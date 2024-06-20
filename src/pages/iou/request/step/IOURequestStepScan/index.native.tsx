@@ -22,6 +22,7 @@ import withCurrentUserPersonalDetails from '@components/withCurrentUserPersonalD
 import useLocalize from '@hooks/useLocalize';
 import useTheme from '@hooks/useTheme';
 import useThemeStyles from '@hooks/useThemeStyles';
+import checkPDFState from '@libs/checkPDFState';
 import * as FileUtils from '@libs/fileDownload/FileUtils';
 import getCurrentPosition from '@libs/getCurrentPosition';
 import Log from '@libs/Log';
@@ -379,8 +380,18 @@ function IOURequestStepScan({
     /**
      * Sets the Receipt objects and navigates the user to the next page
      */
-    const setReceiptAndNavigate = (file: FileObject) => {
+    const setReceiptAndNavigate = async (file: FileObject) => {
         if (!validateReceipt(file)) {
+            return;
+        }
+
+        const {errorMessage} = await checkPDFState({url: file?.uri});
+        if (errorMessage) {
+            if (errorMessage === 'password') {
+                Alert.alert(translate('attachmentPicker.attachmentError'), translate('attachmentPicker.protectedPDFNotSupported'));
+            }
+            Alert.alert(translate('attachmentPicker.attachmentError'), translate('attachmentPicker.errorWhileSelectingAttachment'));
+
             return;
         }
 

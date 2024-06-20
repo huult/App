@@ -23,6 +23,7 @@ import useTheme from '@hooks/useTheme';
 import useThemeStyles from '@hooks/useThemeStyles';
 import useWindowDimensions from '@hooks/useWindowDimensions';
 import * as Browser from '@libs/Browser';
+import checkPDFState from '@libs/checkPDFState';
 import * as FileUtils from '@libs/fileDownload/FileUtils';
 import getCurrentPosition from '@libs/getCurrentPosition';
 import isPdfFilePasswordProtected from '@libs/isPdfFilePasswordProtected';
@@ -426,12 +427,23 @@ function IOURequestStepScan({
      * Sets the Receipt objects and navigates the user to the next page
      */
     const setReceiptAndNavigate = (file: FileObject) => {
-        validateReceipt(file).then((isFileValid) => {
+        validateReceipt(file).then(async (isFileValid) => {
             if (!isFileValid) {
                 return;
             }
             // Store the receipt on the transaction object in Onyx
             const source = URL.createObjectURL(file as Blob);
+
+            const {errorMessage} = await checkPDFState({url: source});
+            if (errorMessage) {
+                if (errorMessage === 'password') {
+                    setUploadReceiptError(true, 'attachmentPicker.attachmentError', 'attachmentPicker.protectedPDFNotSupported');
+                }
+
+                setUploadReceiptError(true, 'attachmentPicker.attachmentError', 'attachmentPicker.errorWhileSelectingAttachment');
+                return;
+            }
+
             // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
             IOU.setMoneyRequestReceipt(transactionID, source, file.name || '', action !== CONST.IOU.ACTION.EDIT);
 
