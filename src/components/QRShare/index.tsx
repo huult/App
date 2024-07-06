@@ -1,22 +1,31 @@
-import type {ForwardedRef} from 'react';
-import React, {forwardRef, useImperativeHandle, useRef, useState} from 'react';
-import type {LayoutChangeEvent} from 'react-native';
-import {View} from 'react-native';
-import type {Svg} from 'react-native-svg';
 import ExpensifyWordmark from '@assets/images/expensify-wordmark.svg';
 import ImageSVG from '@components/ImageSVG';
 import QRCode from '@components/QRCode';
 import Text from '@components/Text';
 import useTheme from '@hooks/useTheme';
 import useThemeStyles from '@hooks/useThemeStyles';
+import * as Browser from '@libs/Browser';
 import variables from '@styles/variables';
-import type {QRShareHandle, QRShareProps} from './types';
+import type { ForwardedRef } from 'react';
+import React, { forwardRef, useImperativeHandle, useRef, useState } from 'react';
+import type { LayoutChangeEvent } from 'react-native';
+import { Dimensions, Platform, View } from 'react-native';
+import type { Svg } from 'react-native-svg';
+import type { QRShareHandle, QRShareProps } from './types';
 
 function QRShare({url, title, subtitle, logo, logoRatio, logoMarginRatio}: QRShareProps, ref: ForwardedRef<QRShareHandle>) {
     const styles = useThemeStyles();
     const theme = useTheme();
+    const isMobilePlatform = Platform.OS === 'android' || Platform.OS === 'ios';
+    const isMobileBrowser = Browser.isMobile();
+    const isMobile = isMobilePlatform || isMobileBrowser;
+    const containerWidth = isMobile ? Dimensions.get('screen').width : variables.sideBarWidth;
 
-    const [qrCodeSize, setQrCodeSize] = useState<number | undefined>();
+    // styles.ph5.paddingHorizontal * 2: This is the padding outside of the QR code.
+    // variables.qrShareHorizontalPadding * 2: This is the padding inside of the QR code.
+    const [qrCodeSize, setQrCodeSize] = useState<number>(
+        containerWidth - (styles.ph5.paddingHorizontal * 2) - (variables.qrShareHorizontalPadding * 2)
+    );
     const svgRef = useRef<Svg>();
 
     useImperativeHandle(
