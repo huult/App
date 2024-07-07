@@ -4,12 +4,13 @@ import QRCode from '@components/QRCode';
 import Text from '@components/Text';
 import useTheme from '@hooks/useTheme';
 import useThemeStyles from '@hooks/useThemeStyles';
+import useWindowDimensions from '@hooks/useWindowDimensions';
 import * as Browser from '@libs/Browser';
 import variables from '@styles/variables';
 import type { ForwardedRef } from 'react';
 import React, { forwardRef, useImperativeHandle, useRef, useState } from 'react';
 import type { LayoutChangeEvent } from 'react-native';
-import { Dimensions, Platform, View } from 'react-native';
+import { Platform, View } from 'react-native';
 import type { Svg } from 'react-native-svg';
 import type { QRShareHandle, QRShareProps } from './types';
 
@@ -19,12 +20,13 @@ function QRShare({url, title, subtitle, logo, logoRatio, logoMarginRatio}: QRSha
     const isMobilePlatform = Platform.OS === 'android' || Platform.OS === 'ios';
     const isMobileBrowser = Browser.isMobile();
     const isMobile = isMobilePlatform || isMobileBrowser;
-    const containerWidth = isMobile ? Dimensions.get('screen').width : variables.sideBarWidth;
+    const { windowWidth } = useWindowDimensions();
+    const qrShareContainerWidth = isMobile ? windowWidth : variables.sideBarWidth;
 
     // styles.ph5.paddingHorizontal * 2: This is the padding outside of the QR code.
     // variables.qrShareHorizontalPadding * 2: This is the padding inside of the QR code.
     const [qrCodeSize, setQrCodeSize] = useState<number>(
-        containerWidth - (styles.ph5.paddingHorizontal * 2) - (variables.qrShareHorizontalPadding * 2)
+        qrShareContainerWidth - (styles.ph5.paddingHorizontal * 2) - (variables.qrShareHorizontalPadding * 2)
     );
     const svgRef = useRef<Svg>();
 
