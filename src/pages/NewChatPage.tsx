@@ -1,7 +1,6 @@
 import isEmpty from 'lodash/isEmpty';
 import reject from 'lodash/reject';
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
-import {Alert} from 'react-native';
 import {useOnyx} from 'react-native-onyx';
 import Button from '@components/Button';
 import KeyboardAvoidingView from '@components/KeyboardAvoidingView';
@@ -237,24 +236,17 @@ function NewChatPage({isGroupChat}: NewChatPageProps) {
              * @param  option
              */
             function toggleOption(option: ListItem & Partial<OptionData>) {
-                Alert.alert('Test 01');
                 const isOptionInList = !!option.isSelected;
 
                 let newSelectedOptions;
 
                 if (isOptionInList) {
-                    Alert.alert('Test 02');
                     newSelectedOptions = reject(selectedOptions, (selectedOption) => selectedOption.login === option.login);
                 } else {
-                    Alert.alert('Test 03');
                     newSelectedOptions = [...selectedOptions, {...option, isSelected: true, selected: true, reportID: option.reportID ?? '-1'}];
                 }
 
-                Alert.alert('Test 04');
-
                 selectionListRef?.current?.clearInputAfterSelect?.();
-
-                Alert.alert('Test 05');
 
                 setSelectedOptions(newSelectedOptions);
             }
