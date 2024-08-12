@@ -30,7 +30,7 @@ function UserListItem<TItem extends ListItem>({
     onFocus,
     shouldSyncFocus,
     pressableStyle,
-    showRightHandComponent = false,
+    showRightHandComponent,
 }: UserListItemProps<TItem>) {
     const styles = useThemeStyles();
     const theme = useTheme();
@@ -74,6 +74,7 @@ function UserListItem<TItem extends ListItem>({
             keyForList={item.keyForList}
             onFocus={onFocus}
             shouldSyncFocus={shouldSyncFocus}
+            showRightHandComponent={showRightHandComponent}
         >
             {(hovered?: boolean) => (
                 <>

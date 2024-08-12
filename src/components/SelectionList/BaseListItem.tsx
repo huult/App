@@ -33,7 +33,7 @@ function BaseListItem<TItem extends ListItem>({
     onFocus = () => {},
     hoverStyle,
     onLongPressRow,
-    showRightHandComponent = false,
+    showRightHandComponent,
 }: BaseListItemProps<TItem>) {
     const theme = useTheme();
     const styles = useThemeStyles();

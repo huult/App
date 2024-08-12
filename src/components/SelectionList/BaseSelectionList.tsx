@@ -97,6 +97,7 @@ function BaseSelectionList<TItem extends ListItem>(
         shouldDelayFocus = true,
         shouldUpdateFocusedIndex = false,
         onLongPressRow,
+        showRightHandComponent,
     }: BaseSelectionListProps<TItem>,
     ref: ForwardedRef<SelectionListHandle>,
 ) {
@@ -469,6 +470,7 @@ function BaseSelectionList<TItem extends ListItem>(
                         setFocusedIndex(normalizedIndex);
                     }}
                     shouldSyncFocus={!isTextInputFocusedRef.current}
+                    showRightHandComponent={showRightHandComponent}
                 />
                 {item.footerContent && item.footerContent}
             </>
