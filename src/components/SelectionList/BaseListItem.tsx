@@ -33,6 +33,7 @@ function BaseListItem<TItem extends ListItem>({
     onFocus = () => {},
     hoverStyle,
     onLongPressRow,
+    showRightHandComponent = false,
 }: BaseListItemProps<TItem>) {
     const theme = useTheme();
     const styles = useThemeStyles();
@@ -49,7 +50,7 @@ function BaseListItem<TItem extends ListItem>({
     };
 
     const rightHandSideComponentRender = () => {
-        if (canSelectMultiple || !rightHandSideComponent) {
+        if (!showRightHandComponent && (canSelectMultiple || !rightHandSideComponent)) {
             return null;
         }
 

@@ -66,6 +66,8 @@ type CommonListItemProps<TItem extends ListItem> = {
 
     /** Callback to fire when the item is long pressed */
     onLongPressRow?: (item: TItem) => void;
+
+    showRightHandComponent?: boolean;
 } & TRightHandSideComponent<TItem>;
 
 type ListItem = {
@@ -489,6 +491,8 @@ type BaseSelectionListProps<TItem extends ListItem> = Partial<ChildrenProps> & {
 
     /** Callback to fire when the item is long pressed */
     onLongPressRow?: (item: TItem) => void;
+
+    showRightHandComponent?: boolean;
 } & TRightHandSideComponent<TItem>;
 
 type SelectionListHandle = {

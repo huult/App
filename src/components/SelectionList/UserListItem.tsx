@@ -30,6 +30,7 @@ function UserListItem<TItem extends ListItem>({
     onFocus,
     shouldSyncFocus,
     pressableStyle,
+    showRightHandComponent = false,
 }: UserListItemProps<TItem>) {
     const styles = useThemeStyles();
     const theme = useTheme();
@@ -76,7 +77,7 @@ function UserListItem<TItem extends ListItem>({
         >
             {(hovered?: boolean) => (
                 <>
-                    {canSelectMultiple && (
+                    {canSelectMultiple && !showRightHandComponent && (
                         <PressableWithFeedback
                             accessibilityLabel={item.text ?? ''}
                             role={CONST.ROLE.BUTTON}

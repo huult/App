@@ -344,6 +344,8 @@ function NewChatPage({isGroupChat}: NewChatPageProps) {
                     isLoadingNewOptions={!!isSearchingForReports}
                     initiallyFocusedOptionKey={firstKeyForList}
                     shouldTextInputInterceptSwipe
+                    canSelectMultiple
+                    showRightHandComponent
                 />
                 {isSmallScreenWidth && <OfflineIndicator />}
             </KeyboardAvoidingView>
