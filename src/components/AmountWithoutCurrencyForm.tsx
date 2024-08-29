@@ -62,7 +62,7 @@ function AmountWithoutCurrencyForm(
             role={role}
             ref={ref}
             keyboardType={CONST.KEYBOARD_TYPE.DECIMAL_PAD}
-            maxLength={getDecimalLength(formattedAmount) === decimals ? formattedAmount.length : undefined}
+            maxLength={getDecimalLength(formattedAmount) === decimals || formattedAmount.length === CONST.IOU.AMOUNT_MAX_LENGTH ? formattedAmount.length : undefined}
             // eslint-disable-next-line react/jsx-props-no-spreading
             {...rest}
         />
