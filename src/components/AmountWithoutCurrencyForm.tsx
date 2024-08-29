@@ -1,5 +1,5 @@
-import React, {useCallback, useMemo} from 'react';
 import type {ForwardedRef} from 'react';
+import React, {useCallback, useMemo} from 'react';
 import useLocalize from '@hooks/useLocalize';
 import {addLeadingZero, replaceAllDigits, replaceCommasWithPeriod, stripSpacesFromAmount, validateAmount} from '@libs/MoneyRequestUtils';
 import CONST from '@src/CONST';
@@ -13,6 +13,8 @@ type AmountFormProps = {
     /** Callback to update the amount in the FormProvider */
     onInputChange?: (value: string) => void;
 } & Partial<BaseTextInputProps>;
+
+const decimals = 2;
 
 function AmountWithoutCurrencyForm(
     {value: amount, onInputChange, inputID, name, defaultValue, accessibilityLabel, role, label, ...rest}: AmountFormProps,
@@ -33,13 +35,18 @@ function AmountWithoutCurrencyForm(
             const newAmountWithoutSpaces = stripSpacesFromAmount(newAmount);
             const replacedCommasAmount = replaceCommasWithPeriod(newAmountWithoutSpaces);
             const withLeadingZero = addLeadingZero(replacedCommasAmount);
-            if (!validateAmount(withLeadingZero, 2)) {
+            if (!validateAmount(withLeadingZero, decimals)) {
                 return;
             }
             onInputChange?.(withLeadingZero);
         },
         [onInputChange],
     );
+
+    const getDecimalLength = (numStr: string) => {
+        const parts = numStr.split('.');
+        return parts[1] ? parts[1].length : 0;
+    };
 
     const formattedAmount = replaceAllDigits(currentAmount, toLocaleDigit);
 
@@ -55,6 +62,7 @@ function AmountWithoutCurrencyForm(
             role={role}
             ref={ref}
             keyboardType={CONST.KEYBOARD_TYPE.DECIMAL_PAD}
+            maxLength={getDecimalLength(formattedAmount) === decimals ? formattedAmount.length : undefined}
             // eslint-disable-next-line react/jsx-props-no-spreading
             {...rest}
         />
