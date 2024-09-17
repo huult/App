@@ -1,5 +1,5 @@
-import React, {useMemo} from 'react';
-import {View} from 'react-native';
+import React, {RefObject, useCallback, useContext, useMemo, useRef} from 'react';
+import {ScrollView as RNScrollView, ScrollViewProps, View} from 'react-native';
 import type {ValueOf} from 'react-native-gesture-handler/lib/typescript/typeUtils';
 import type {OnyxCollection} from 'react-native-onyx';
 import {useOnyx} from 'react-native-onyx';
@@ -8,6 +8,7 @@ import FormAlertWithSubmitButton from '@components/FormAlertWithSubmitButton';
 import type {LocaleContextProps} from '@components/LocaleContextProvider';
 import MenuItemWithTopDescription from '@components/MenuItemWithTopDescription';
 import {usePersonalDetails} from '@components/OnyxProvider';
+import {ScrollOffsetContext} from '@components/ScrollOffsetContextProvider';
 import ScrollView from '@components/ScrollView';
 import type {AdvancedFiltersKeys, SearchQueryJSON} from '@components/Search/types';
 import useLocalize from '@hooks/useLocalize';
@@ -215,6 +216,8 @@ function getFilterExpenseDisplayTitle(filters: Partial<SearchAdvancedFiltersForm
 function getFilterInDisplayTitle(filters: Partial<SearchAdvancedFiltersForm>, translate: LocaleContextProps['translate'], reports?: OnyxCollection<Report>) {
     return filters.in ? filters.in.map((id) => ReportUtils.getReportName(reports?.[`${ONYXKEYS.COLLECTION.REPORT}${id}`])).join(', ') : undefined;
 }
+
+export const ADVANCED_SEARCH_FILTER = 'ADVANCED_SEARCH_FILTER';
 function AdvancedSearchFilters() {
     const {translate} = useLocalize();
     const styles = useThemeStyles();
@@ -230,6 +233,30 @@ function AdvancedSearchFilters() {
     const queryString = useMemo(() => SearchUtils.buildQueryStringFromFilterValues(searchAdvancedFilters) || '', [searchAdvancedFilters]);
     const queryJSON = useMemo(() => SearchUtils.buildSearchQueryJSON(queryString || SearchUtils.buildCannedSearchQuery()) ?? ({} as SearchQueryJSON), [queryString]);
 
+    const {saveScrollOffsetByName, getScrollOffsetByName} = useContext(ScrollOffsetContext);
+    const scrollViewRef = useRef<RNScrollView>();
+    const saveSearchRef = useRef<RefObject<View>>();
+
+    const onScroll = useCallback<NonNullable<ScrollViewProps['onScroll']>>((e) => {
+        if (e.nativeEvent.layoutMeasurement.height === 0) {
+            return;
+        }
+
+        saveScrollOffsetByName(ADVANCED_SEARCH_FILTER, e.nativeEvent.contentOffset.y);
+    }, []);
+
+    const isScrollingPossible = (scrollOffset: number | null): boolean => {
+        return !!scrollOffset && !!scrollViewRef.current && !!saveSearchRef.current;
+    };
+
+    const measureAndScroll = (scrollOffset: number, bufferHeight: number): void => {
+        saveSearchRef.current?.measure((_, __, ___, height) => {
+            scrollViewRef.current?.scrollTo({
+                y: scrollOffset + height + bufferHeight,
+                animated: false,
+            });
+        });
+    };
     const applyFiltersAndNavigate = () => {
         SearchActions.clearAllFilters();
         Navigation.dismissModal();
@@ -287,7 +314,22 @@ function AdvancedSearchFilters() {
 
     return (
         <>
-            <ScrollView contentContainerStyle={[styles.flexGrow1, styles.justifyContentBetween]}>
+            <ScrollView
+                ref={scrollViewRef}
+                onScroll={onScroll}
+                onLayout={() => {
+                    const scrollOffset = getScrollOffsetByName(ADVANCED_SEARCH_FILTER);
+
+                    if (!scrollOffset || !isScrollingPossible(scrollOffset)) {
+                        return;
+                    }
+
+                    const BUFFER_HEIGHT = 16;
+                    measureAndScroll(scrollOffset, BUFFER_HEIGHT);
+                }}
+                scrollEventThrottle={16}
+                contentContainerStyle={[styles.flexGrow1, styles.justifyContentBetween]}
+            >
                 <View>
                     {filters.map((filter) => {
                         if (filter === undefined) {
@@ -313,6 +355,7 @@ function AdvancedSearchFilters() {
                     onPress={onSaveSearch}
                     style={[styles.mh4, styles.mt4]}
                     large
+                    ref={saveSearchRef}
                 />
             )}
             <FormAlertWithSubmitButton

@@ -1,11 +1,12 @@
-import {useNavigation} from '@react-navigation/native';
+import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import type {StackNavigationProp} from '@react-navigation/stack';
-import React, {useCallback, useEffect, useRef, useState} from 'react';
+import React, {useCallback, useContext, useEffect, useRef, useState} from 'react';
 import type {OnyxEntry} from 'react-native-onyx';
 import {useOnyx} from 'react-native-onyx';
 import FullPageOfflineBlockingView from '@components/BlockingViews/FullPageOfflineBlockingView';
 import ConfirmModal from '@components/ConfirmModal';
 import DecisionModal from '@components/DecisionModal';
+import {ScrollOffsetContext} from '@components/ScrollOffsetContextProvider';
 import SearchTableHeader from '@components/SelectionList/SearchTableHeader';
 import type {ReportActionListItemType, ReportListItemType, TransactionListItemType} from '@components/SelectionList/types';
 import SelectionListWithModal from '@components/SelectionListWithModal';
@@ -26,6 +27,7 @@ import * as ReportUtils from '@libs/ReportUtils';
 import * as SearchUtils from '@libs/SearchUtils';
 import Navigation from '@navigation/Navigation';
 import type {AuthScreensParamList} from '@navigation/types';
+import {ADVANCED_SEARCH_FILTER} from '@pages/Search/AdvancedSearchFilters';
 import EmptySearchView from '@pages/Search/EmptySearchView';
 import variables from '@styles/variables';
 import CONST from '@src/CONST';
@@ -98,6 +100,7 @@ function Search({queryJSON}: SearchProps) {
     const [currentSearchResults] = useOnyx(`${ONYXKEYS.COLLECTION.SNAPSHOT}${hash}`);
 
     const canSelectMultiple = isSmallScreenWidth ? !!selectionMode?.isEnabled : true;
+    const {clearScrollOffsetByName} = useContext(ScrollOffsetContext);
 
     useEffect(() => {
         clearSelectedTransactions(hash);
@@ -125,6 +128,12 @@ function Search({queryJSON}: SearchProps) {
         SearchActions.search({queryJSON, offset});
         // eslint-disable-next-line react-compiler/react-compiler, react-hooks/exhaustive-deps
     }, [isOffline, offset, queryJSON]);
+
+    useFocusEffect(
+        useCallback(() => {
+            clearScrollOffsetByName(ADVANCED_SEARCH_FILTER);
+        }, []),
+    );
 
     const handleOnCancelConfirmModal = () => {
         setDeleteExpensesConfirmModalVisible(false);

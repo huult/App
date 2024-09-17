@@ -3,6 +3,7 @@ import React, {createContext, useCallback, useEffect, useMemo, useRef} from 'rea
 import {withOnyx} from 'react-native-onyx';
 import usePrevious from '@hooks/usePrevious';
 import type {NavigationPartialRoute, State} from '@libs/Navigation/types';
+import {ADVANCED_SEARCH_FILTER} from '@pages/Search/AdvancedSearchFilters';
 import NAVIGATORS from '@src/NAVIGATORS';
 import ONYXKEYS from '@src/ONYXKEYS';
 import SCREENS from '@src/SCREENS';
@@ -15,8 +16,16 @@ type ScrollOffsetContextValue = {
     /** Get scroll offset value for given screen */
     getScrollOffset: (route: RouteProp<ParamListBase>) => number | undefined;
 
+    /** Save scroll offset of flashlist on given screen */
+    saveScrollOffsetByName: (name: string, scrollOffset: number) => void;
+
+    /** Get scroll offset value for given screen */
+    getScrollOffsetByName: (name: string) => number | undefined;
+
     /** Clean scroll offsets of screen that aren't anymore in the state */
     cleanStaleScrollOffsets: (state: State) => void;
+
+    clearScrollOffsetByName: (name: string) => void;
 };
 
 type ScrollOffsetContextProviderOnyxProps = {
@@ -32,7 +41,10 @@ type ScrollOffsetContextProviderProps = ScrollOffsetContextProviderOnyxProps & {
 const defaultValue: ScrollOffsetContextValue = {
     saveScrollOffset: () => {},
     getScrollOffset: () => undefined,
+    saveScrollOffsetByName: () => {},
+    getScrollOffsetByName: () => undefined,
     cleanStaleScrollOffsets: () => {},
+    clearScrollOffsetByName: () => {},
 };
 
 const ScrollOffsetContext = createContext<ScrollOffsetContextValue>(defaultValue);
@@ -72,14 +84,33 @@ function ScrollOffsetContextProvider({children, priorityMode}: ScrollOffsetConte
         }
         return scrollOffsetsRef.current[getKey(route)];
     }, []);
+    const saveScrollOffsetByName: ScrollOffsetContextValue['saveScrollOffsetByName'] = useCallback((name, scrollOffset) => {
+        scrollOffsetsRef.current[name] = scrollOffset;
+    }, []);
+
+    const getScrollOffsetByName: ScrollOffsetContextValue['getScrollOffsetByName'] = useCallback((name) => {
+        if (!scrollOffsetsRef.current) {
+            return;
+        }
+        return scrollOffsetsRef.current[name];
+    }, []);
+
+    const clearScrollOffsetByName: ScrollOffsetContextValue['clearScrollOffsetByName'] = useCallback((name) => {
+        if (!scrollOffsetsRef.current) {
+            return;
+        }
+        delete scrollOffsetsRef.current[name];
+    }, []);
 
     const cleanStaleScrollOffsets: ScrollOffsetContextValue['cleanStaleScrollOffsets'] = useCallback((state) => {
         const bottomTabNavigator = state.routes.find((route) => route.name === NAVIGATORS.BOTTOM_TAB_NAVIGATOR);
+
         if (bottomTabNavigator?.state && 'routes' in bottomTabNavigator.state) {
             const bottomTabNavigatorRoutes = bottomTabNavigator.state.routes;
             const scrollOffsetkeysOfExistingScreens = bottomTabNavigatorRoutes.map((route) => getKey(route));
+
             for (const key of Object.keys(scrollOffsetsRef.current)) {
-                if (!scrollOffsetkeysOfExistingScreens.includes(key)) {
+                if (!scrollOffsetkeysOfExistingScreens.includes(key) && key !== ADVANCED_SEARCH_FILTER) {
                     delete scrollOffsetsRef.current[key];
                 }
             }
@@ -91,8 +122,11 @@ function ScrollOffsetContextProvider({children, priorityMode}: ScrollOffsetConte
             saveScrollOffset,
             getScrollOffset,
             cleanStaleScrollOffsets,
+            clearScrollOffsetByName,
+            saveScrollOffsetByName,
+            getScrollOffsetByName,
         }),
-        [saveScrollOffset, getScrollOffset, cleanStaleScrollOffsets],
+        [saveScrollOffset, getScrollOffset, cleanStaleScrollOffsets, clearScrollOffsetByName, saveScrollOffsetByName, getScrollOffsetByName],
     );
 
     return <ScrollOffsetContext.Provider value={contextValue}>{children}</ScrollOffsetContext.Provider>;
