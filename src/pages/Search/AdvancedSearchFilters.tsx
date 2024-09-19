@@ -235,16 +235,22 @@ function AdvancedSearchFilters() {
     const queryString = useMemo(() => SearchUtils.buildQueryStringFromFilterValues(searchAdvancedFilters) || '', [searchAdvancedFilters]);
     const queryJSON = useMemo(() => SearchUtils.buildSearchQueryJSON(queryString || SearchUtils.buildCannedSearchQuery()) ?? ({} as SearchQueryJSON), [queryString]);
 
-    const {saveScrollOffsetByName, getScrollOffsetByName} = useContext(ScrollOffsetContext);
+    const {saveScrollOffsetByName, getScrollOffsetByName, clearScrollOffsetByName} = useContext(ScrollOffsetContext);
     const scrollViewRef = useRef<RNScrollView>();
     const saveSearchRef = useRef<RefObject<View>>();
 
-    const onScroll = useCallback<NonNullable<ScrollViewProps['onScroll']>>((e) => {
-        if (e.nativeEvent.layoutMeasurement.height === 0) {
-            return;
-        }
+    const onScroll = useCallback<NonNullable<ScrollViewProps['onScroll']>>((event) => {
+        const {layoutMeasurement, contentOffset, contentSize} = event.nativeEvent;
 
-        saveScrollOffsetByName(ADVANCED_SEARCH_FILTER, e.nativeEvent.contentOffset.y);
+        if (layoutMeasurement.height === 0) return;
+
+        const isAtBottom = layoutMeasurement.height + contentOffset.y >= contentSize.height;
+
+        if (isAtBottom) {
+            saveScrollOffsetByName(ADVANCED_SEARCH_FILTER, contentOffset.y);
+        } else {
+            getScrollOffsetByName(ADVANCED_SEARCH_FILTER) && clearScrollOffsetByName(ADVANCED_SEARCH_FILTER);
+        }
     }, []);
 
     const isScrollingPossible = (scrollOffset: number | null): boolean => {
