@@ -682,6 +682,11 @@ const ROUTES = {
         getRoute: (policyID: string) => `settings/workspaces/${policyID}/workflows/approvals/new` as const,
     },
     WORKSPACE_WORKFLOWS_APPROVALS_EDIT: {
+        route: 'settings/workspaces/:policyID/workflows/approvals/:firstApproverEmail/:index/edit',
+        getRoute: (policyID: string, firstApproverEmail: string, index: string) =>
+            `settings/workspaces/${policyID}/workflows/approvals/${encodeURIComponent(firstApproverEmail)}/${index}/edit` as const,
+    },
+    WORKSPACE_WORKFLOWS_APPROVALS_EDIT2: {
         route: 'settings/workspaces/:policyID/workflows/approvals/:firstApproverEmail/edit',
         getRoute: (policyID: string, firstApproverEmail: string) => `settings/workspaces/${policyID}/workflows/approvals/${encodeURIComponent(firstApproverEmail)}/edit` as const,
     },

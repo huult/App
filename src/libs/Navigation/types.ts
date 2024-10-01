@@ -1308,6 +1308,7 @@ type FullScreenNavigatorParamList = {
     [SCREENS.WORKSPACE.WORKFLOWS_APPROVALS_EDIT]: {
         policyID: string;
         firstApproverEmail: string;
+        index?: string;
     };
     [SCREENS.WORKSPACE.WORKFLOWS_APPROVALS_EXPENSES_FROM]: {
         policyID: string;

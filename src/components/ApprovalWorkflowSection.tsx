@@ -18,9 +18,10 @@ type ApprovalWorkflowSectionProps = {
 
     /** A function that is called when the section is pressed */
     onPress: () => void;
+    onAddApprover?: () => void;
 };
 
-function ApprovalWorkflowSection({approvalWorkflow, onPress}: ApprovalWorkflowSectionProps) {
+function ApprovalWorkflowSection({approvalWorkflow, onPress, onAddApprover}: ApprovalWorkflowSectionProps) {
     const styles = useThemeStyles();
     const theme = useTheme();
     const {translate, toLocaleOrdinal} = useLocalize();
@@ -81,6 +82,22 @@ function ApprovalWorkflowSection({approvalWorkflow, onPress}: ApprovalWorkflowSe
                     shouldRemoveBackground
                 />
 
+                {approvalWorkflow.approvers.length === 0 ? (
+                    <MenuItem
+                        title={translate('workflowsPage.approver')}
+                        style={styles.p0}
+                        titleStyle={styles.textLabelSupportingNormal}
+                        descriptionTextStyle={styles.textNormalThemeText}
+                        icon={Expensicons.UserCheck}
+                        iconHeight={20}
+                        iconWidth={20}
+                        iconFill={theme.icon}
+                        onPress={onPress}
+                        shouldRemoveBackground
+                    />
+                ) : (
+                    <></>
+                )}
                 {approvalWorkflow.approvers.map((approver, index) => (
                     // eslint-disable-next-line react/no-array-index-key
                     <View key={`approver-${approver.email}-${index}`}>

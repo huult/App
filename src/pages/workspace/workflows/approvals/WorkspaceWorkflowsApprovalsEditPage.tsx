@@ -67,7 +67,7 @@ function WorkspaceWorkflowsApprovalsEditPage({policy, isLoadingReportData = true
         });
     }, [initialApprovalWorkflow, route.params.policyID]);
 
-    const {currentApprovalWorkflow, defaultWorkflowMembers, usedApproverEmails} = useMemo(() => {
+    const {currentApprovalWorkflow, defaultWorkflowMembers, usedApproverEmails, hasMemberWithoutApprovalWorkflow} = useMemo(() => {
         if (!policy || !personalDetails) {
             return {};
         }
@@ -85,8 +85,9 @@ function WorkspaceWorkflowsApprovalsEditPage({policy, isLoadingReportData = true
             defaultWorkflowMembers: result.availableMembers,
             usedApproverEmails: result.usedApproverEmails,
             currentApprovalWorkflow: result.approvalWorkflows.find((workflow) => workflow.approvers.at(0)?.email === firstApprover),
+            hasMemberWithoutApprovalWorkflow: result.approvalWorkflows.find((workflow, index) => route.params.index && route.params.index === `${index}` && !workflow.approvers.length),
         };
-    }, [personalDetails, policy, route.params.firstApproverEmail]);
+    }, [personalDetails, policy, route.params.firstApproverEmail, route.params.index]);
 
     // eslint-disable-next-line rulesdir/no-negated-variables
     const shouldShowNotFoundView =
@@ -98,6 +99,18 @@ function WorkspaceWorkflowsApprovalsEditPage({policy, isLoadingReportData = true
             return;
         }
 
+        if (hasMemberWithoutApprovalWorkflow) {
+            Workflow.setApprovalWorkflow({
+                ...hasMemberWithoutApprovalWorkflow,
+                availableMembers: [...hasMemberWithoutApprovalWorkflow.members, ...defaultWorkflowMembers],
+                usedApproverEmails,
+                action: CONST.APPROVAL_WORKFLOW.ACTION.EDIT,
+                isLoading: false,
+                errors: null,
+            });
+            setInitialApprovalWorkflow(hasMemberWithoutApprovalWorkflow);
+            return;
+        }
         if (!currentApprovalWorkflow) {
             return Workflow.clearApprovalWorkflow();
         }
@@ -111,7 +124,7 @@ function WorkspaceWorkflowsApprovalsEditPage({policy, isLoadingReportData = true
             errors: null,
         });
         setInitialApprovalWorkflow(currentApprovalWorkflow);
-    }, [currentApprovalWorkflow, defaultWorkflowMembers, initialApprovalWorkflow, usedApproverEmails]);
+    }, [currentApprovalWorkflow, defaultWorkflowMembers, hasMemberWithoutApprovalWorkflow, initialApprovalWorkflow, usedApproverEmails]);
 
     return (
         <AccessOrNotFoundWrapper
@@ -123,7 +136,7 @@ function WorkspaceWorkflowsApprovalsEditPage({policy, isLoadingReportData = true
                 testID={WorkspaceWorkflowsApprovalsEditPage.displayName}
             >
                 <FullPageNotFoundView
-                    shouldShow={shouldShowNotFoundView}
+                    shouldShow={shouldShowNotFoundView && !hasMemberWithoutApprovalWorkflow?.members.length}
                     subtitleKey={isEmptyObject(policy) ? undefined : 'workspace.common.notAuthorized'}
                     onBackButtonPress={PolicyUtils.goBackFromInvalidPolicy}
                     onLinkPress={PolicyUtils.goBackFromInvalidPolicy}
@@ -132,6 +145,7 @@ function WorkspaceWorkflowsApprovalsEditPage({policy, isLoadingReportData = true
                         title={translate('workflowsEditApprovalsPage.title')}
                         onBackButtonPress={Navigation.goBack}
                     />
+
                     {approvalWorkflow && (
                         <>
                             <ApprovalWorkflowEditor
@@ -154,7 +168,7 @@ function WorkspaceWorkflowsApprovalsEditPage({policy, isLoadingReportData = true
                             />
                         </>
                     )}
-                    {!initialApprovalWorkflow && <FullScreenLoadingIndicator />}
+                    {!initialApprovalWorkflow && !hasMemberWithoutApprovalWorkflow?.members.length && <FullScreenLoadingIndicator />}
                 </FullPageNotFoundView>
                 <ConfirmModal
                     title={translate('workflowsEditApprovalsPage.deleteTitle')}
