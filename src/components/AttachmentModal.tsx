@@ -182,7 +182,6 @@ function AttachmentModal({
     const parentReportAction = ReportActionsUtils.getReportAction(report?.parentReportID ?? '-1', report?.parentReportActionID ?? '-1');
     const transactionID = ReportActionsUtils.isMoneyRequestAction(parentReportAction) ? ReportActionsUtils.getOriginalMessage(parentReportAction)?.IOUTransactionID ?? '-1' : '-1';
     const [transaction] = useOnyx(`${ONYXKEYS.COLLECTION.TRANSACTION}${transactionID}`);
-
     const [file, setFile] = useState<FileObject | undefined>(
         originalFileName
             ? {
@@ -540,7 +539,7 @@ function AttachmentModal({
                             />
                         )}
                         {!shouldShowNotFoundPage &&
-                            (!isEmptyObject(report) && !isReceiptAttachment ? (
+                            (!isEmptyObject(report) && !isReceiptAttachment && type !== CONST.ATTACHMENT_TYPE.SEARCH ? (
                                 <AttachmentCarousel
                                     accountID={accountID}
                                     type={type}
@@ -571,6 +570,8 @@ function AttachmentModal({
                                             isUsedInAttachmentModal
                                             transactionID={transaction?.transactionID}
                                             isUploaded={!isEmptyObject(report)}
+                                            type={type}
+                                            report={isEmptyObject(report) ? undefined : report}
                                         />
                                     </AttachmentCarouselPagerContext.Provider>
                                 )

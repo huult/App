@@ -40,7 +40,7 @@ function ChatListItem<TItem extends ListItem>({
     const theme = useTheme();
     const StyleUtils = useStyleUtils();
 
-    const attachmentContextValue = {type: CONST.ATTACHMENT_TYPE.SEARCH};
+    const attachmentContextValue = {reportID: item.reportID, type: CONST.ATTACHMENT_TYPE.SEARCH};
 
     const contextValue = {
         anchor: null,

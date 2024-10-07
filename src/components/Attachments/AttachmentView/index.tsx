@@ -1,9 +1,10 @@
 import {Str} from 'expensify-common';
-import React, {memo, useContext, useEffect, useState} from 'react';
+import React, {memo, useCallback, useContext, useEffect, useState} from 'react';
 import type {GestureResponderEvent, StyleProp, ViewStyle} from 'react-native';
 import {View} from 'react-native';
 import type {OnyxEntry} from 'react-native-onyx';
-import {withOnyx} from 'react-native-onyx';
+import {useOnyx, withOnyx} from 'react-native-onyx';
+import type {ValueOf} from 'type-fest';
 import AttachmentCarouselPagerContext from '@components/Attachments/AttachmentCarousel/Pager/AttachmentCarouselPagerContext';
 import type {Attachment, AttachmentSource} from '@components/Attachments/types';
 import DistanceEReceipt from '@components/DistanceEReceipt';
@@ -23,8 +24,10 @@ import * as FileUtils from '@libs/fileDownload/FileUtils';
 import * as TransactionUtils from '@libs/TransactionUtils';
 import type {ColorValue} from '@styles/utils/types';
 import variables from '@styles/variables';
+import CONST from '@src/CONST';
 import ONYXKEYS from '@src/ONYXKEYS';
-import type {Transaction} from '@src/types/onyx';
+import type {Report, Transaction} from '@src/types/onyx';
+import extractAttachments from '../AttachmentCarousel/extractAttachments';
 import AttachmentViewImage from './AttachmentViewImage';
 import AttachmentViewPdf from './AttachmentViewPdf';
 import AttachmentViewVideo from './AttachmentViewVideo';
@@ -77,6 +80,12 @@ type AttachmentViewProps = AttachmentViewOnyxProps &
 
         /* Flag indicating whether the attachment has been uploaded. */
         isUploaded?: boolean;
+
+        /** The report currently being looked at */
+        report?: Report;
+
+        /** The type of the attachment */
+        type?: ValueOf<typeof CONST.ATTACHMENT_TYPE>;
     };
 
 function AttachmentView({
@@ -101,6 +110,8 @@ function AttachmentView({
     duration,
     isUsedAsChatAttachment,
     isUploaded = true,
+    report,
+    type,
 }: AttachmentViewProps) {
     const {translate} = useLocalize();
     const {updateCurrentlyPlayingURL} = usePlaybackContext();
@@ -113,6 +124,9 @@ function AttachmentView({
     const [hasPDFFailedToLoad, setHasPDFFailedToLoad] = useState(false);
     const isVideo = (typeof source === 'string' && Str.isVideo(source)) || (file?.name && Str.isVideo(file.name));
     const isUsedInCarousel = !!attachmentCarouselPagerContext?.pagerRef;
+    const [parentReportActions] = useOnyx(`${ONYXKEYS.COLLECTION.REPORT_ACTIONS}${report?.parentReportID}`, {canEvict: false});
+    const [reportActions] = useOnyx(`${ONYXKEYS.COLLECTION.REPORT_ACTIONS}${report?.reportID}`, {canEvict: false});
+    const [isImageAuthTokenRequired, setImageAuthTokenRequired] = useState(isAuthTokenRequired);
 
     useEffect(() => {
         if (!isFocused && !(file && isUsedInAttachmentModal)) {
@@ -219,6 +233,21 @@ function AttachmentView({
     const isFileNameImage = file?.name && Str.isImage(file.name);
     const isFileImage = isSourceImage || isFileNameImage;
 
+    const compareImage = useCallback((attachment: Attachment) => attachment.source === source, [source]);
+
+    useEffect(() => {
+        if (type !== CONST.ATTACHMENT_TYPE.SEARCH) return;
+        const prReportAction = report?.parentReportActionID && parentReportActions ? parentReportActions[report?.parentReportActionID] : undefined;
+        const newAttachments: Attachment[] = extractAttachments(CONST.ATTACHMENT_TYPE.REPORT, {parentReportAction: prReportAction, reportActions: reportActions ?? undefined});
+
+        const newIndex = newAttachments.findIndex(compareImage);
+        const attachment = newAttachments.at(newIndex);
+
+        if (attachment?.isAuthTokenRequired !== undefined) {
+            setImageAuthTokenRequired(attachment?.isAuthTokenRequired);
+        }
+    }, [compareImage, parentReportActions, report?.parentReportActionID, reportActions, type]);
+
     if (isFileImage) {
         if (imageError && (typeof fallbackSource === 'number' || typeof fallbackSource === 'function')) {
             return (
@@ -259,7 +288,7 @@ function AttachmentView({
                     <AttachmentViewImage
                         url={imageSource}
                         file={file}
-                        isAuthTokenRequired={isAuthTokenRequired}
+                        isAuthTokenRequired={type === CONST.ATTACHMENT_TYPE.SEARCH ? isImageAuthTokenRequired : isAuthTokenRequired}
                         loadComplete={loadComplete}
                         isImage={isFileImage}
                         onPress={onPress}
