@@ -26,6 +26,7 @@ import * as CardUtils from '@libs/CardUtils';
 import * as CurrencyUtils from '@libs/CurrencyUtils';
 import * as PolicyUtils from '@libs/PolicyUtils';
 import shouldRenderTransferOwnerButton from '@libs/shouldRenderTransferOwnerButton';
+import {convertPolicyEmployeesToApprovalWorkflows, INITIAL_APPROVAL_WORKFLOW} from '@libs/WorkflowUtils';
 import Navigation from '@navigation/Navigation';
 import type {SettingsNavigatorParamList} from '@navigation/types';
 import NotFoundPage from '@pages/ErrorPage/NotFoundPage';
@@ -35,11 +36,13 @@ import withPolicyAndFullscreenLoading from '@pages/workspace/withPolicyAndFullsc
 import variables from '@styles/variables';
 import * as Card from '@userActions/Card';
 import * as Member from '@userActions/Policy/Member';
+import * as Workflow from '@userActions/Workflow';
 import CONST from '@src/CONST';
 import ONYXKEYS from '@src/ONYXKEYS';
 import ROUTES from '@src/ROUTES';
 import type SCREENS from '@src/SCREENS';
 import type {PersonalDetails, PersonalDetailsList} from '@src/types/onyx';
+import {isEmptyObject} from '@src/types/utils/EmptyObject';
 import type {ListItemType} from './WorkspaceMemberDetailsRoleSelectionModal';
 import WorkspaceMemberDetailsRoleSelectionModal from './WorkspaceMemberDetailsRoleSelectionModal';
 
@@ -80,6 +83,17 @@ function WorkspaceMemberDetailsPage({personalDetails, policy, route}: WorkspaceM
     const ownerDetails = personalDetails?.[policy?.ownerAccountID ?? -1] ?? ({} as PersonalDetails);
     const policyOwnerDisplayName = ownerDetails.displayName ?? policy?.owner ?? '';
     const companyCards = CardUtils.getMemberCards(policy, allCardsList, accountID);
+    const policyApproverEmail = policy?.approver;
+
+    const {approvalWorkflows, availableMembers, usedApproverEmails} = useMemo(
+        () =>
+            convertPolicyEmployeesToApprovalWorkflows({
+                employees: policy?.employeeList ?? {},
+                defaultApprover: policyApproverEmail ?? policy?.owner ?? '',
+                personalDetails: personalDetails ?? {},
+            }),
+        [personalDetails, policy?.employeeList, policy?.owner, policyApproverEmail],
+    );
 
     // TODO: for now enabled for testing purposes. Change this to check for the actual multiple feeds when API is ready
     const hasMultipleFeeds = policy?.areCompanyCardsEnabled;
@@ -141,8 +155,61 @@ function WorkspaceMemberDetailsPage({personalDetails, policy, route}: WorkspaceM
     };
 
     const removeUser = useCallback(() => {
-        Member.removeMembers([accountID], policyID);
-        setIsRemoveMemberConfirmModalVisible(false);
+        const isUserApprover = Member.isApprover(policy, accountID);
+        const userEmail = personalDetails?.[accountID]?.login;
+
+        const matchingWorkflow = approvalWorkflows.find((workflow) => workflow.approvers.at(0)?.email === userEmail);
+
+        const defaultWorkflow = approvalWorkflows.at(0);
+        const ownerEmail = ownerDetails.login;
+
+        if (isUserApprover && matchingWorkflow) {
+            if (defaultWorkflow?.approvers.at(0) === ownerEmail) {
+                Workflow.removeApprovalWorkflow(policyID, matchingWorkflow);
+                Member.removeMembers([accountID], policyID);
+                setIsRemoveMemberConfirmModalVisible(false);
+            } else {
+                const userInWorkflow = matchingWorkflow.approvers.find((approver) => approver.email === userEmail);
+
+                const updatedWorkflow = {
+                    ...matchingWorkflow,
+                    approvers: [
+                        {
+                            email: ownerEmail || '',
+                            forwardsTo: userInWorkflow?.forwardsTo || '',
+                            avatar: ownerDetails.avatar,
+                            displayName: ownerDetails.displayName || '',
+                            isCircularReference: false,
+                        },
+                        ...matchingWorkflow.approvers.filter((approver) => approver.email !== userEmail),
+                    ],
+                };
+
+                Workflow.updateApprovalWorkflow(policyID, updatedWorkflow, [], []);
+                Member.removeMembers([accountID], policyID);
+                setIsRemoveMemberConfirmModalVisible(false);
+            }
+        } else if (isUserApprover && !matchingWorkflow) {
+            const doesUserHaveEmptyForwardsTo = (email: string) =>
+                approvalWorkflows.some((workflow) => workflow.approvers.some((approver) => approver.email === email && approver.forwardsTo === ''));
+
+            if (userEmail && doesUserHaveEmptyForwardsTo(userEmail)) {
+                Member.removeMembers([accountID], policyID);
+                setIsRemoveMemberConfirmModalVisible(false);
+            } else {
+                approvalWorkflows.forEach((workflow) => {
+                    const updatedWorkflow = {
+                        ...workflow,
+                        approvers: workflow.approvers.filter((approver) => approver.email !== userEmail),
+                    };
+
+                    Workflow.updateApprovalWorkflow(policyID, updatedWorkflow, [], []);
+                });
+
+                Member.removeMembers([accountID], policyID);
+                setIsRemoveMemberConfirmModalVisible(false);
+            }
+        }
     }, [accountID, policyID]);
 
     const navigateToProfile = useCallback(() => {
