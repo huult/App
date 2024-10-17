@@ -188,45 +188,42 @@ function WorkspaceMemberDetailsPage({personalDetails, policy, route}: WorkspaceM
                 setIsRemoveMemberConfirmModalVisible(false);
             }
         } else if (isUserApprover && !matchingWorkflow) {
-            const doesUserHaveEmptyForwardsTo = (email: string) =>
-                approvalWorkflows.some((workflow) => workflow.approvers.some((approver) => approver.email === email && approver.forwardsTo === ''));
+            approvalWorkflows.forEach((workflow) => {
+                const getApprovers = () => {
+                    const indexToRemoveFrom = workflow.approvers.findIndex((item) => item.email === userEmail);
+                    const newApprovers = workflow.approvers.slice(0, indexToRemoveFrom);
+                    const isExistingWorkspaceOwner = newApprovers.find((item) => item.email === ownerEmail);
 
-            if (userEmail && doesUserHaveEmptyForwardsTo(userEmail)) {
-                Member.removeMembers([accountID], policyID);
-                setIsRemoveMemberConfirmModalVisible(false);
-            } else {
-                approvalWorkflows.forEach((workflow) => {
-                    const getApprovers = () => {
-                        const indexToRemoveFrom = workflow.approvers.findIndex((item) => item.email === userEmail);
-                        const newApprovers = workflow.approvers.slice(0, indexToRemoveFrom);
-                        const isExistingWorkspaceOwner = newApprovers.find((item) => item.email === ownerEmail);
+                    if (isExistingWorkspaceOwner?.email) {
+                        return workflow.approvers.slice(0, indexToRemoveFrom);
+                    }
 
-                        if (isExistingWorkspaceOwner) {
-                            return workflow.approvers.slice(0, indexToRemoveFrom);
-                        }
+                    return [
+                        ...newApprovers.map((item) => {
+                            if (item.forwardsTo === userEmail) {
+                                return {...item, forwardsTo: ownerEmail};
+                            }
+                            return item;
+                        }),
+                        {
+                            email: ownerEmail ?? '',
+                            forwardsTo: '',
+                            avatar: ownerDetails?.avatar ?? '',
+                            displayName: ownerDetails?.displayName ?? '',
+                            isCircularReference: false,
+                        },
+                    ];
+                };
+                const updatedWorkflow = {
+                    ...workflow,
+                    approvers: getApprovers(),
+                };
 
-                        return [
-                            ...newApprovers,
-                            {
-                                email: ownerEmail ?? '',
-                                forwardsTo: '',
-                                avatar: ownerDetails?.avatar ?? '',
-                                displayName: ownerDetails?.displayName ?? '',
-                                isCircularReference: false,
-                            },
-                        ];
-                    };
-                    const updatedWorkflow = {
-                        ...workflow,
-                        approvers: getApprovers(),
-                    };
+                Workflow.updateApprovalWorkflow(policyID, updatedWorkflow, [], []);
+            });
 
-                    Workflow.updateApprovalWorkflow(policyID, updatedWorkflow, [], []);
-                });
-
-                Member.removeMembers([accountID], policyID);
-                setIsRemoveMemberConfirmModalVisible(false);
-            }
+            Member.removeMembers([accountID], policyID);
+            setIsRemoveMemberConfirmModalVisible(false);
         }
     }, [accountID, approvalWorkflows, ownerDetails.avatar, ownerDetails.displayName, ownerDetails.login, personalDetails, policy, policyID]);
 
