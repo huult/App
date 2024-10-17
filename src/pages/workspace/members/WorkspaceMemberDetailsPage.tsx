@@ -26,7 +26,7 @@ import * as CardUtils from '@libs/CardUtils';
 import * as CurrencyUtils from '@libs/CurrencyUtils';
 import * as PolicyUtils from '@libs/PolicyUtils';
 import shouldRenderTransferOwnerButton from '@libs/shouldRenderTransferOwnerButton';
-import {convertPolicyEmployeesToApprovalWorkflows, INITIAL_APPROVAL_WORKFLOW} from '@libs/WorkflowUtils';
+import {convertPolicyEmployeesToApprovalWorkflows} from '@libs/WorkflowUtils';
 import Navigation from '@navigation/Navigation';
 import type {SettingsNavigatorParamList} from '@navigation/types';
 import NotFoundPage from '@pages/ErrorPage/NotFoundPage';
@@ -42,7 +42,6 @@ import ONYXKEYS from '@src/ONYXKEYS';
 import ROUTES from '@src/ROUTES';
 import type SCREENS from '@src/SCREENS';
 import type {PersonalDetails, PersonalDetailsList} from '@src/types/onyx';
-import {isEmptyObject} from '@src/types/utils/EmptyObject';
 import type {ListItemType} from './WorkspaceMemberDetailsRoleSelectionModal';
 import WorkspaceMemberDetailsRoleSelectionModal from './WorkspaceMemberDetailsRoleSelectionModal';
 
@@ -85,7 +84,7 @@ function WorkspaceMemberDetailsPage({personalDetails, policy, route}: WorkspaceM
     const companyCards = CardUtils.getMemberCards(policy, allCardsList, accountID);
     const policyApproverEmail = policy?.approver;
 
-    const {approvalWorkflows, availableMembers, usedApproverEmails} = useMemo(
+    const {approvalWorkflows} = useMemo(
         () =>
             convertPolicyEmployeesToApprovalWorkflows({
                 employees: policy?.employeeList ?? {},
@@ -175,13 +174,12 @@ function WorkspaceMemberDetailsPage({personalDetails, policy, route}: WorkspaceM
                     ...matchingWorkflow,
                     approvers: [
                         {
-                            email: ownerEmail || '',
-                            forwardsTo: userInWorkflow?.forwardsTo || '',
+                            email: ownerEmail ?? '',
+                            forwardsTo: userInWorkflow?.forwardsTo ?? '',
                             avatar: ownerDetails.avatar,
-                            displayName: ownerDetails.displayName || '',
+                            displayName: ownerDetails.displayName ?? '',
                             isCircularReference: false,
                         },
-                        ...matchingWorkflow.approvers.filter((approver) => approver.email !== userEmail),
                     ],
                 };
 
@@ -198,9 +196,29 @@ function WorkspaceMemberDetailsPage({personalDetails, policy, route}: WorkspaceM
                 setIsRemoveMemberConfirmModalVisible(false);
             } else {
                 approvalWorkflows.forEach((workflow) => {
+                    const getApprovers = () => {
+                        const indexToRemoveFrom = workflow.approvers.findIndex((item) => item.email === userEmail);
+                        const newApprovers = workflow.approvers.slice(0, indexToRemoveFrom);
+                        const isExistingWorkspaceOwner = newApprovers.find((item) => item.email === ownerEmail);
+
+                        if (isExistingWorkspaceOwner) {
+                            return workflow.approvers.slice(0, indexToRemoveFrom);
+                        }
+
+                        return [
+                            ...newApprovers,
+                            {
+                                email: ownerEmail ?? '',
+                                forwardsTo: '',
+                                avatar: ownerDetails?.avatar ?? '',
+                                displayName: ownerDetails?.displayName ?? '',
+                                isCircularReference: false,
+                            },
+                        ];
+                    };
                     const updatedWorkflow = {
                         ...workflow,
-                        approvers: workflow.approvers.filter((approver) => approver.email !== userEmail),
+                        approvers: getApprovers(),
                     };
 
                     Workflow.updateApprovalWorkflow(policyID, updatedWorkflow, [], []);
@@ -210,7 +228,7 @@ function WorkspaceMemberDetailsPage({personalDetails, policy, route}: WorkspaceM
                 setIsRemoveMemberConfirmModalVisible(false);
             }
         }
-    }, [accountID, policyID]);
+    }, [accountID, approvalWorkflows, ownerDetails.avatar, ownerDetails.displayName, ownerDetails.login, personalDetails, policy, policyID]);
 
     const navigateToProfile = useCallback(() => {
         Navigation.navigate(ROUTES.PROFILE.getRoute(accountID, Navigation.getActiveRoute()));
