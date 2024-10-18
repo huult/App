@@ -78,6 +78,7 @@ function WorkspaceInvitePage({route, betas, invitedEmailsToAccountIDsDraft, poli
     useEffect(() => {
         return () => {
             Member.setWorkspaceInviteMembersDraft(route.params.policyID, {});
+            Policy.setWorkspaceInviteMessageDraft(route.params.policyID, '');
         };
         // eslint-disable-next-line react-compiler/react-compiler, react-hooks/exhaustive-deps
     }, [route.params.policyID]);

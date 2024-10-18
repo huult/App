@@ -2150,6 +2150,9 @@ function requestExpensifyCardLimitIncrease(settlementBankAccountID?: number) {
 function setWorkspaceInviteMessageDraft(policyID: string, message: string | null) {
     Onyx.set(`${ONYXKEYS.COLLECTION.WORKSPACE_INVITE_MESSAGE_DRAFT}${policyID}`, message);
 }
+function persistWorkspaceInviteMessage(policyID: string, message: string | null) {
+    Onyx.set(`${ONYXKEYS.COLLECTION.WORKSPACE_INVITE_MESSAGE_PERSIST}${policyID}`, message);
+}
 
 function clearErrors(policyID: string) {
     Onyx.merge(`${ONYXKEYS.COLLECTION.POLICY}${policyID}`, {errors: null});
@@ -4943,6 +4946,7 @@ export {
     createDraftInitialWorkspace,
     buildOptimisticRecentlyUsedCurrencies,
     setWorkspaceInviteMessageDraft,
+    persistWorkspaceInviteMessage,
     setWorkspaceApprovalMode,
     setWorkspaceAutoReportingFrequency,
     setWorkspaceAutoReportingMonthlyOffset,

@@ -53,6 +53,7 @@ function WorkspaceInviteMessagePage({policy, route, currentUserPersonalDetails}:
 
     const [invitedEmailsToAccountIDsDraft] = useOnyx(`${ONYXKEYS.COLLECTION.WORKSPACE_INVITE_MEMBERS_DRAFT}${route.params.policyID.toString()}`);
     const [workspaceInviteMessageDraft] = useOnyx(`${ONYXKEYS.COLLECTION.WORKSPACE_INVITE_MESSAGE_DRAFT}${route.params.policyID.toString()}`);
+    const [workspaceInviteMessagePersist] = useOnyx(`${ONYXKEYS.COLLECTION.WORKSPACE_INVITE_MESSAGE_PERSIST}${route.params.policyID.toString()}`);
     const [allPersonalDetails] = useOnyx(ONYXKEYS.PERSONAL_DETAILS_LIST);
 
     const welcomeNoteSubject = useMemo(
@@ -61,18 +62,32 @@ function WorkspaceInviteMessagePage({policy, route, currentUserPersonalDetails}:
     );
 
     const getDefaultWelcomeNote = useCallback(() => {
-        return (
-            // workspaceInviteMessageDraft can be an empty string
-            // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
-            workspaceInviteMessageDraft ||
-            // policy?.description can be an empty string
-            // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
-            Parser.htmlToMarkdown(policy?.description ?? '') ||
-            translate('workspace.common.welcomeNote', {
+        let welcomeNote = '';
+
+        // Check if workspaceInviteMessageDraft is not an empty string
+        if (workspaceInviteMessageDraft) {
+            welcomeNote = workspaceInviteMessageDraft;
+        }
+
+        // Check if workspaceInviteMessagePersist is not an empty string
+        else if (typeof workspaceInviteMessagePersist === 'string') {
+            welcomeNote = workspaceInviteMessagePersist;
+        }
+
+        // Check if policy?.description is not an empty string
+        else if (policy?.description) {
+            welcomeNote = Parser.htmlToMarkdown(policy.description);
+        }
+
+        // Fallback to the translated welcome note
+        else {
+            welcomeNote = translate('workspace.common.welcomeNote', {
                 workspaceName: policy?.name ?? '',
-            })
-        );
-    }, [workspaceInviteMessageDraft, policy, translate]);
+            });
+        }
+
+        return welcomeNote;
+    }, [workspaceInviteMessageDraft, workspaceInviteMessagePersist, policy, translate]);
 
     useEffect(() => {
         if (!isEmptyObject(invitedEmailsToAccountIDsDraft)) {
@@ -87,14 +102,18 @@ function WorkspaceInviteMessagePage({policy, route, currentUserPersonalDetails}:
     }, []);
 
     useEffect(() => {
-        if (isEmptyObject(invitedEmailsToAccountIDsDraft) || !welcomeNote) {
+        if ((typeof workspaceInviteMessagePersist !== 'string' && isEmptyObject(invitedEmailsToAccountIDsDraft)) || !welcomeNote) {
             return;
         }
         setWelcomeNote(getDefaultWelcomeNote());
-    }, [getDefaultWelcomeNote, invitedEmailsToAccountIDsDraft, welcomeNote]);
+    }, [getDefaultWelcomeNote, invitedEmailsToAccountIDsDraft, welcomeNote, workspaceInviteMessagePersist]);
 
     const debouncedSaveDraft = lodashDebounce((newDraft: string | null) => {
         Policy.setWorkspaceInviteMessageDraft(route.params.policyID, newDraft);
+    });
+
+    const debouncedPersistWorkspaceInviteMessage = lodashDebounce((newDraft: string) => {
+        Policy.persistWorkspaceInviteMessage(route.params.policyID, newDraft);
     });
 
     const sendInvitation = () => {
@@ -103,6 +122,7 @@ function WorkspaceInviteMessagePage({policy, route, currentUserPersonalDetails}:
         // Please see https://github.com/Expensify/App/blob/main/README.md#Security for more details
         Member.addMembersToWorkspace(invitedEmailsToAccountIDsDraft ?? {}, `${welcomeNoteSubject}\n\n${welcomeNote}`, route.params.policyID, policyMemberAccountIDs);
         debouncedSaveDraft(null);
+        debouncedPersistWorkspaceInviteMessage(welcomeNote ?? '');
         Navigation.dismissModal();
     };
 
