@@ -643,7 +643,9 @@ function AttachmentModal({
                     title={'This image has an external link. Do you want to visit it?'}
                     onConfirm={() => {
                         setShowConfirm(false);
-                        Linking.openURL(imageWithExternalLink ?? imageWithExternalLinkURL ?? '');
+                        setImageWithExternalLinkURL(undefined);
+
+                        Linking.openURL(imageWithExternalLink || imageWithExternalLinkURL || '');
                     }}
                     onCancel={() => {
                         setShowConfirm(false);
