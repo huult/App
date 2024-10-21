@@ -76,6 +76,8 @@ function extractAttachments(
                     fileName = `${fileInfo.fileName || 'image'}.jpg`;
                 }
 
+                console.log('****** currentAnchorHref ******', currentAnchorHref);
+
                 // Create the attachment
                 attachments.unshift({
                     reportActionID: attribs['data-id'],

@@ -217,7 +217,7 @@ function AttachmentModal({
             setIsAuthTokenRequiredState(attachment.isAuthTokenRequired ?? false);
             onCarouselAttachmentChange(attachment);
 
-            setImageWithExternalLinkURL(attachment.imageWithExternalLink);
+            setImageWithExternalLinkURL(attachment?.imageWithExternalLink);
         },
         [onCarouselAttachmentChange],
     );
@@ -638,7 +638,7 @@ function AttachmentModal({
                     }}
                 />
             )}
-            {(!!imageWithExternalLink || imageWithExternalLinkURL) && (
+            {(!!imageWithExternalLink || !!imageWithExternalLinkURL) && (
                 <ConfirmModal
                     title={'This image has an external link. Do you want to visit it?'}
                     onConfirm={() => {
@@ -647,10 +647,12 @@ function AttachmentModal({
                     }}
                     onCancel={() => {
                         setShowConfirm(false);
+                        setImageWithExternalLinkURL(undefined);
                     }}
-                    isVisible={showConfirm}
+                    isVisible={showConfirm || !!imageWithExternalLinkURL}
                     onModalHide={() => {
                         setShowConfirm(false);
+                        setImageWithExternalLinkURL(undefined);
                     }}
                 />
             )}
