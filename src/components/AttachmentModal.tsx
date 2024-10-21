@@ -1,6 +1,6 @@
 import {Str} from 'expensify-common';
 import React, {memo, useCallback, useEffect, useMemo, useRef, useState} from 'react';
-import {Animated, Keyboard, View} from 'react-native';
+import {Animated, Keyboard, Linking, View} from 'react-native';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
 import {useOnyx} from 'react-native-onyx';
 import type {OnyxEntry} from 'react-native-onyx';
@@ -134,6 +134,8 @@ type AttachmentModalProps = {
     canEditReceipt?: boolean;
 
     shouldDisableSendButton?: boolean;
+
+    imageWithExternalLink?: string;
 };
 
 function AttachmentModal({
@@ -161,6 +163,7 @@ function AttachmentModal({
     type = undefined,
     accountID = undefined,
     shouldDisableSendButton = false,
+    imageWithExternalLink = '',
 }: AttachmentModalProps) {
     const styles = useThemeStyles();
     const StyleUtils = useStyleUtils();
@@ -185,6 +188,8 @@ function AttachmentModal({
     const parentReportAction = ReportActionsUtils.getReportAction(report?.parentReportID ?? '-1', report?.parentReportActionID ?? '-1');
     const transactionID = ReportActionsUtils.isMoneyRequestAction(parentReportAction) ? ReportActionsUtils.getOriginalMessage(parentReportAction)?.IOUTransactionID ?? '-1' : '-1';
     const [transaction] = useOnyx(`${ONYXKEYS.COLLECTION.TRANSACTION}${transactionID}`);
+    const [showConfirm, setShowConfirm] = useState(!!imageWithExternalLink);
+    const [imageWithExternalLinkURL, setImageWithExternalLinkURL] = useState();
 
     const [file, setFile] = useState<FileObject | undefined>(
         originalFileName
@@ -211,6 +216,8 @@ function AttachmentModal({
             setFile(attachment.file);
             setIsAuthTokenRequiredState(attachment.isAuthTokenRequired ?? false);
             onCarouselAttachmentChange(attachment);
+
+            setImageWithExternalLinkURL(attachment.imageWithExternalLink);
         },
         [onCarouselAttachmentChange],
     );
@@ -628,6 +635,22 @@ function AttachmentModal({
                         }
                         isPDFLoadError.current = false;
                         onModalHide?.();
+                    }}
+                />
+            )}
+            {(!!imageWithExternalLink || imageWithExternalLinkURL) && (
+                <ConfirmModal
+                    title={'This image has an external link. Do you want to visit it?'}
+                    onConfirm={() => {
+                        setShowConfirm(false);
+                        Linking.openURL(imageWithExternalLink ?? imageWithExternalLinkURL ?? '');
+                    }}
+                    onCancel={() => {
+                        setShowConfirm(false);
+                    }}
+                    isVisible={showConfirm}
+                    onModalHide={() => {
+                        setShowConfirm(false);
                     }}
                 />
             )}

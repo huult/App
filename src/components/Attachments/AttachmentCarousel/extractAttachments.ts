@@ -24,12 +24,19 @@ function extractAttachments(
     const targetNote = privateNotes?.[Number(accountID)]?.note ?? '';
     const attachments: Attachment[] = [];
 
-    // We handle duplicate image sources by considering the first instance as original. Selecting any duplicate
-    // and navigating back (<) shows the image preceding the first instance, not the selected duplicate's position.
+    // We handle duplicate image sources by considering the first instance as original.
     const uniqueSources = new Set();
+
+    // Track the href for images within the HtmlParser context
+    let currentAnchorHref = '';
 
     const htmlParser = new HtmlParser({
         onopentag: (name, attribs) => {
+            if (name === 'a' && attribs.href) {
+                // Store the href of the current anchor
+                currentAnchorHref = attribs.href;
+            }
+
             if (name === 'video') {
                 const source = tryResolveUrlFromApiRoot(attribs[CONST.ATTACHMENT_SOURCE_ATTRIBUTE]);
                 if (uniqueSources.has(source)) {
@@ -63,16 +70,13 @@ function extractAttachments(
                 const width = (attribs['data-expensify-width'] && parseInt(attribs['data-expensify-width'], 10)) || undefined;
                 const height = (attribs['data-expensify-height'] && parseInt(attribs['data-expensify-height'], 10)) || undefined;
 
-                // Public image URLs might lack a file extension in the source URL, without an extension our
-                // AttachmentView fails to recognize them as images and renders fallback content instead.
-                // We apply this small hack to add an image extension and ensure AttachmentView renders the image.
+                // Handle missing file extension
                 const fileInfo = FileUtils.splitExtensionFromFileName(fileName);
                 if (!fileInfo.fileExtension) {
                     fileName = `${fileInfo.fileName || 'image'}.jpg`;
                 }
 
-                // By iterating actions in chronological order and prepending each attachment
-                // we ensure correct order of attachments even across actions with multiple attachments.
+                // Create the attachment
                 attachments.unshift({
                     reportActionID: attribs['data-id'],
                     source,
@@ -81,7 +85,14 @@ function extractAttachments(
                     file: {name: fileName, width, height},
                     isReceipt: false,
                     hasBeenFlagged: attribs['data-flagged'] === 'true',
+                    imageWithExternalLink: currentAnchorHref, // Set the external link here
                 });
+            }
+        },
+
+        onclosetag: (name) => {
+            if (name === 'a') {
+                currentAnchorHref = '';
             }
         },
     });
@@ -89,7 +100,6 @@ function extractAttachments(
     if (type === CONST.ATTACHMENT_TYPE.NOTE) {
         htmlParser.write(targetNote);
         htmlParser.end();
-
         return attachments.reverse();
     }
 
@@ -102,6 +112,7 @@ function extractAttachments(
         const decision = ReportActionsUtils.getReportActionMessage(action)?.moderationDecision?.decision;
         const hasBeenFlagged = decision === CONST.MODERATION.MODERATOR_DECISION_PENDING_HIDE || decision === CONST.MODERATION.MODERATOR_DECISION_HIDDEN;
         const html = ReportActionsUtils.getReportActionHtml(action).replace('/>', `data-flagged="${hasBeenFlagged}" data-id="${action.reportActionID}"/>`);
+
         htmlParser.write(html);
     });
     htmlParser.end();
