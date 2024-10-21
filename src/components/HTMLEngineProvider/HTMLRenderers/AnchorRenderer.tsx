@@ -30,6 +30,7 @@ function AnchorRenderer({tnode, style, key}: AnchorRendererProps) {
     const internalNewExpensifyPath = Link.getInternalNewExpensifyPath(attrHref);
     const internalExpensifyPath = Link.getInternalExpensifyPath(attrHref);
     const isVideo = attrHref && Str.isVideo(attrHref);
+    const hasImageInLink = tnode.tagName === 'a' && tnode.children.some((child) => child.tagName === 'img');
 
     if (!HTMLEngineUtils.isChildOfComment(tnode)) {
         // This is not a comment from a chat, the AnchorForCommentsOnly uses a Pressable to create a context menu on right click.
@@ -70,6 +71,7 @@ function AnchorRenderer({tnode, style, key}: AnchorRendererProps) {
             rel={htmlAttribs.rel || 'noopener noreferrer'}
             style={[style, parentStyle, textDecorationLineStyle, styles.textUnderlinePositionUnder, styles.textDecorationSkipInkNone]}
             key={key}
+            hasImageInLink={hasImageInLink}
             // Only pass the press handler for internal links. For public links or whitelisted internal links fallback to default link handling
             onPress={internalNewExpensifyPath || internalExpensifyPath ? () => Link.openLink(attrHref, environmentURL, isAttachment) : undefined}
         >

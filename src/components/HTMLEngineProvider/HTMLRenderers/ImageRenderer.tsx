@@ -90,7 +90,8 @@ function ImageRenderer({tnode}: ImageRendererProps) {
                                     return;
                                 }
 
-                                const route = ROUTES.ATTACHMENTS?.getRoute(reportID ?? '-1', type, source, accountID, isAttachmentOrReceipt);
+                                const linkToOpen = tnode.parent?.attributes?.href;
+                                const route = ROUTES.ATTACHMENTS?.getRoute(reportID ?? '-1', type, source, accountID, isAttachmentOrReceipt, linkToOpen);
                                 Navigation.navigate(route);
                             }}
                             onLongPress={(event) => {
