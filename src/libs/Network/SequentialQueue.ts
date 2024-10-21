@@ -1,5 +1,6 @@
 import Onyx from 'react-native-onyx';
 import * as ActiveClientManager from '@libs/ActiveClientManager';
+import {WRITE_COMMANDS} from '@libs/API/types';
 import Log from '@libs/Log';
 import * as Request from '@libs/Request';
 import * as RequestThrottle from '@libs/RequestThrottle';
@@ -217,13 +218,22 @@ function push(newRequest: OnyxRequest) {
         delete newRequest.checkAndFixConflictingRequest;
 
         if (conflictAction.type === 'push') {
+            if (newRequest.command === WRITE_COMMANDS.LOG_OUT) {
+                QueuedOnyxUpdates.clearQueueOnyxUpdates();
+            }
             PersistedRequests.save(newRequest);
         } else if (conflictAction.type === 'replace') {
+            if (newRequest.command === WRITE_COMMANDS.LOG_OUT) {
+                QueuedOnyxUpdates.clearQueueOnyxUpdates();
+            }
             PersistedRequests.update(conflictAction.index, newRequest);
         } else {
             Log.info(`[SequentialQueue] No action performed to command ${newRequest.command} and it will be ignored.`);
         }
     } else {
+        if (newRequest.command === WRITE_COMMANDS.LOG_OUT) {
+            QueuedOnyxUpdates.clearQueueOnyxUpdates();
+        }
         // Add request to Persisted Requests so that it can be retried if it fails
         PersistedRequests.save(newRequest);
     }

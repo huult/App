@@ -19,4 +19,8 @@ function flushQueue(): Promise<void> {
     });
 }
 
-export {queueOnyxUpdates, flushQueue};
+const clearQueueOnyxUpdates = () => {
+    queuedOnyxUpdates = [];
+};
+
+export {queueOnyxUpdates, flushQueue, clearQueueOnyxUpdates};
