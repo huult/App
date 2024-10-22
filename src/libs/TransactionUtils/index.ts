@@ -257,6 +257,7 @@ function getUpdatedTransaction(transaction: Transaction, transactionChanges: Tra
     if (Object.hasOwn(transactionChanges, 'currency')) {
         updatedTransaction.modifiedCurrency = transactionChanges.currency;
         shouldStopSmartscan = true;
+        updatedTransaction.currency = transactionChanges.currency ?? '';
     }
 
     if (Object.hasOwn(transactionChanges, 'merchant')) {

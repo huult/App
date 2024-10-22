@@ -2636,7 +2636,7 @@ function getUpdateMoneyRequestParams(
         {
             onyxMethod: Onyx.METHOD.MERGE,
             key: `${ONYXKEYS.COLLECTION.REPORT}${iouReport?.reportID}`,
-            value: updatedMoneyRequestReport,
+            value: {...updatedMoneyRequestReport, currency: transactionChanges?.currency},
         },
         {
             onyxMethod: Onyx.METHOD.MERGE,
@@ -2667,6 +2667,7 @@ function getUpdateMoneyRequestParams(
         key: `${ONYXKEYS.COLLECTION.REPORT}${transactionThreadReportID}`,
         value: {
             lastActorAccountID: updatedReportAction.actorAccountID,
+            currency: transactionChanges?.currency,
         },
     });
 
@@ -2738,16 +2739,23 @@ function getUpdateMoneyRequestParams(
     const clearedPendingFields = Object.fromEntries(Object.keys(updatedTransaction?.pendingFields ?? transactionChanges).map((key) => [key, null]));
 
     // Clear out the error fields and loading states on success
-    successData.push({
-        onyxMethod: Onyx.METHOD.MERGE,
-        key: `${ONYXKEYS.COLLECTION.TRANSACTION}${transactionID}`,
-        value: {
-            pendingFields: clearedPendingFields,
-            isLoading: false,
-            errorFields: null,
-            routes: null,
+    successData.push(
+        {
+            onyxMethod: Onyx.METHOD.MERGE,
+            key: `${ONYXKEYS.COLLECTION.TRANSACTION}${transactionID}`,
+            value: {
+                pendingFields: clearedPendingFields,
+                isLoading: false,
+                errorFields: null,
+                routes: null,
+            },
         },
-    });
+        {
+            onyxMethod: Onyx.METHOD.MERGE,
+            key: `${ONYXKEYS.COLLECTION.REPORT}${iouReport?.reportID}`,
+            value: {...updatedMoneyRequestReport, currency: transactionChanges?.currency},
+        },
+    );
 
     // Clear out loading states, pending fields, and add the error fields
     failureData.push({
