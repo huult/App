@@ -23,11 +23,16 @@ function beforeRemoveReportOpenedFromSearchRHP(event: EventArg<'beforeRemove', t
     }
 
     const shouldPopHome =
-        state.routes?.length >= 3 &&
-        state.routes.at(-1)?.name === SCREENS.REPORT &&
-        state.routes.at(-2)?.name === NAVIGATORS.RIGHT_MODAL_NAVIGATOR &&
-        state.routes.at(-3)?.name === SCREENS.SEARCH.CENTRAL_PANE &&
-        getTopmostBottomTabRoute(state)?.name === SCREENS.HOME;
+        (state.routes?.length >= 3 &&
+            state.routes.at(-1)?.name === SCREENS.REPORT &&
+            state.routes.at(-2)?.name === NAVIGATORS.RIGHT_MODAL_NAVIGATOR &&
+            state.routes.at(-3)?.name === SCREENS.SEARCH.CENTRAL_PANE &&
+            getTopmostBottomTabRoute(state)?.name === SCREENS.HOME) ||
+        (state.routes?.length >= 3 &&
+            state.routes.at(-1)?.name === SCREENS.REPORT &&
+            state.routes.at(-2)?.name === SCREENS.SETTINGS.WORKSPACES &&
+            state.routes.at(-3)?.name === NAVIGATORS.BOTTOM_TAB_NAVIGATOR &&
+            getTopmostBottomTabRoute(state)?.name === SCREENS.HOME);
 
     if (!shouldPopHome) {
         return;
