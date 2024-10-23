@@ -18,6 +18,7 @@ function ReportAttachments({route}: ReportAttachmentsProps) {
     const type = route.params.type;
     const accountID = route.params.accountID;
     const isAuthTokenRequired = route.params.isAuthTokenRequired;
+    const fileName = route.params.fileName;
     const [report] = useOnyx(`${ONYXKEYS.COLLECTION.REPORT}${reportID || -1}`);
     const [isLoadingApp] = useOnyx(ONYXKEYS.IS_LOADING_APP);
 
@@ -48,6 +49,7 @@ function ReportAttachments({route}: ReportAttachmentsProps) {
             onCarouselAttachmentChange={onCarouselAttachmentChange}
             shouldShowNotFoundPage={!isLoadingApp && type !== CONST.ATTACHMENT_TYPE.SEARCH && !report?.reportID}
             isAuthTokenRequired={!!isAuthTokenRequired}
+            originalFileName={fileName ?? ''}
         />
     );
 }

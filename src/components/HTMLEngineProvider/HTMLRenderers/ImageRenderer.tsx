@@ -58,6 +58,12 @@ function ImageRenderer({tnode}: ImageRendererProps) {
     const previewSource = tryResolveUrlFromApiRoot(htmlAttribs.src);
     const source = tryResolveUrlFromApiRoot(isAttachmentOrReceipt ? attachmentSourceAttribute : htmlAttribs.src);
 
+    let fileName = htmlAttribs[CONST.ATTACHMENT_ORIGINAL_FILENAME_ATTRIBUTE] || FileUtils.getFileName(`${isAttachmentOrReceipt ? attachmentSourceAttribute : htmlAttribs.src}`);
+    const fileInfo = FileUtils.splitExtensionFromFileName(fileName);
+    if (!fileInfo.fileExtension) {
+        fileName = `${fileInfo.fileName || 'image'}.jpg`;
+    }
+
     const alt = htmlAttribs.alt;
     const imageWidth = (htmlAttribs['data-expensify-width'] && parseInt(htmlAttribs['data-expensify-width'], 10)) || undefined;
     const imageHeight = (htmlAttribs['data-expensify-height'] && parseInt(htmlAttribs['data-expensify-height'], 10)) || undefined;
@@ -98,7 +104,7 @@ function ImageRenderer({tnode}: ImageRendererProps) {
                                     return;
                                 }
 
-                                const route = ROUTES.ATTACHMENTS?.getRoute(reportID ?? '-1', type, source, accountID, isAttachmentOrReceipt);
+                                const route = ROUTES.ATTACHMENTS?.getRoute(reportID ?? '-1', type, source, accountID, isAttachmentOrReceipt, fileName);
                                 Navigation.navigate(route);
                             }}
                             onLongPress={(event) => {
