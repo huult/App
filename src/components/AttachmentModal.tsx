@@ -1,6 +1,7 @@
+import {Link} from '@react-navigation/native';
 import {Str} from 'expensify-common';
 import React, {memo, useCallback, useEffect, useMemo, useRef, useState} from 'react';
-import {Animated, Keyboard, Linking, View} from 'react-native';
+import {Animated, InteractionManager, Keyboard, Linking, View} from 'react-native';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
 import {useOnyx} from 'react-native-onyx';
 import type {OnyxEntry} from 'react-native-onyx';
@@ -39,10 +40,13 @@ import ConfirmModal from './ConfirmModal';
 import FullScreenLoadingIndicator from './FullscreenLoadingIndicator';
 import HeaderGap from './HeaderGap';
 import HeaderWithBackButton from './HeaderWithBackButton';
+import Icon from './Icon';
 import * as Expensicons from './Icon/Expensicons';
 import * as Illustrations from './Icon/Illustrations';
 import Modal from './Modal';
+import PressableWithoutFeedback from './Pressable/PressableWithoutFeedback';
 import SafeAreaConsumer from './SafeAreaConsumer';
+import Tooltip from './Tooltip';
 
 /**
  * Modal render prop component that exposes modal launching triggers that can be used
@@ -188,8 +192,8 @@ function AttachmentModal({
     const parentReportAction = ReportActionsUtils.getReportAction(report?.parentReportID ?? '-1', report?.parentReportActionID ?? '-1');
     const transactionID = ReportActionsUtils.isMoneyRequestAction(parentReportAction) ? ReportActionsUtils.getOriginalMessage(parentReportAction)?.IOUTransactionID ?? '-1' : '-1';
     const [transaction] = useOnyx(`${ONYXKEYS.COLLECTION.TRANSACTION}${transactionID}`);
-    const [showConfirm, setShowConfirm] = useState(!!imageWithExternalLink);
-    const [imageWithExternalLinkURL, setImageWithExternalLinkURL] = useState();
+    const [isConfirmExternalLinkVisible, setIsConfirmExternalLinkVisible] = useState(false);
+    const [externalLinkUrlInCarouselImage, setExternalLinkUrlInCarouselImage] = useState('');
 
     const [file, setFile] = useState<FileObject | undefined>(
         originalFileName
@@ -202,6 +206,16 @@ function AttachmentModal({
     const {isOffline} = useNetwork();
 
     const isLocalSource = typeof sourceState === 'string' && /^file:|^blob:/.test(sourceState);
+
+    useEffect(() => {
+        if (!isAuthTokenRequired && (!!imageWithExternalLink || !!source)) {
+            InteractionManager.runAfterInteractions(() => {
+                requestAnimationFrame(() => {
+                    setIsConfirmExternalLinkVisible(true);
+                });
+            });
+        }
+    }, []);
 
     useEffect(() => {
         setFile(originalFileName ? {name: originalFileName} : undefined);
@@ -217,7 +231,10 @@ function AttachmentModal({
             setIsAuthTokenRequiredState(attachment.isAuthTokenRequired ?? false);
             onCarouselAttachmentChange(attachment);
 
-            setImageWithExternalLinkURL(attachment?.imageWithExternalLink);
+            if (attachment.imageWithExternalLink || (!attachment.isAuthTokenRequired && attachment.source)) {
+                setIsConfirmExternalLinkVisible(true);
+                setExternalLinkUrlInCarouselImage(attachment.imageWithExternalLink || attachment.source);
+            }
         },
         [onCarouselAttachmentChange],
     );
@@ -535,6 +552,7 @@ function AttachmentModal({
                         threeDotsMenuItems={threeDotsMenuItems}
                         shouldOverlayDots
                     />
+
                     <View style={styles.imageModalImageCenterContainer}>
                         {isLoading && <FullScreenLoadingIndicator />}
                         {shouldShowNotFoundPage && !isLoading && (
@@ -618,6 +636,23 @@ function AttachmentModal({
                             danger
                         />
                     )}
+                    {((!isAuthTokenRequired && (imageWithExternalLink || source)) || externalLinkUrlInCarouselImage) && (
+                        <ConfirmModal
+                            title={'This image has an external link. Do you want to visit it?'}
+                            onConfirm={() => {
+                                setIsConfirmExternalLinkVisible(false);
+                                Linking.openURL(imageWithExternalLink || source || externalLinkUrlInCarouselImage || '');
+                            }}
+                            onCancel={() => {
+                                setIsConfirmExternalLinkVisible(false);
+                            }}
+                            prompt={'This image has an external link. Do you want to visit it?'}
+                            isVisible={isConfirmExternalLinkVisible}
+                            onModalHide={() => {
+                                setIsConfirmExternalLinkVisible(false);
+                            }}
+                        />
+                    )}
                 </GestureHandlerRootView>
             </Modal>
             {!isReceiptAttachment && (
@@ -635,26 +670,6 @@ function AttachmentModal({
                         }
                         isPDFLoadError.current = false;
                         onModalHide?.();
-                    }}
-                />
-            )}
-            {(!!imageWithExternalLink || !!imageWithExternalLinkURL) && (
-                <ConfirmModal
-                    title={'This image has an external link. Do you want to visit it?'}
-                    onConfirm={() => {
-                        setShowConfirm(false);
-                        setImageWithExternalLinkURL(undefined);
-
-                        Linking.openURL(imageWithExternalLink || imageWithExternalLinkURL || '');
-                    }}
-                    onCancel={() => {
-                        setShowConfirm(false);
-                        setImageWithExternalLinkURL(undefined);
-                    }}
-                    isVisible={showConfirm || !!imageWithExternalLinkURL}
-                    onModalHide={() => {
-                        setShowConfirm(false);
-                        setImageWithExternalLinkURL(undefined);
                     }}
                 />
             )}
