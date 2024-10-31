@@ -621,6 +621,13 @@ function renamePolicyCategory(policyID: string, policyCategory: {oldName: string
                     },
                 },
             },
+            {
+                onyxMethod: Onyx.METHOD.MERGE,
+                key: `${ONYXKEYS.COLLECTION.POLICY}${policyID}`,
+                value: {
+                    mccGroup: CategoryUtils.updateCategoryInMccGroup(clonedMccGroup, policyCategory.oldName, policyCategory.newName, true),
+                },
+            },
         ],
         failureData: [
             {

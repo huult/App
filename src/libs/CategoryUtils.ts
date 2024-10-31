@@ -68,7 +68,7 @@ function getCategoryDefaultTaxRate(expenseRules: ExpenseRule[], categoryName: st
     return categoryDefaultTaxRate;
 }
 
-function updateCategoryInMccGroup(mccGroups: Record<string, MccGroup>, oldCategoryName: string, newCategoryName: string) {
+function updateCategoryInMccGroup(mccGroups: Record<string, MccGroup>, oldCategoryName: string, newCategoryName: string, isSuccess?: boolean) {
     if (oldCategoryName === newCategoryName) {
         return mccGroups;
     }
@@ -76,7 +76,7 @@ function updateCategoryInMccGroup(mccGroups: Record<string, MccGroup>, oldCatego
     const updatedGroups: Record<string, MccGroup> = {};
 
     for (const [key, group] of Object.entries(mccGroups || {})) {
-        updatedGroups[key] = group.category === oldCategoryName ? {...group, category: newCategoryName, pendingAction: CONST.RED_BRICK_ROAD_PENDING_ACTION.UPDATE} : group;
+        updatedGroups[key] = group.category === oldCategoryName ? {...group, category: newCategoryName, pendingAction: isSuccess ? null : CONST.RED_BRICK_ROAD_PENDING_ACTION.UPDATE} : group;
     }
 
     return updatedGroups;
