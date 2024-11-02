@@ -130,6 +130,7 @@ function HeaderWithBackButton({
         title,
         titleColor,
         translate,
+        urlExternal,
     ]);
 
     return (

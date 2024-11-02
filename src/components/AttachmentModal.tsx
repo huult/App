@@ -192,7 +192,6 @@ function AttachmentModal({
     const parentReportAction = ReportActionsUtils.getReportAction(report?.parentReportID ?? '-1', report?.parentReportActionID ?? '-1');
     const transactionID = ReportActionsUtils.isMoneyRequestAction(parentReportAction) ? ReportActionsUtils.getOriginalMessage(parentReportAction)?.IOUTransactionID ?? '-1' : '-1';
     const [transaction] = useOnyx(`${ONYXKEYS.COLLECTION.TRANSACTION}${transactionID}`);
-    const [isConfirmExternalLinkVisible, setIsConfirmExternalLinkVisible] = useState(false);
     const [externalLinkUrlInCarouselImage, setExternalLinkUrlInCarouselImage] = useState('');
 
     const [file, setFile] = useState<FileObject | undefined>(
@@ -208,16 +207,6 @@ function AttachmentModal({
     const isLocalSource = typeof sourceState === 'string' && /^file:|^blob:/.test(sourceState);
 
     useEffect(() => {
-        if (!isAuthTokenRequired && (!!imageWithExternalLink || !!source)) {
-            InteractionManager.runAfterInteractions(() => {
-                requestAnimationFrame(() => {
-                    setIsConfirmExternalLinkVisible(true);
-                });
-            });
-        }
-    }, []);
-
-    useEffect(() => {
         setFile(originalFileName ? {name: originalFileName} : undefined);
     }, [originalFileName]);
 
@@ -231,10 +220,7 @@ function AttachmentModal({
             setIsAuthTokenRequiredState(attachment.isAuthTokenRequired ?? false);
             onCarouselAttachmentChange(attachment);
 
-            if (attachment.imageWithExternalLink || (!attachment.isAuthTokenRequired && attachment.source)) {
-                setIsConfirmExternalLinkVisible(true);
-                setExternalLinkUrlInCarouselImage(attachment.imageWithExternalLink || attachment.source);
-            }
+            setExternalLinkUrlInCarouselImage(attachment.imageWithExternalLink);
         },
         [onCarouselAttachmentChange],
     );
@@ -506,6 +492,13 @@ function AttachmentModal({
 
     const submitRef = useRef<View | HTMLElement>(null);
 
+    const getUrlExternal = () => {
+        if (shouldShowNotFoundPage) return '';
+        if (!isEmptyObject(report) && !isReceiptAttachment) return externalLinkUrlInCarouselImage;
+        if (!isAuthTokenRequired && imageWithExternalLink) return imageWithExternalLink;
+        return '';
+    };
+
     return (
         <>
             <Modal
@@ -551,11 +544,7 @@ function AttachmentModal({
                         threeDotsAnchorPosition={styles.threeDotsPopoverOffsetAttachmentModal(windowWidth)}
                         threeDotsMenuItems={threeDotsMenuItems}
                         shouldOverlayDots
-                        urlExternal={
-                            (!isAuthTokenRequired && (imageWithExternalLink || source)) || externalLinkUrlInCarouselImage
-                                ? imageWithExternalLink || source || externalLinkUrlInCarouselImage || ''
-                                : ''
-                        }
+                        urlExternal={getUrlExternal()}
                     />
 
                     <View style={styles.imageModalImageCenterContainer}>

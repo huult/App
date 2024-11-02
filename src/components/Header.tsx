@@ -28,6 +28,7 @@ type HeaderProps = {
 
 function Header({title = '', subtitle = '', textStyles = [], containerStyles = [], shouldShowEnvironmentBadge = false, urlExternal}: HeaderProps) {
     const styles = useThemeStyles();
+
     const renderedSubtitle = useMemo(
         () => (
             <>
