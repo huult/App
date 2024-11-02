@@ -1,10 +1,11 @@
 import type {ReactNode} from 'react';
 import React, {useMemo} from 'react';
 import type {StyleProp, TextStyle, ViewStyle} from 'react-native';
-import {View} from 'react-native';
+import {Linking, View} from 'react-native';
 import useThemeStyles from '@hooks/useThemeStyles';
 import EnvironmentBadge from './EnvironmentBadge';
 import Text from './Text';
+import TextLink from './TextLink';
 
 type HeaderProps = {
     /** Title of the Header */
@@ -21,9 +22,11 @@ type HeaderProps = {
 
     /** Additional header container styles */
     containerStyles?: StyleProp<ViewStyle>;
+
+    urlExternal?: any;
 };
 
-function Header({title = '', subtitle = '', textStyles = [], containerStyles = [], shouldShowEnvironmentBadge = false}: HeaderProps) {
+function Header({title = '', subtitle = '', textStyles = [], containerStyles = [], shouldShowEnvironmentBadge = false, urlExternal}: HeaderProps) {
     const styles = useThemeStyles();
     const renderedSubtitle = useMemo(
         () => (
@@ -57,6 +60,18 @@ function Header({title = '', subtitle = '', textStyles = [], containerStyles = [
                       )
                     : title}
                 {renderedSubtitle}
+                {!!urlExternal && (
+                    <Text numberOfLines={1}>
+                        <TextLink
+                            onPress={() => {
+                                Linking.openURL(urlExternal);
+                            }}
+                        >
+                            {urlExternal}
+                        </TextLink>
+                        {urlExternal}
+                    </Text>
+                )}
             </View>
             {shouldShowEnvironmentBadge && <EnvironmentBadge />}
         </View>

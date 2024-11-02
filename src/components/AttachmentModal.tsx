@@ -551,6 +551,11 @@ function AttachmentModal({
                         threeDotsAnchorPosition={styles.threeDotsPopoverOffsetAttachmentModal(windowWidth)}
                         threeDotsMenuItems={threeDotsMenuItems}
                         shouldOverlayDots
+                        urlExternal={
+                            (!isAuthTokenRequired && (imageWithExternalLink || source)) || externalLinkUrlInCarouselImage
+                                ? imageWithExternalLink || source || externalLinkUrlInCarouselImage || ''
+                                : ''
+                        }
                     />
 
                     <View style={styles.imageModalImageCenterContainer}>
@@ -634,23 +639,6 @@ function AttachmentModal({
                             confirmText={translate('common.delete')}
                             cancelText={translate('common.cancel')}
                             danger
-                        />
-                    )}
-                    {((!isAuthTokenRequired && (imageWithExternalLink || source)) || externalLinkUrlInCarouselImage) && (
-                        <ConfirmModal
-                            title={'This image has an external link. Do you want to visit it?'}
-                            onConfirm={() => {
-                                setIsConfirmExternalLinkVisible(false);
-                                Linking.openURL(imageWithExternalLink || source || externalLinkUrlInCarouselImage || '');
-                            }}
-                            onCancel={() => {
-                                setIsConfirmExternalLinkVisible(false);
-                            }}
-                            prompt={'This image has an external link. Do you want to visit it?'}
-                            isVisible={isConfirmExternalLinkVisible}
-                            onModalHide={() => {
-                                setIsConfirmExternalLinkVisible(false);
-                            }}
                         />
                     )}
                 </GestureHandlerRootView>
