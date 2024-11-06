@@ -2935,6 +2935,10 @@ function getFormulaTypeReportField(reportFields: Record<string, PolicyReportFiel
     return Object.values(reportFields).find((field) => field?.type === 'formula');
 }
 
+function getTextTypeReportField(reportFields: Record<string, PolicyReportField>) {
+    return Object.values(reportFields).find((field) => field?.type === 'text');
+}
+
 /**
  * Given a set of report fields, return the field that refers to title
  */
@@ -3013,8 +3017,9 @@ function getMoneyRequestReportName(report: OnyxEntry<Report>, policy?: OnyxEntry
     const isReportSettled = isSettled(report?.reportID ?? '-1');
     const reportFields = isReportSettled ? report?.fieldList : getReportFieldsByPolicyID(report?.policyID ?? '-1');
     const titleReportField = getFormulaTypeReportField(reportFields ?? {});
+    const textTypeReportField = getTextTypeReportField(reportFields ?? {});
 
-    if (titleReportField && report?.reportName && isPaidGroupPolicyExpenseReport(report)) {
+    if ((titleReportField ?? textTypeReportField) && report?.reportName && isPaidGroupPolicyExpenseReport(report)) {
         return report.reportName;
     }
 
