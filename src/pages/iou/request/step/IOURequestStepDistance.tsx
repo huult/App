@@ -1,17 +1,18 @@
 import isEmpty from 'lodash/isEmpty';
 import isEqual from 'lodash/isEqual';
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
-import {View} from 'react-native';
+import {InteractionManager, View} from 'react-native';
 // eslint-disable-next-line no-restricted-imports
 import type {ScrollView as RNScrollView} from 'react-native';
 import type {RenderItemParams} from 'react-native-draggable-flatlist/lib/typescript/types';
 import type {OnyxEntry} from 'react-native-onyx';
-import {useOnyx} from 'react-native-onyx';
+import Onyx, {useOnyx} from 'react-native-onyx';
 import Button from '@components/Button';
 import DistanceRequestFooter from '@components/DistanceRequest/DistanceRequestFooter';
 import DistanceRequestRenderItem from '@components/DistanceRequest/DistanceRequestRenderItem';
 import DotIndicatorMessage from '@components/DotIndicatorMessage';
 import DraggableList from '@components/DraggableList';
+import FullScreenLoadingIndicator from '@components/FullscreenLoadingIndicator';
 import withCurrentUserPersonalDetails from '@components/withCurrentUserPersonalDetails';
 import type {WithCurrentUserPersonalDetailsProps} from '@components/withCurrentUserPersonalDetails';
 import useFetchRoute from '@hooks/useFetchRoute';
@@ -43,6 +44,7 @@ import type * as OnyxTypes from '@src/types/onyx';
 import type {Participant} from '@src/types/onyx/IOU';
 import type {Errors} from '@src/types/onyx/OnyxCommon';
 import type {Waypoint, WaypointCollection} from '@src/types/onyx/Transaction';
+import isLoadingOnyxValue from '@src/types/utils/isLoadingOnyxValue';
 import StepScreenWrapper from './StepScreenWrapper';
 import withFullTransactionOrNotFound from './withFullTransactionOrNotFound';
 import type {WithWritableReportOrNotFoundProps} from './withWritableReportOrNotFound';
@@ -70,6 +72,8 @@ function IOURequestStepDistance({
     const policy = usePolicy(report?.policyID);
     const [personalDetails] = useOnyx(ONYXKEYS.PERSONAL_DETAILS_LIST);
     const [skipConfirmation] = useOnyx(`${ONYXKEYS.COLLECTION.SKIP_CONFIRMATION}${transactionID}`);
+    const [isEditDistancePageRefreshing, isEditDistancePageResult] = useOnyx(`${ONYXKEYS.EDIT_DISTANCE_PAGE_RELOAD}${transactionID}`);
+
     const [optimisticWaypoints, setOptimisticWaypoints] = useState<WaypointCollection | null>(null);
     const waypoints = useMemo(
         () =>
@@ -212,24 +216,44 @@ function IOURequestStepDistance({
     // discard changes if the user cancels out of making any changes. This is accomplished by backing up the
     // original transaction, letting the user modify the current transaction, and then if the user ever
     // cancels out of the modal without saving changes, the original transaction is restored from the backup.
+
+    useEffect(() => {
+        window.addEventListener('beforeunload', () => {
+            Onyx.set(`${ONYXKEYS.EDIT_DISTANCE_PAGE_RELOAD}${transactionID}`, true);
+        });
+
+        return () => {
+            window.removeEventListener('beforeunload', () => {
+                Onyx.set(`${ONYXKEYS.EDIT_DISTANCE_PAGE_RELOAD}${transactionID}`, false);
+            });
+
+            Onyx.set(`${ONYXKEYS.EDIT_DISTANCE_PAGE_RELOAD}${transactionID}`, false);
+        };
+    }, [transactionID]);
+
     useEffect(() => {
         if (isCreatingNewRequest) {
             return () => {};
         }
 
-        // On mount, create the backup transaction.
-        TransactionEdit.createBackupTransaction(transaction);
+        InteractionManager.runAfterInteractions(() => {
+            requestAnimationFrame(() => {
+                // On mount, create the backup transaction.
+                if (isEditDistancePageRefreshing === true || isEditDistancePageRefreshing === undefined) {
+                    return;
+                }
+
+                TransactionEdit.createBackupTransaction(transaction);
+            });
+        });
 
         return () => {
-            // If the user cancels out of the modal without without saving changes, then the original transaction
-            // needs to be restored from the backup so that all changes are removed.
             if (transactionWasSaved.current) {
                 TransactionEdit.removeBackupTransaction(transaction?.transactionID ?? '-1');
                 return;
             }
             TransactionEdit.restoreOriginalTransactionFromBackup(transaction?.transactionID ?? '-1', IOUUtils.shouldUseTransactionDraft(action));
 
-            // If the user opens IOURequestStepDistance in offline mode and then goes online, re-open the report to fill in missing fields from the transaction backup
             if (!transaction?.reportID) {
                 return;
             }
@@ -503,6 +527,10 @@ function IOURequestStepDistance({
         ),
         [isLoadingRoute, navigateToWaypointEditPage, waypoints],
     );
+
+    if (isLoadingOnyxValue(isEditDistancePageResult)) {
+        return <FullScreenLoadingIndicator />;
+    }
 
     return (
         <StepScreenWrapper
