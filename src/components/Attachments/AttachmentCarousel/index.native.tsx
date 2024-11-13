@@ -7,6 +7,7 @@ import FullScreenLoadingIndicator from '@components/FullscreenLoadingIndicator';
 import * as Illustrations from '@components/Icon/Illustrations';
 import useLocalize from '@hooks/useLocalize';
 import useThemeStyles from '@hooks/useThemeStyles';
+import * as FileUtils from '@libs/fileDownload/FileUtils';
 import Navigation from '@libs/Navigation/Navigation';
 import variables from '@styles/variables';
 import CONST from '@src/CONST';
@@ -29,6 +30,8 @@ function AttachmentCarousel({report, source, onNavigate, setDownloadButtonVisibi
     const {shouldShowArrows, setShouldShowArrows, autoHideArrows, cancelAutoHideArrows} = useCarouselArrows();
     const [activeSource, setActiveSource] = useState<AttachmentSource>(source);
     const compareImage = useCallback((attachment: Attachment) => attachment.source === source, [source]);
+    const [keys, setKeys] = useState([]);
+    const [activePageBeforeChangedKey, setActivePageBeforeChangedKey] = useState();
 
     useEffect(() => {
         const parentReportAction = report.parentReportActionID && parentReportActions ? parentReportActions[report.parentReportActionID] : undefined;
@@ -109,6 +112,33 @@ function AttachmentCarousel({report, source, onNavigate, setDownloadButtonVisibi
     );
 
     const containerStyles = [styles.flex1, styles.attachmentCarouselContainer];
+
+    const extractItemKey = useCallback((item: Attachment, index: number) => {
+        return typeof item.source === 'string' || typeof item.source === 'number' ? `source-${item.source}` : `reportActionID-${item.reportActionID}` ?? `index-${index}`;
+    }, []);
+
+    useEffect(() => {
+        const currentKeys = attachments.map((item, index) => extractItemKey(item, index));
+        const isIncludedLocalFile = attachments.some((item) => FileUtils.isLocalFile(item.source));
+
+        if (JSON.stringify(currentKeys) !== JSON.stringify(keys) && isIncludedLocalFile) {
+            console.log('Keys have changed');
+            setKeys(currentKeys);
+            setActivePageBeforeChangedKey(page);
+        }
+    }, [activePageBeforeChangedKey, attachments, extractItemKey, keys, page]);
+
+    useEffect(() => {
+        if (page === activePageBeforeChangedKey || activePageBeforeChangedKey === undefined) {
+            return;
+        }
+
+        setPage(activePageBeforeChangedKey);
+        if (activePageBeforeChangedKey) {
+            pagerRef.current?.setPage(activePageBeforeChangedKey);
+        }
+        setActivePageBeforeChangedKey(undefined);
+    }, [activePageBeforeChangedKey, page]);
 
     if (page == null) {
         return (
