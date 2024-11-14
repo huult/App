@@ -411,11 +411,25 @@ function WorkspaceMembersPage({personalDetails, route, policy, currentUserPerson
         if (!isFocused) {
             return;
         }
-        if (isEmptyObject(invitedEmailsToAccountIDsDraft) || accountIDs === prevAccountIDs) {
+
+        if (accountIDs === prevAccountIDs) {
             return;
         }
-        const invitedEmails = Object.values(invitedEmailsToAccountIDsDraft).map(String);
-        selectionListRef.current?.scrollAndHighlightItem?.(invitedEmails, 1500);
+
+        if (accountIDs.length < prevAccountIDs.length) {
+            return;
+        }
+
+        const diffAccountIDs = accountIDs.filter((id) => !prevAccountIDs.includes(id));
+
+        if (!isEmptyObject(invitedEmailsToAccountIDsDraft) && !diffAccountIDs.length) {
+            return;
+        }
+
+        selectionListRef.current?.scrollAndHighlightItem?.(
+            diffAccountIDs.map((item) => String(item)),
+            1500,
+        );
         Member.setWorkspaceInviteMembersDraft(route.params.policyID, {});
     }, [invitedEmailsToAccountIDsDraft, route.params.policyID, isFocused, accountIDs, prevAccountIDs]);
 
