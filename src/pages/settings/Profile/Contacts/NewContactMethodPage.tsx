@@ -49,10 +49,16 @@ function NewContactMethodPage({route}: NewContactMethodPageProps) {
 
     const hasFailedToSendVerificationCode = !!pendingContactAction?.errorFields?.actionVerified;
 
+    const previousPhoneOrEmail = useRef('');
+    const [isChangedPhoneOrEmail, setIsChangedPhoneOrEmail] = useState(false);
+
     const handleValidateMagicCode = useCallback((values: FormOnyxValues<typeof ONYXKEYS.FORMS.NEW_CONTACT_METHOD_FORM>) => {
         const phoneLogin = LoginUtils.getPhoneLogin(values.phoneOrEmail);
         const validateIfnumber = LoginUtils.validateNumber(phoneLogin);
         const submitDetail = (validateIfnumber || values.phoneOrEmail).trim().toLowerCase();
+
+        setIsChangedPhoneOrEmail(previousPhoneOrEmail?.current !== submitDetail);
+        previousPhoneOrEmail.current = submitDetail;
         User.addPendingContactMethod(submitDetail);
         setIsValidateCodeActionModalVisible(true);
     }, []);
@@ -172,6 +178,7 @@ function NewContactMethodPage({route}: NewContactMethodPageProps) {
                     title={translate('delegate.makeSureItIsYou')}
                     sendValidateCode={() => User.requestValidateCodeAction()}
                     descriptionPrimary={translate('contacts.enterMagicCode', {contactMethod})}
+                    isChangedPhoneOrEmail={isChangedPhoneOrEmail}
                 />
             </ScreenWrapper>
         </AccessOrNotFoundWrapper>

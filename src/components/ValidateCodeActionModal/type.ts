@@ -43,6 +43,8 @@ type ValidateCodeActionModalProps = {
 
     /** Wheather the form is loading or not */
     isLoading?: boolean;
+
+    isChangedPhoneOrEmail?: boolean;
 };
 
 // eslint-disable-next-line import/prefer-default-export

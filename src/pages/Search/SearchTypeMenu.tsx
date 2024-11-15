@@ -1,4 +1,4 @@
-import {useRoute} from '@react-navigation/native';
+import {useFocusEffect, useRoute} from '@react-navigation/native';
 import React, {useCallback, useContext, useLayoutEffect, useRef} from 'react';
 import {View} from 'react-native';
 // eslint-disable-next-line no-restricted-imports
@@ -193,6 +193,21 @@ function SearchTypeMenu({queryJSON, searchName}: SearchTypeMenuProps) {
         },
         [route, saveScrollOffset],
     );
+
+    useLayoutEffect(() => {
+        if (type !== CONST.SEARCH.DATA_TYPES.INVOICE) {
+            return;
+        }
+        if (hasWorkspaceWithInvoices(session?.email) || hasInvoiceReports()) {
+            return;
+        }
+
+        Navigation.navigate(
+            ROUTES.SEARCH_CENTRAL_PANE.getRoute({
+                query: SearchQueryUtils.buildCannedSearchQuery(),
+            }),
+        );
+    }, [session?.email, type]);
 
     useLayoutEffect(() => {
         const scrollOffset = getScrollOffset(route);

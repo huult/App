@@ -28,6 +28,7 @@ function ValidateCodeActionModal({
     sendValidateCode,
     hasMagicCodeBeenSent,
     isLoading,
+    isChangedPhoneOrEmail,
 }: ValidateCodeActionModalProps) {
     const themeStyles = useThemeStyles();
     const safePaddingBottomStyle = useSafePaddingBottomStyle();
@@ -42,13 +43,20 @@ function ValidateCodeActionModal({
     }, [onClose, clearError]);
 
     useEffect(() => {
+        if (!isChangedPhoneOrEmail) {
+            return;
+        }
+        firstRenderRef.current = true;
+    }, [isChangedPhoneOrEmail]);
+
+    useEffect(() => {
         if (!firstRenderRef.current || !isVisible || hasMagicCodeBeenSent) {
             return;
         }
-        firstRenderRef.current = false;
 
+        firstRenderRef.current = false;
         sendValidateCode();
-    }, [isVisible, sendValidateCode, hasMagicCodeBeenSent]);
+    }, [isVisible, sendValidateCode, hasMagicCodeBeenSent, isChangedPhoneOrEmail]);
 
     return (
         <Modal
