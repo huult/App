@@ -2,6 +2,8 @@ import React, {memo, useCallback, useEffect, useRef, useState} from 'react';
 import type {LayoutRectangle, NativeSyntheticEvent} from 'react-native';
 import GenericTooltip from '@components/Tooltip/GenericTooltip';
 import type {EducationalTooltipProps} from '@components/Tooltip/types';
+import usePrevious from '@hooks/usePrevious';
+import useWindowDimensions from '@hooks/useWindowDimensions';
 import onyxSubscribe from '@libs/onyxSubscribe';
 import ONYXKEYS from '@src/ONYXKEYS';
 import type {Modal} from '@src/types/onyx';
@@ -22,6 +24,8 @@ function BaseEducationalTooltip({children, onHideTooltip, shouldRender = false, 
         willAlertModalBecomeVisible: false,
         isVisible: false,
     });
+    const {windowWidth, windowHeight} = useWindowDimensions();
+    const previousDimensions = usePrevious({windowWidth, windowHeight});
 
     const shouldShow = !modal?.willAlertModalBecomeVisible && !modal?.isVisible && shouldRender;
 
@@ -63,6 +67,15 @@ function BaseEducationalTooltip({children, onHideTooltip, shouldRender = false, 
         },
         [],
     );
+
+    useEffect(() => {
+        if (previousDimensions.windowHeight !== windowHeight) {
+            closeTooltip?.();
+        }
+        if (previousDimensions.windowWidth !== windowWidth) {
+            closeTooltip?.();
+        }
+    }, [windowWidth, windowHeight, previousDimensions.windowHeight, previousDimensions.windowWidth, closeTooltip]);
 
     // Automatically hide tooltip after 5 seconds
     useEffect(() => {
