@@ -54,9 +54,11 @@ function ValidateCodeActionModal({
             return;
         }
 
+        console.log('****** sendValidateCode ******');
+
         firstRenderRef.current = false;
         sendValidateCode();
-    }, [isVisible, sendValidateCode, hasMagicCodeBeenSent, isChangedPhoneOrEmail]);
+    }, [isVisible, sendValidateCode, hasMagicCodeBeenSent]);
 
     return (
         <Modal

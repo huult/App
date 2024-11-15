@@ -195,21 +195,6 @@ function SearchTypeMenu({queryJSON, searchName}: SearchTypeMenuProps) {
     );
 
     useLayoutEffect(() => {
-        if (type !== CONST.SEARCH.DATA_TYPES.INVOICE) {
-            return;
-        }
-        if (hasWorkspaceWithInvoices(session?.email) || hasInvoiceReports()) {
-            return;
-        }
-
-        Navigation.navigate(
-            ROUTES.SEARCH_CENTRAL_PANE.getRoute({
-                query: SearchQueryUtils.buildCannedSearchQuery(),
-            }),
-        );
-    }, [session?.email, type]);
-
-    useLayoutEffect(() => {
         const scrollOffset = getScrollOffset(route);
         if (!scrollOffset || !scrollViewRef.current) {
             return;
