@@ -49,7 +49,8 @@ function NewContactMethodPage({route}: NewContactMethodPageProps) {
 
     const hasFailedToSendVerificationCode = !!pendingContactAction?.errorFields?.actionVerified;
 
-    const previousPhoneOrEmail = useRef('');
+    // const previousPhoneOrEmail = useRef(''); // for solution 1
+    const previousPhoneOrEmailList = useRef<string[]>([]);
     const [isChangedPhoneOrEmail, setIsChangedPhoneOrEmail] = useState(false);
 
     const handleValidateMagicCode = useCallback((values: FormOnyxValues<typeof ONYXKEYS.FORMS.NEW_CONTACT_METHOD_FORM>) => {
@@ -57,8 +58,14 @@ function NewContactMethodPage({route}: NewContactMethodPageProps) {
         const validateIfnumber = LoginUtils.validateNumber(phoneLogin);
         const submitDetail = (validateIfnumber || values.phoneOrEmail).trim().toLowerCase();
 
-        setIsChangedPhoneOrEmail(previousPhoneOrEmail?.current !== submitDetail);
-        previousPhoneOrEmail.current = submitDetail;
+        // setIsChangedPhoneOrEmail(previousPhoneOrEmail?.current !== submitDetail); // for solution 1
+        // previousPhoneOrEmail.current = submitDetail; // for solution 1
+        if (!previousPhoneOrEmailList.current.includes(submitDetail)) {
+            setIsChangedPhoneOrEmail(true);
+            previousPhoneOrEmailList.current.push(submitDetail);
+        } else {
+            setIsChangedPhoneOrEmail(false);
+        }
         User.addPendingContactMethod(submitDetail);
         setIsValidateCodeActionModalVisible(true);
     }, []);
@@ -78,6 +85,12 @@ function NewContactMethodPage({route}: NewContactMethodPageProps) {
         Navigation.navigate(ROUTES.SETTINGS_CONTACT_METHODS.route);
         User.clearUnvalidatedNewContactMethodAction();
     }, [pendingContactAction?.actionVerified]);
+
+    useEffect(() => {
+        return () => {
+            previousPhoneOrEmailList.current = [];
+        };
+    }, []);
 
     const validate = React.useCallback(
         (values: FormOnyxValues<typeof ONYXKEYS.FORMS.NEW_CONTACT_METHOD_FORM>): Errors => {
@@ -179,8 +192,12 @@ function NewContactMethodPage({route}: NewContactMethodPageProps) {
                 isVisible={isValidateCodeActionModalVisible}
                 hasMagicCodeBeenSent={!!loginData?.validateCodeSent}
                 title={translate('delegate.makeSureItIsYou')}
-                sendValidateCode={() => User.requestValidateCodeAction()}
+                sendValidateCode={() => {
+                    setIsChangedPhoneOrEmail(false);
+                    User.requestValidateCodeAction();
+                }}
                 descriptionPrimary={translate('contacts.enterMagicCode', {contactMethod})}
+                isChangedPhoneOrEmail={isChangedPhoneOrEmail}
             />
         </ScreenWrapper>
     );
