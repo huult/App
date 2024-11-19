@@ -94,6 +94,17 @@ function ImportSpreedsheet({backTo, goTo}: ImportSpreedsheetProps) {
                 const workbook = XLSX.read(new Uint8Array(arrayBuffer), {type: 'buffer'});
                 const worksheet = workbook.Sheets[workbook.SheetNames[0]];
                 const data = XLSX.utils.sheet_to_json(worksheet, {header: 1, blankrows: false});
+
+                const rowTitle = data.at(0) as string[];
+
+                if (!rowTitle.includes(CONST.CSV_IMPORT_COLUMNS.NAME)) {
+                    setUploadFileError(true, 'spreadsheet.importFailedTitle', 'spreadsheet.invalidFileMessage');
+                    setIsReadingFIle(false);
+                    if (fileURI && !file.uri) {
+                        URL.revokeObjectURL(fileURI);
+                    }
+                    return;
+                }
                 setSpreadsheetData(data as string[][])
                     .then(() => {
                         Navigation.navigate(goTo);
