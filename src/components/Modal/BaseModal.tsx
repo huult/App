@@ -1,6 +1,7 @@
 import {PortalHost} from '@gorhom/portal';
 import React, {forwardRef, useCallback, useEffect, useMemo, useRef} from 'react';
 import {View} from 'react-native';
+import {GestureHandlerRootView} from 'react-native-gesture-handler';
 import ReactNativeModal from 'react-native-modal';
 import ColorSchemeWrapper from '@components/ColorSchemeWrapper';
 import FocusTrapForModal from '@components/FocusTrap/FocusTrapForModal';
@@ -273,7 +274,9 @@ function BaseModal(
                                 style={[styles.defaultModalContainer, modalPaddingStyles, modalContainerStyle, !isVisible && styles.pointerEventsNone]}
                                 ref={ref}
                             >
+                                {/* <GestureHandlerRootView> // alternative solutions */}
                                 <ColorSchemeWrapper>{children}</ColorSchemeWrapper>
+                                {/* </GestureHandlerRootView> */}
                             </View>
                         </FocusTrapForModal>
                     </ModalContent>

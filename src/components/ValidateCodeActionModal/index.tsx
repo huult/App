@@ -1,5 +1,6 @@
 import React, {useCallback, useEffect, useRef} from 'react';
 import {View} from 'react-native';
+import {GestureHandlerRootView} from 'react-native-gesture-handler';
 import {useOnyx} from 'react-native-onyx';
 import HeaderWithBackButton from '@components/HeaderWithBackButton';
 import Modal from '@components/Modal';
@@ -74,18 +75,21 @@ function ValidateCodeActionModal({
                 <View style={[themeStyles.ph5, themeStyles.mt3, themeStyles.mb7, themeStyles.flex1]}>
                     <Text style={[themeStyles.mb3]}>{descriptionPrimary}</Text>
                     {!!descriptionSecondary && <Text style={[themeStyles.mb3]}>{descriptionSecondary}</Text>}
-                    <ValidateCodeForm
-                        validateCodeAction={validateCodeAction}
-                        validatePendingAction={validatePendingAction}
-                        validateError={validateError}
-                        handleSubmitForm={handleSubmitForm}
-                        sendValidateCode={sendValidateCode}
-                        clearError={clearError}
-                        buttonStyles={[themeStyles.justifyContentEnd, themeStyles.flex1, safePaddingBottomStyle]}
-                        ref={validateCodeFormRef}
-                        hasMagicCodeBeenSent={hasMagicCodeBeenSent}
-                        isLoading={isLoading}
-                    />
+
+                    <GestureHandlerRootView>
+                        <ValidateCodeForm
+                            validateCodeAction={validateCodeAction}
+                            validatePendingAction={validatePendingAction}
+                            validateError={validateError}
+                            handleSubmitForm={handleSubmitForm}
+                            sendValidateCode={sendValidateCode}
+                            clearError={clearError}
+                            buttonStyles={[themeStyles.justifyContentEnd, themeStyles.flex1, safePaddingBottomStyle]}
+                            ref={validateCodeFormRef}
+                            hasMagicCodeBeenSent={hasMagicCodeBeenSent}
+                            isLoading={isLoading}
+                        />
+                    </GestureHandlerRootView>
                 </View>
                 {footer?.()}
             </ScreenWrapper>
