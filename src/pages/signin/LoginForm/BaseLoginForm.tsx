@@ -274,7 +274,7 @@ function BaseLoginForm({login, onLoginChanged, blurOnSubmit = false, isVisible}:
             {
                 // We need to unmount the submit button when the component is not visible so that the Enter button
                 // key handler gets unsubscribed
-                isVisible && (
+                true && (
                     <View
                         style={[shouldShowServerError ? {} : styles.mt5]}
                         ref={viewRef(submitContainerRef)}
@@ -293,7 +293,7 @@ function BaseLoginForm({login, onLoginChanged, blurOnSubmit = false, isVisible}:
                             // for developers about possible regressions, we won't render buttons in development mode.
                             // For more information about these differences and how to test in development mode,
                             // see`Expensify/App/contributingGuides/APPLE_GOOGLE_SIGNIN.md`
-                            CONFIG.ENVIRONMENT !== CONST.ENVIRONMENT.DEV && (
+                            true && (
                                 <View style={[getSignInWithStyles()]}>
                                     <Text
                                         accessibilityElementsHidden
