@@ -27,8 +27,8 @@ function TransactionReceipt({route}: TransactionReceiptProps) {
     const imageSource = tryResolveUrlFromApiRoot(receiptURIs.image ?? '');
 
     const isLocalFile = receiptURIs.isLocalFile;
-    const readonly = route.params.readonly ?? false;
-    const isFromReviewDuplicates = route.params.isFromReviewDuplicates ?? false;
+    const readonly = route.params.readonly === 'true';
+    const isFromReviewDuplicates = route.params.isFromReviewDuplicates === 'true';
 
     const parentReportAction = ReportActionUtils.getReportAction(report?.parentReportID ?? '-1', report?.parentReportActionID ?? '-1');
     const canEditReceipt = ReportUtils.canEditFieldOfMoneyRequest(parentReportAction, CONST.EDIT_REQUEST_FIELD.RECEIPT);
@@ -52,9 +52,8 @@ function TransactionReceipt({route}: TransactionReceiptProps) {
         if (secondToLastRoute?.name === NAVIGATORS.RIGHT_MODAL_NAVIGATOR) {
             Navigation.dismissModal();
         } else {
-            Navigation.dismissModal(
-                ReportUtils.isOneTransactionThread(report?.reportID ?? '-1', report?.parentReportID ?? '-1', parentReportAction) ? report?.parentReportID : report?.reportID,
-            );
+            const isOneTransactionThread = ReportUtils.isOneTransactionThread(report?.reportID ?? '-1', report?.parentReportID ?? '-1', parentReportAction);
+            Navigation.dismissModal(isOneTransactionThread ? report?.parentReportID : report?.reportID);
         }
     };
 
