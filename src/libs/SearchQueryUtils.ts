@@ -311,7 +311,7 @@ function buildSearchQueryString(queryJSON?: SearchQueryJSON) {
 
     for (const filter of filters) {
         const includeQuotes =
-            !queryParts.some((item) => item === 'type:chat') &&
+            queryParts.some((item) => item === 'type:chat') &&
             (filter.key === FILTER_KEYS.CATEGORY ||
                 filter.key === FILTER_KEYS.EXPENSE_TYPE ||
                 filter.key === FILTER_KEYS.TAG ||
