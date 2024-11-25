@@ -1,3 +1,4 @@
+import {InteractionManager} from 'react-native';
 import type UpdateMultilineInputRange from './types';
 
 /**
@@ -20,7 +21,11 @@ const updateMultilineInputRange: UpdateMultilineInputRange = (input, shouldAutoF
      * For more details: https://github.com/Expensify/App/pull/27702#issuecomment-1728651132
      */
     if (shouldAutoFocus) {
-        input.focus();
+        InteractionManager.runAfterInteractions(() => {
+            requestAnimationFrame(() => {
+                input.focus();
+            });
+        });
     }
 };
 
