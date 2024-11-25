@@ -310,8 +310,24 @@ function buildSearchQueryString(queryJSON?: SearchQueryJSON) {
     const filters = queryJSON.flatFilters;
 
     for (const filter of filters) {
+        const includeQuotes =
+            !queryParts.some((item) => item === 'type:chat') &&
+            (filter.key === FILTER_KEYS.CATEGORY ||
+                filter.key === FILTER_KEYS.EXPENSE_TYPE ||
+                filter.key === FILTER_KEYS.TAG ||
+                filter.key === FILTER_KEYS.TAX_RATE ||
+                filter.key === FILTER_KEYS.DESCRIPTION ||
+                filter.key === FILTER_KEYS.MERCHANT ||
+                filter.key === FILTER_KEYS.CARD_ID ||
+                filter.key === FILTER_KEYS.CURRENCY);
+
         const filterValueString = buildFilterValuesString(filter.key, filter.filters);
-        queryParts.push(filterValueString);
+
+        if (includeQuotes) {
+            queryParts.push(`"${filterValueString}"`.replace(/\s+/g, ''));
+        } else {
+            queryParts.push(filterValueString);
+        }
     }
 
     return queryParts.join(' ');
