@@ -30,6 +30,7 @@ function WorkspaceJoinUserPage({route, policy}: WorkspaceJoinUserPageProps) {
     const styles = useThemeStyles();
     const policyID = route?.params?.policyID;
     const inviterEmail = route?.params?.email;
+    const backTo = route?.params?.backTo;
     const isUnmounted = useRef(false);
 
     useEffect(() => {
@@ -46,7 +47,7 @@ function WorkspaceJoinUserPage({route, policy}: WorkspaceJoinUserPageProps) {
         if (!isEmptyObject(policy) && !policy?.isJoinRequestPending && !PolicyUtils.isPendingDeletePolicy(policy)) {
             Navigation.isNavigationReady().then(() => {
                 Navigation.goBack(undefined, false, true);
-                Navigation.navigate(ROUTES.WORKSPACE_INITIAL.getRoute(policyID ?? '-1'));
+                Navigation.navigate(ROUTES.WORKSPACE_INITIAL.getRoute(policyID ?? '-1', backTo));
             });
             return;
         }

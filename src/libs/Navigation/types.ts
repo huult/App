@@ -1569,6 +1569,7 @@ type AuthScreensParamList = CentralPaneScreensParamList &
         [SCREENS.WORKSPACE_JOIN_USER]: {
             policyID: string;
             email: string;
+            backTo?: string;
         };
         [SCREENS.REPORT_AVATAR]: {
             reportID: string;

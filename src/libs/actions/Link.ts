@@ -155,6 +155,11 @@ function getInternalExpensifyPath(href: string) {
     return attrPath;
 }
 
+function isWorkspaceShareLink(path: string) {
+    const pattern = /^settings\/workspaces\/[^/]+\/join$/;
+    return pattern.test(path);
+}
+
 function openLink(href: string, environmentURL: string, isAttachment = false) {
     const hasSameOrigin = Url.hasSameExpensifyOrigin(href, environmentURL);
     const hasExpensifyOrigin = Url.hasSameExpensifyOrigin(href, CONFIG.EXPENSIFY.EXPENSIFY_URL) || Url.hasSameExpensifyOrigin(href, CONFIG.EXPENSIFY.STAGING_API_ROOT);
@@ -180,6 +185,14 @@ function openLink(href: string, environmentURL: string, isAttachment = false) {
             Session.signOutAndRedirectToSignIn();
             return;
         }
+
+        const pathWithoutQuery = internalNewExpensifyPath.split('?').at(0);
+
+        if (isWorkspaceShareLink(pathWithoutQuery ?? '')) {
+            Navigation.navigate(`${internalNewExpensifyPath}&backTo=${Navigation.getActiveRoute()}` as Route);
+            return;
+        }
+
         Navigation.navigate(internalNewExpensifyPath as Route);
         return;
     }
