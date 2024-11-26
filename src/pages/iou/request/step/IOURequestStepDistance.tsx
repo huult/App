@@ -240,6 +240,16 @@ function IOURequestStepDistance({
             requestAnimationFrame(() => {
                 // On mount, create the backup transaction.
                 if (isEditDistancePageRefreshing === true || isEditDistancePageRefreshing === undefined) {
+                    if (transactionWasSaved.current) {
+                        TransactionEdit.removeBackupTransaction(transaction?.transactionID ?? '-1');
+                        return;
+                    }
+                    TransactionEdit.restoreOriginalTransactionFromBackup(transaction?.transactionID ?? '-1', IOUUtils.shouldUseTransactionDraft(action));
+
+                    if (!transaction?.reportID) {
+                        return;
+                    }
+                    Report.openReport(transaction?.reportID);
                     return;
                 }
 
