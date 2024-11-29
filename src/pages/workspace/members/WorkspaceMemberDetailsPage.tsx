@@ -84,7 +84,6 @@ function WorkspaceMemberDetailsPage({personalDetails, policy, route}: WorkspaceM
     const isCurrentUserOwner = policy?.owner === currentUserPersonalDetails?.login;
     const ownerDetails = personalDetails?.[policy?.ownerAccountID ?? -1] ?? ({} as PersonalDetails);
     const policyOwnerDisplayName = ownerDetails.displayName ?? policy?.owner ?? '';
-    const companyCards = CardUtils.getMemberCards(policy, allCardsList, accountID);
     const policyApproverEmail = policy?.approver;
 
     const {approvalWorkflows} = useMemo(
