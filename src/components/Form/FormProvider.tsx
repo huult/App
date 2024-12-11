@@ -69,6 +69,8 @@ type FormProviderProps<TFormID extends OnyxFormKey = OnyxFormKey> = FormProps<TF
 
     /** Whether HTML is allowed in form inputs */
     allowHTML?: boolean;
+
+    shouldScrollToEnd?: boolean;
 };
 
 function FormProvider(

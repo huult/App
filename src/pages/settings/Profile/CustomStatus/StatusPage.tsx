@@ -16,6 +16,7 @@ import Text from '@components/Text';
 import TextInput from '@components/TextInput';
 import useAutoFocusInput from '@hooks/useAutoFocusInput';
 import useCurrentUserPersonalDetails from '@hooks/useCurrentUserPersonalDetails';
+import useKeyboardState from '@hooks/useKeyboardState';
 import useLocalize from '@hooks/useLocalize';
 import useStyleUtils from '@hooks/useStyleUtils';
 import useTheme from '@hooks/useTheme';
@@ -151,6 +152,7 @@ function StatusPage() {
     }, [brickRoadIndicator]);
 
     const {inputCallbackRef, inputRef} = useAutoFocusInput();
+    const {keyboardHeight} = useKeyboardState();
 
     return (
         <ScreenWrapper
@@ -172,6 +174,8 @@ function StatusPage() {
                 onSubmit={updateStatus}
                 validate={validateForm}
                 enabledWhenOffline
+                // shouldScrollToEnd={keyboardHeight !== 0}
+                shouldScrollToEnd
             >
                 <View style={[styles.mh5, styles.mv1]}>
                     <Text style={[styles.textNormal, styles.mt2]}>{translate('statusPage.statusExplanation')}</Text>

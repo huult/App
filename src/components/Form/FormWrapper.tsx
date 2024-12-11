@@ -1,8 +1,8 @@
-import React, {useCallback, useMemo, useRef} from 'react';
+import React, {useCallback, useEffect, useMemo, useRef} from 'react';
 import type {RefObject} from 'react';
 // eslint-disable-next-line no-restricted-imports
 import type {ScrollView as RNScrollView, StyleProp, View, ViewStyle} from 'react-native';
-import {Keyboard} from 'react-native';
+import {InteractionManager, Keyboard} from 'react-native';
 import {useOnyx} from 'react-native-onyx';
 import FormAlertWithSubmitButton from '@components/FormAlertWithSubmitButton';
 import FormElement from '@components/FormElement';
@@ -36,6 +36,8 @@ type FormWrapperProps = ChildrenProps &
 
         /** Callback to submit the form */
         onSubmit: () => void;
+
+        shouldScrollToEnd?: boolean;
     };
 
 function FormWrapper({
@@ -57,6 +59,7 @@ function FormWrapper({
     shouldHideFixErrorsAlert = false,
     disablePressOnEnter = false,
     isSubmitDisabled = false,
+    shouldScrollToEnd = false,
 }: FormWrapperProps) {
     const styles = useThemeStyles();
     const {paddingBottom: safeAreaInsetPaddingBottom} = useStyledSafeAreaInsets();
@@ -97,6 +100,17 @@ function FormWrapper({
         // Focus the input after scrolling, as on the Web it gives a slightly better visual result
         focusInput?.focus?.();
     }, [errors, formState?.errorFields, inputRefs]);
+
+    useEffect(() => {
+        if (!shouldScrollToEnd) {
+            return;
+        }
+        InteractionManager.runAfterInteractions(() => {
+            requestAnimationFrame(() => {
+                formRef.current?.scrollToEnd({animated: true});
+            });
+        });
+    }, [shouldScrollToEnd]);
 
     const scrollViewContent = useCallback(
         () => (
