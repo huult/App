@@ -1,13 +1,14 @@
-import React, {useCallback, useEffect, useMemo, useRef} from 'react';
+import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import type {RefObject} from 'react';
 // eslint-disable-next-line no-restricted-imports
 import type {ScrollView as RNScrollView, StyleProp, View, ViewStyle} from 'react-native';
-import {InteractionManager, Keyboard} from 'react-native';
+import {Dimensions, InteractionManager, Keyboard} from 'react-native';
 import {useOnyx} from 'react-native-onyx';
 import FormAlertWithSubmitButton from '@components/FormAlertWithSubmitButton';
 import FormElement from '@components/FormElement';
 import ScrollView from '@components/ScrollView';
 import ScrollViewWithContext from '@components/ScrollViewWithContext';
+import useKeyboardState from '@hooks/useKeyboardState';
 import useStyledSafeAreaInsets from '@hooks/useStyledSafeAreaInsets';
 import useThemeStyles from '@hooks/useThemeStyles';
 import * as ErrorUtils from '@libs/ErrorUtils';
@@ -65,6 +66,7 @@ function FormWrapper({
     const {paddingBottom: safeAreaInsetPaddingBottom} = useStyledSafeAreaInsets();
     const formRef = useRef<RNScrollView>(null);
     const formContentRef = useRef<View>(null);
+    const [isLayoutDone, setIsLayoutDone] = useState(false);
 
     const [formState] = useOnyx<OnyxFormKey, Form>(`${formID}`);
 
@@ -102,15 +104,18 @@ function FormWrapper({
     }, [errors, formState?.errorFields, inputRefs]);
 
     useEffect(() => {
-        if (!shouldScrollToEnd) {
+        if (!shouldScrollToEnd || !isLayoutDone) {
             return;
         }
         InteractionManager.runAfterInteractions(() => {
             requestAnimationFrame(() => {
-                formRef.current?.scrollToEnd({animated: true});
+                // Test mweb(debug)
+                // setTimeout(() => {
+                formRef.current?.scrollToEnd();
+                // }, 1000);
             });
         });
-    }, [shouldScrollToEnd]);
+    }, [isLayoutDone, shouldScrollToEnd]);
 
     const scrollViewContent = useCallback(
         () => (
@@ -187,6 +192,9 @@ function FormWrapper({
             contentContainerStyle={styles.flexGrow1}
             keyboardShouldPersistTaps="handled"
             ref={formRef}
+            onLayout={() => {
+                setIsLayoutDone(true);
+            }}
         >
             {scrollViewContent()}
         </ScrollView>

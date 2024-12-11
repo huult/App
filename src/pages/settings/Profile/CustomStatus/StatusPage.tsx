@@ -160,6 +160,7 @@ function StatusPage() {
             shouldEnablePickerAvoiding={false}
             includeSafeAreaPaddingBottom
             testID={HeaderPageLayout.displayName}
+            shouldEnableMaxHeight
         >
             <HeaderWithBackButton
                 title={translate('statusPage.status')}
