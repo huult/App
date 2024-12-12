@@ -100,6 +100,8 @@ function BaseValidateCodeForm({
 
     const timerRef = useRef<NodeJS.Timeout>();
 
+    const isValidateCodeValid = !!validateCode.trim() || !!ValidationUtils.isValidValidateCode(validateCode);
+
     useImperativeHandle(innerRef, () => ({
         focus() {
             inputValidateCodeRef.current?.focus();
@@ -215,7 +217,7 @@ function BaseValidateCodeForm({
                 value={validateCode}
                 onChangeText={onTextInput}
                 errorText={formError?.validateCode ? translate(formError?.validateCode) : ErrorUtils.getLatestErrorMessage(account ?? {})}
-                hasError={!isEmptyObject(validateError)}
+                hasError={!isEmptyObject(isValidateCodeValid ? validateError : undefined)}
                 onFulfill={validateAndSubmitForm}
                 autoFocus={false}
             />
@@ -259,7 +261,7 @@ function BaseValidateCodeForm({
             <OfflineWithFeedback
                 shouldDisplayErrorAbove
                 pendingAction={validatePendingAction}
-                errors={validateError}
+                errors={isValidateCodeValid ? validateError : undefined}
                 errorRowStyles={[styles.mt2]}
                 onClose={() => clearError()}
                 style={buttonStyles}
