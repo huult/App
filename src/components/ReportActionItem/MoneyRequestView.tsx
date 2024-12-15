@@ -368,16 +368,19 @@ function MoneyRequestView({report, shouldShowAnimatedBackground, readonly = fals
         for (const violation of transactionViolations ?? []) {
             const isReceiptFieldViolation = receiptFieldViolationNames.includes(violation.name);
             const isReceiptImageViolation = receiptImageViolationNames.includes(violation.name);
+            const isSmartScannedViolation = isDistanceRequest && violation.name === CONST.VIOLATIONS.RECEIPT_NOT_SMART_SCANNED;
             if (isReceiptFieldViolation || isReceiptImageViolation) {
                 const violationMessage = ViolationsUtils.getViolationTranslation(violation, translate);
-                allViolations.push(violationMessage);
-                if (isReceiptImageViolation) {
-                    imageViolations.push(violationMessage);
+                if (!isSmartScannedViolation) {
+                    allViolations.push(violationMessage);
+                    if (isReceiptImageViolation) {
+                        imageViolations.push(violationMessage);
+                    }
                 }
             }
         }
         return [imageViolations, allViolations];
-    }, [transactionViolations, translate]);
+    }, [isDistanceRequest, transactionViolations, translate]);
 
     const receiptRequiredViolation = transactionViolations?.some((violation) => violation.name === CONST.VIOLATIONS.RECEIPT_REQUIRED);
 

@@ -888,10 +888,13 @@ function hasViolation(transactionID: string, transactionViolations: OnyxCollecti
 /**
  * Checks if any violations for the provided transaction are of type 'notice'
  */
-function hasNoticeTypeViolation(transactionID: string, transactionViolations: OnyxCollection<TransactionViolation[]>, showInReview?: boolean): boolean {
-    return !!transactionViolations?.[ONYXKEYS.COLLECTION.TRANSACTION_VIOLATIONS + transactionID]?.some(
-        (violation: TransactionViolation) => violation.type === CONST.VIOLATION_TYPES.NOTICE && (showInReview === undefined || showInReview === (violation.showInReview ?? false)),
-    );
+function hasNoticeTypeViolation(transactionID: string, transactionViolations: OnyxCollection<TransactionViolation[]>, showInReview?: boolean, isDistanceRequest?: boolean): boolean {
+    return !!transactionViolations?.[ONYXKEYS.COLLECTION.TRANSACTION_VIOLATIONS + transactionID]?.some((violation: TransactionViolation) => {
+        if (isDistanceRequest && violation.name === CONST.VIOLATIONS.RECEIPT_NOT_SMART_SCANNED) {
+            return false;
+        }
+        return violation.type === CONST.VIOLATION_TYPES.NOTICE && (showInReview === undefined || showInReview === (violation.showInReview ?? false));
+    });
 }
 
 /**

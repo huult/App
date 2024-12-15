@@ -6429,7 +6429,11 @@ function hasWarningTypeViolations(reportID: string, transactionViolations: OnyxC
  */
 function hasNoticeTypeViolations(reportID: string, transactionViolations: OnyxCollection<TransactionViolation[]>, shouldShowInReview?: boolean): boolean {
     const transactions = reportsTransactions[reportID] ?? [];
-    return transactions.some((transaction) => TransactionUtils.hasNoticeTypeViolation(transaction.transactionID, transactionViolations, shouldShowInReview));
+    return transactions.some((transaction) => {
+        const isDistanceRequest = TransactionUtils.isDistanceRequest(transaction);
+
+        return TransactionUtils.hasNoticeTypeViolation(transaction.transactionID, transactionViolations, shouldShowInReview, isDistanceRequest);
+    });
 }
 
 function hasReportViolations(reportID: string) {
