@@ -152,7 +152,6 @@ function StatusPage() {
     }, [brickRoadIndicator]);
 
     const {inputCallbackRef, inputRef} = useAutoFocusInput();
-    const {keyboardHeight} = useKeyboardState();
 
     return (
         <ScreenWrapper
@@ -175,10 +174,13 @@ function StatusPage() {
                 onSubmit={updateStatus}
                 validate={validateForm}
                 enabledWhenOffline
-                // shouldScrollToEnd={keyboardHeight !== 0}
-                shouldScrollToEnd
             >
-                <View style={[styles.mh5, styles.mv1]}>
+                <View
+                    style={[styles.mh5, styles.mv1]}
+                    onLayout={(e) => {
+                        console.log('****** e ******', e.nativeEvent.layout.height);
+                    }}
+                >
                     <Text style={[styles.textNormal, styles.mt2]}>{translate('statusPage.statusExplanation')}</Text>
                 </View>
                 <View style={[styles.mb2, styles.mt4]}>
@@ -205,6 +207,11 @@ function StatusPage() {
                             accessibilityLabel={INPUT_IDS.STATUS_TEXT}
                             defaultValue={defaultText}
                             maxLength={CONST.STATUS_TEXT_MAX_LENGTH}
+                            onFocus={() => {
+                                inputRef.current.measure((fx, fy, width, height, px, py) => {
+                                    formRef.current?.scrollTo(py - 68);
+                                });
+                            }}
                         />
                     </View>
                     <MenuItemWithTopDescription

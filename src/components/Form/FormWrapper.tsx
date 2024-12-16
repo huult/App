@@ -1,17 +1,18 @@
-import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
-import type {RefObject} from 'react';
+import React, {forwardRef, useCallback, useImperativeHandle, useMemo, useRef} from 'react';
+import type {ForwardedRef, RefObject} from 'react';
+import {ForwardRef} from 'react-is';
 // eslint-disable-next-line no-restricted-imports
 import type {ScrollView as RNScrollView, StyleProp, View, ViewStyle} from 'react-native';
-import {Dimensions, InteractionManager, Keyboard} from 'react-native';
+import {InteractionManager, Keyboard} from 'react-native';
 import {useOnyx} from 'react-native-onyx';
 import FormAlertWithSubmitButton from '@components/FormAlertWithSubmitButton';
 import FormElement from '@components/FormElement';
 import ScrollView from '@components/ScrollView';
 import ScrollViewWithContext from '@components/ScrollViewWithContext';
-import useKeyboardState from '@hooks/useKeyboardState';
 import useStyledSafeAreaInsets from '@hooks/useStyledSafeAreaInsets';
 import useThemeStyles from '@hooks/useThemeStyles';
 import * as ErrorUtils from '@libs/ErrorUtils';
+import CONST from '@src/CONST';
 import type {OnyxFormKey} from '@src/ONYXKEYS';
 import type {Form} from '@src/types/form';
 import type ChildrenProps from '@src/types/utils/ChildrenProps';
@@ -37,36 +38,35 @@ type FormWrapperProps = ChildrenProps &
 
         /** Callback to submit the form */
         onSubmit: () => void;
-
-        shouldScrollToEnd?: boolean;
     };
 
-function FormWrapper({
-    onSubmit,
-    children,
-    errors,
-    inputRefs,
-    submitButtonText,
-    footerContent,
-    isSubmitButtonVisible = true,
-    style,
-    submitButtonStyles,
-    submitFlexEnabled = true,
-    enabledWhenOffline,
-    isSubmitActionDangerous = false,
-    formID,
-    shouldUseScrollView = true,
-    scrollContextEnabled = false,
-    shouldHideFixErrorsAlert = false,
-    disablePressOnEnter = false,
-    isSubmitDisabled = false,
-    shouldScrollToEnd = false,
-}: FormWrapperProps) {
+function FormWrapper(
+    {
+        onSubmit,
+        children,
+        errors,
+        inputRefs,
+        submitButtonText,
+        footerContent,
+        isSubmitButtonVisible = true,
+        style,
+        submitButtonStyles,
+        submitFlexEnabled = true,
+        enabledWhenOffline,
+        isSubmitActionDangerous = false,
+        formID,
+        shouldUseScrollView = true,
+        scrollContextEnabled = false,
+        shouldHideFixErrorsAlert = false,
+        disablePressOnEnter = false,
+        isSubmitDisabled = false,
+    }: FormWrapperProps,
+    forwardedRef: ForwardedRef<{scrollTo: (e: number) => void}>,
+) {
     const styles = useThemeStyles();
     const {paddingBottom: safeAreaInsetPaddingBottom} = useStyledSafeAreaInsets();
     const formRef = useRef<RNScrollView>(null);
     const formContentRef = useRef<View>(null);
-    const [isLayoutDone, setIsLayoutDone] = useState(false);
 
     const [formState] = useOnyx<OnyxFormKey, Form>(`${formID}`);
 
@@ -103,19 +103,20 @@ function FormWrapper({
         focusInput?.focus?.();
     }, [errors, formState?.errorFields, inputRefs]);
 
-    useEffect(() => {
-        if (!shouldScrollToEnd || !isLayoutDone) {
-            return;
-        }
-        InteractionManager.runAfterInteractions(() => {
-            requestAnimationFrame(() => {
-                // Test mweb(debug)
-                // setTimeout(() => {
-                formRef.current?.scrollToEnd();
-                // }, 1000);
+    useImperativeHandle(forwardedRef, () => ({
+        scrollTo: (e) => {
+            InteractionManager.runAfterInteractions(() => {
+                requestAnimationFrame(() => {
+                    setTimeout(() => {
+                        formRef.current?.scrollTo({
+                            y: e,
+                            animated: false,
+                        });
+                    }, 500);
+                });
             });
-        });
-    }, [isLayoutDone, shouldScrollToEnd]);
+        },
+    }));
 
     const scrollViewContent = useCallback(
         () => (
@@ -192,9 +193,6 @@ function FormWrapper({
             contentContainerStyle={styles.flexGrow1}
             keyboardShouldPersistTaps="handled"
             ref={formRef}
-            onLayout={() => {
-                setIsLayoutDone(true);
-            }}
         >
             {scrollViewContent()}
         </ScrollView>
@@ -203,4 +201,4 @@ function FormWrapper({
 
 FormWrapper.displayName = 'FormWrapper';
 
-export default FormWrapper;
+export default forwardRef(FormWrapper);

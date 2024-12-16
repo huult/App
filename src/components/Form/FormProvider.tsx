@@ -2,7 +2,7 @@ import {useFocusEffect} from '@react-navigation/native';
 import lodashIsEqual from 'lodash/isEqual';
 import type {ForwardedRef, MutableRefObject, ReactNode, RefAttributes} from 'react';
 import React, {createRef, forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState} from 'react';
-import type {NativeSyntheticEvent, StyleProp, TextInputSubmitEditingEventData, ViewStyle} from 'react-native';
+import type {NativeSyntheticEvent, ScrollView as RNScrollView, StyleProp, TextInputSubmitEditingEventData, ViewStyle} from 'react-native';
 import {useOnyx} from 'react-native-onyx';
 import useDebounceNonReactive from '@hooks/useDebounceNonReactive';
 import useLocalize from '@hooks/useLocalize';
@@ -69,8 +69,6 @@ type FormProviderProps<TFormID extends OnyxFormKey = OnyxFormKey> = FormProps<TF
 
     /** Whether HTML is allowed in form inputs */
     allowHTML?: boolean;
-
-    shouldScrollToEnd?: boolean;
 };
 
 function FormProvider(
@@ -97,6 +95,7 @@ function FormProvider(
     const [inputValues, setInputValues] = useState<Form>(() => ({...draftValues}));
     const [errors, setErrors] = useState<GenericFormInputErrors>({});
     const hasServerError = useMemo(() => !!formState && !isEmptyObject(formState?.errors), [formState]);
+    const formRef = useRef<RNScrollView>(null);
 
     const onValidate = useCallback(
         (values: FormOnyxValues, shouldClearServerError = true) => {
@@ -263,10 +262,15 @@ function FormProvider(
         [errors, formID],
     );
 
+    const scrollTo = (e: number) => {
+        formRef.current?.scrollTo(e);
+    };
+
     useImperativeHandle(forwardedRef, () => ({
         resetForm,
         resetErrors,
         resetFormFieldError,
+        scrollTo,
     }));
 
     const registerInput = useCallback<RegisterInput>(
@@ -409,6 +413,7 @@ function FormProvider(
                 inputRefs={inputRefs}
                 errors={errors}
                 enabledWhenOffline={enabledWhenOffline}
+                ref={formRef}
             >
                 {typeof children === 'function' ? children({inputValues}) : children}
             </FormWrapper>
