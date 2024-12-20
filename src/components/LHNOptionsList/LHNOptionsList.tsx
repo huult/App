@@ -2,8 +2,9 @@ import {useRoute} from '@react-navigation/native';
 import type {FlashListProps} from '@shopify/flash-list';
 import {FlashList} from '@shopify/flash-list';
 import type {ReactElement} from 'react';
-import React, {memo, useCallback, useContext, useEffect, useMemo, useRef} from 'react';
-import {StyleSheet, View} from 'react-native';
+import React, {memo, useCallback, useContext, useEffect, useMemo, useRef, useState} from 'react';
+import type {LayoutChangeEvent} from 'react-native';
+import {InteractionManager, StyleSheet, View} from 'react-native';
 import {useOnyx} from 'react-native-onyx';
 import BlockingView from '@components/BlockingViews/BlockingView';
 import Icon from '@components/Icon';
@@ -246,14 +247,21 @@ function LHNOptionsList({style, contentContainerStyles, data, onSelectRow, optio
             return;
         }
 
-        // We need to use requestAnimationFrame to make sure it will scroll properly on iOS.
-        requestAnimationFrame(() => {
-            if (!(offset && flashListRef.current)) {
-                return;
-            }
-            flashListRef.current.scrollToOffset({offset});
+        InteractionManager.runAfterInteractions(() => {
+            // We need to use requestAnimationFrame to make sure it will scroll properly on iOS.
+            requestAnimationFrame(() => {
+                if (!(offset && flashListRef.current)) {
+                    return;
+                }
+                flashListRef.current.scrollToOffset({offset, animated: true});
+            });
         });
     }, [route, flashListRef, getScrollOffset]);
+
+    const getIndexFromOffset = (itemSize: number) => {
+        const offset = getScrollOffset(route) ?? 0;
+        return Math.floor(offset / itemSize); // Round down to nearest index
+    };
 
     return (
         <View style={[style ?? styles.flex1, shouldShowEmptyLHN ? styles.emptyLHNWrapper : undefined]}>
@@ -282,6 +290,7 @@ function LHNOptionsList({style, contentContainerStyles, data, onSelectRow, optio
                     showsVerticalScrollIndicator={false}
                     onLayout={onLayout}
                     onScroll={onScroll}
+                    initialScrollIndex={getIndexFromOffset(52)}
                 />
             )}
         </View>
