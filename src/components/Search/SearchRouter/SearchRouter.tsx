@@ -283,7 +283,12 @@ function SearchRouter({onRouterClose, shouldHideInputCaret}: SearchRouterProps) 
                         isFullWidth={shouldUseNarrowLayout}
                         onSearchQueryChange={onSearchQueryChange}
                         onSubmit={() => {
-                            submitSearch(textInputValue);
+                            const item = listRef.current?.getFocusedItem();
+                            if (!item) {
+                                submitSearch(textInputValue);
+                                return;
+                            }
+                            onListItemPress(item);
                         }}
                         caretHidden={shouldHideInputCaret}
                         routerListRef={listRef}

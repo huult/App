@@ -641,6 +641,7 @@ type SelectionListHandle = {
     scrollToIndex: (index: number, animated?: boolean) => void;
     updateAndScrollToFocusedIndex: (newFocusedIndex: number) => void;
     updateExternalTextInputFocus: (isTextInputFocused: boolean) => void;
+    getFocusedItem: <TItem extends ListItem>() => TItem | undefined;
 };
 
 type ItemLayout = {
