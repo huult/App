@@ -16,6 +16,7 @@ import useWindowDimensions from '@hooks/useWindowDimensions';
 import * as Browser from '@libs/Browser';
 import type {PlatformStackNavigationProp} from '@libs/Navigation/PlatformStackNavigation/types';
 import type {AuthScreensParamList, RootStackParamList} from '@libs/Navigation/types';
+import addViewportResizeListener from '@libs/VisualViewport';
 import toggleTestToolsModal from '@userActions/TestTool';
 import CONST from '@src/CONST';
 import CustomDevMenu from './CustomDevMenu';
@@ -162,7 +163,7 @@ function ScreenWrapper(
     const [didScreenTransitionEnd, setDidScreenTransitionEnd] = useState(false);
     const maxHeight = shouldEnableMaxHeight ? windowHeight : undefined;
     const minHeight = shouldEnableMinHeight && !Browser.isSafari() ? initialHeight : undefined;
-
+    const [shouldSetMaxHeight, setShouldSetMaxHeight] = useState(true);
     const route = useRoute();
     const shouldReturnToOldDot = useMemo(() => {
         return !!route?.params && 'singleNewDotEntry' in route.params && route.params.singleNewDotEntry === 'true';
@@ -190,6 +191,48 @@ function ScreenWrapper(
             onPanResponderGrant: Keyboard.dismiss,
         }),
     ).current;
+
+    useEffect(() => {
+        const updateDimensions = () => {
+            if (!Browser.isSafari()) {
+                return;
+            }
+            setShouldSetMaxHeight(true);
+        };
+
+        const removeViewportResizeListener = addViewportResizeListener(updateDimensions);
+
+        return () => {
+            removeViewportResizeListener();
+        };
+    }, []);
+
+    useEffect(() => {
+        if (!Browser.isSafari()) {
+            return;
+        }
+        const handleFocus = () => {
+            setShouldSetMaxHeight(true);
+        };
+
+        const handleBlur = () => {
+            setShouldSetMaxHeight(false);
+        };
+
+        const inputs = document.querySelectorAll('input, textarea');
+
+        inputs.forEach((input) => {
+            input.addEventListener('focus', handleFocus);
+            input.addEventListener('blur', handleBlur);
+        });
+
+        return () => {
+            inputs.forEach((input) => {
+                input.removeEventListener('focus', handleFocus);
+                input.removeEventListener('blur', handleBlur);
+            });
+        };
+    }, []);
 
     useEffect(() => {
         // On iOS, the transitionEnd event doesn't trigger some times. As such, we need to set a timeout
@@ -274,7 +317,12 @@ function ScreenWrapper(
                     {...keyboardDismissPanResponder.panHandlers}
                 >
                     <KeyboardAvoidingView
-                        style={[styles.w100, styles.h100, {maxHeight}, isAvoidingViewportScroll ? [styles.overflowAuto, styles.overscrollBehaviorContain] : {}]}
+                        style={[
+                            styles.w100,
+                            styles.h100,
+                            shouldSetMaxHeight ? {maxHeight} : undefined,
+                            isAvoidingViewportScroll ? [styles.overflowAuto, styles.overscrollBehaviorContain] : {},
+                        ]}
                         behavior={keyboardAvoidingViewBehavior}
                         enabled={shouldEnableKeyboardAvoidingView}
                     >
