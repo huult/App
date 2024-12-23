@@ -9,6 +9,7 @@ import useLocalize from '@hooks/useLocalize';
 import * as ValidationUtils from '@libs/ValidationUtils';
 import Visibility from '@libs/Visibility';
 import * as FormActions from '@userActions/FormActions';
+import {useMaxHeightContext} from '@src/BlurContext';
 import CONST from '@src/CONST';
 import type {OnyxFormDraftKey, OnyxFormKey} from '@src/ONYXKEYS';
 import ONYXKEYS from '@src/ONYXKEYS';
@@ -95,6 +96,7 @@ function FormProvider(
     const [inputValues, setInputValues] = useState<Form>(() => ({...draftValues}));
     const [errors, setErrors] = useState<GenericFormInputErrors>({});
     const hasServerError = useMemo(() => !!formState && !isEmptyObject(formState?.errors), [formState]);
+    const {setBlurState} = useMaxHeightContext();
 
     const onValidate = useCallback(
         (values: FormOnyxValues, shouldClearServerError = true) => {
@@ -371,6 +373,7 @@ function FormProvider(
                         }, VALIDATE_DELAY);
                     }
                     inputProps.onBlur?.(event);
+                    setBlurState(false);
                 },
                 onInputChange: (value, key) => {
                     const inputKey = key ?? inputID;
@@ -393,7 +396,7 @@ function FormProvider(
                 },
             };
         },
-        [draftValues, inputValues, formState?.errorFields, errors, submit, setTouchedInput, shouldValidateOnBlur, onValidate, hasServerError, formID, shouldValidateOnChange],
+        [draftValues, inputValues, formState?.errorFields, errors, submit, setTouchedInput, setBlurState, shouldValidateOnBlur, onValidate, hasServerError, formID, shouldValidateOnChange],
     );
     const value = useMemo(() => ({registerInput}), [registerInput]);
 

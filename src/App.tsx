@@ -5,6 +5,7 @@ import {GestureHandlerRootView} from 'react-native-gesture-handler';
 import {PickerStateProvider} from 'react-native-picker-select';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 import '../wdyr';
+import {BlurContextProvider} from './BlurContext';
 import ActiveElementRoleProvider from './components/ActiveElementRoleProvider';
 import ActiveWorkspaceContextProvider from './components/ActiveWorkspaceProvider';
 import ColorSchemeWrapper from './components/ColorSchemeWrapper';
@@ -65,47 +66,49 @@ function App({url}: AppProps) {
     return (
         <StrictModeWrapper>
             <SplashScreenStateContextProvider>
-                <InitialURLContextProvider url={url}>
-                    <GestureHandlerRootView style={fill}>
-                        <ComposeProviders
-                            components={[
-                                OnyxProvider,
-                                ThemeProvider,
-                                ThemeStylesProvider,
-                                ThemeIllustrationsProvider,
-                                SafeAreaProvider,
-                                PortalProvider,
-                                SafeArea,
-                                LocaleContextProvider,
-                                HTMLEngineProvider,
-                                KeyboardStateProvider,
-                                PopoverContextProvider,
-                                CurrentReportIDContextProvider,
-                                ScrollOffsetContextProvider,
-                                ReportAttachmentsProvider,
-                                PickerStateProvider,
-                                EnvironmentProvider,
-                                CustomStatusBarAndBackgroundContextProvider,
-                                ActiveElementRoleProvider,
-                                ActiveWorkspaceContextProvider,
-                                ReportIDsContextProvider,
-                                PlaybackContextProvider,
-                                FullScreenContextProvider,
-                                VolumeContextProvider,
-                                VideoPopoverMenuContextProvider,
-                                KeyboardProvider,
-                                SearchRouterContextProvider,
-                            ]}
-                        >
-                            <CustomStatusBarAndBackground />
-                            <ErrorBoundary errorMessage="NewExpensify crash caught by error boundary">
-                                <ColorSchemeWrapper>
-                                    <Expensify />
-                                </ColorSchemeWrapper>
-                            </ErrorBoundary>
-                        </ComposeProviders>
-                    </GestureHandlerRootView>
-                </InitialURLContextProvider>
+                <BlurContextProvider>
+                    <InitialURLContextProvider url={url}>
+                        <GestureHandlerRootView style={fill}>
+                            <ComposeProviders
+                                components={[
+                                    OnyxProvider,
+                                    ThemeProvider,
+                                    ThemeStylesProvider,
+                                    ThemeIllustrationsProvider,
+                                    SafeAreaProvider,
+                                    PortalProvider,
+                                    SafeArea,
+                                    LocaleContextProvider,
+                                    HTMLEngineProvider,
+                                    KeyboardStateProvider,
+                                    PopoverContextProvider,
+                                    CurrentReportIDContextProvider,
+                                    ScrollOffsetContextProvider,
+                                    ReportAttachmentsProvider,
+                                    PickerStateProvider,
+                                    EnvironmentProvider,
+                                    CustomStatusBarAndBackgroundContextProvider,
+                                    ActiveElementRoleProvider,
+                                    ActiveWorkspaceContextProvider,
+                                    ReportIDsContextProvider,
+                                    PlaybackContextProvider,
+                                    FullScreenContextProvider,
+                                    VolumeContextProvider,
+                                    VideoPopoverMenuContextProvider,
+                                    KeyboardProvider,
+                                    SearchRouterContextProvider,
+                                ]}
+                            >
+                                <CustomStatusBarAndBackground />
+                                <ErrorBoundary errorMessage="NewExpensify crash caught by error boundary">
+                                    <ColorSchemeWrapper>
+                                        <Expensify />
+                                    </ColorSchemeWrapper>
+                                </ErrorBoundary>
+                            </ComposeProviders>
+                        </GestureHandlerRootView>
+                    </InitialURLContextProvider>
+                </BlurContextProvider>
             </SplashScreenStateContextProvider>
         </StrictModeWrapper>
     );
