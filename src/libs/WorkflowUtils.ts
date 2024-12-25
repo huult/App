@@ -255,6 +255,7 @@ function convertApprovalWorkflowToPolicyEmployees({
             pendingAction,
             pendingFields: {
                 submitsTo: pendingAction,
+                forwardsTo: updatedEmployeeList[email]?.pendingFields?.forwardsTo,
             },
         };
     });

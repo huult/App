@@ -247,6 +247,28 @@ function setApprovalWorkflowApprover(approver: Approver, approverIndex: number, 
     }
 
     const approvers: Array<Approver | undefined> = [...currentApprovalWorkflow.approvers];
+    const previousApprover = approvers.at(approverIndex)?.email;
+    const pendingFieldsOfForwardsTo = previousApprover ? currentApprovalWorkflow.members.find((item) => item.email === previousApprover) : undefined;
+    const newMembers = currentApprovalWorkflow.members.map((item) => {
+        if (item.email === approver.email) {
+            return {
+                ...item,
+                pendingFields: pendingFieldsOfForwardsTo?.pendingFields ?? item.pendingFields, // Fallback to item's original pendingFields if undefined
+            };
+        }
+
+        if (item.email === approvers.at(approverIndex)?.email) {
+            return {
+                ...item,
+                pendingFields: {
+                    forwardsTo: null,
+                },
+            };
+        }
+
+        return item;
+    });
+
     approvers[approverIndex] = approver;
 
     // Check if the approver forwards to other approvers and add them to the list
@@ -277,7 +299,7 @@ function setApprovalWorkflowApprover(approver: Approver, approverIndex: number, 
         };
     });
 
-    Onyx.merge(ONYXKEYS.APPROVAL_WORKFLOW, {approvers: updatedApprovers, errors});
+    Onyx.merge(ONYXKEYS.APPROVAL_WORKFLOW, {approvers: updatedApprovers, members: newMembers, errors});
 }
 
 /** Clear one approver at the specified index in the approval workflow that is currently edited */
