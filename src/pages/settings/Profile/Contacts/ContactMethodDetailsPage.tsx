@@ -177,63 +177,99 @@ function ContactMethodDetailsPage({route}: ContactMethodDetailsPageProps) {
     const isFailedAddContactMethod = !!loginData.errorFields?.addedLogin;
     const isFailedRemovedContactMethod = !!loginData.errorFields?.deletedLogin;
 
-    const getMenuItems = () => (
-        <>
-            {canChangeDefaultContactMethod ? (
-                <OfflineWithFeedback
-                    errors={ErrorUtils.getLatestErrorField(loginData, 'defaultLogin')}
-                    errorRowStyles={[themeStyles.ml8, themeStyles.mr5]}
-                    onClose={() => User.clearContactMethodErrors(contactMethod, 'defaultLogin')}
-                >
-                    <MenuItem
-                        title={translate('contacts.setAsDefault')}
-                        icon={Expensicons.Star}
-                        onPress={setAsDefault}
+    const getMenuItems = (onlyRemove = false) => {
+        if (onlyRemove) {
+            return (
+                <>
+                    <OfflineWithFeedback
+                        pendingAction={loginData.pendingFields?.deletedLogin}
+                        errors={ErrorUtils.getLatestErrorField(loginData, 'deletedLogin')}
+                        errorRowStyles={[themeStyles.mt6, themeStyles.ph5]}
+                        onClose={() => User.clearContactMethodErrors(contactMethod, 'deletedLogin')}
+                    >
+                        <MenuItem
+                            title={translate('common.remove')}
+                            icon={Expensicons.Trashcan}
+                            iconFill={theme.danger}
+                            onPress={() => toggleDeleteModal(true)}
+                        />
+                    </OfflineWithFeedback>
+                    <ConfirmModal
+                        title={translate('contacts.removeContactMethod')}
+                        onConfirm={confirmDeleteAndHideModal}
+                        onCancel={() => toggleDeleteModal(false)}
+                        onModalHide={() => {
+                            InteractionManager.runAfterInteractions(() => {
+                                validateCodeFormRef.current?.focusLastSelected?.();
+                            });
+                        }}
+                        prompt={translate('contacts.removeAreYouSure')}
+                        confirmText={translate('common.yesContinue')}
+                        cancelText={translate('common.cancel')}
+                        isVisible={isDeleteModalOpen && !isDefaultContactMethod}
+                        danger
                     />
-                </OfflineWithFeedback>
-            ) : null}
-            {isDefaultContactMethod ? (
-                <OfflineWithFeedback
-                    pendingAction={loginData.pendingFields?.defaultLogin}
-                    errors={ErrorUtils.getLatestErrorField(loginData, isFailedRemovedContactMethod ? 'deletedLogin' : 'defaultLogin')}
-                    errorRowStyles={[themeStyles.ml8, themeStyles.mr5]}
-                    onClose={() => User.clearContactMethodErrors(contactMethod, isFailedRemovedContactMethod ? 'deletedLogin' : 'defaultLogin')}
-                >
-                    <Text style={[themeStyles.ph5, themeStyles.mv3]}>{translate('contacts.yourDefaultContactMethod')}</Text>
-                </OfflineWithFeedback>
-            ) : (
-                <OfflineWithFeedback
-                    pendingAction={loginData.pendingFields?.deletedLogin}
-                    errors={ErrorUtils.getLatestErrorField(loginData, 'deletedLogin')}
-                    errorRowStyles={[themeStyles.mt6, themeStyles.ph5]}
-                    onClose={() => User.clearContactMethodErrors(contactMethod, 'deletedLogin')}
-                >
-                    <MenuItem
-                        title={translate('common.remove')}
-                        icon={Expensicons.Trashcan}
-                        iconFill={theme.danger}
-                        onPress={() => toggleDeleteModal(true)}
-                    />
-                </OfflineWithFeedback>
-            )}
+                </>
+            );
+        }
+        return (
+            <>
+                {canChangeDefaultContactMethod ? (
+                    <OfflineWithFeedback
+                        errors={ErrorUtils.getLatestErrorField(loginData, 'defaultLogin')}
+                        errorRowStyles={[themeStyles.ml8, themeStyles.mr5]}
+                        onClose={() => User.clearContactMethodErrors(contactMethod, 'defaultLogin')}
+                    >
+                        <MenuItem
+                            title={translate('contacts.setAsDefault')}
+                            icon={Expensicons.Star}
+                            onPress={setAsDefault}
+                        />
+                    </OfflineWithFeedback>
+                ) : null}
+                {isDefaultContactMethod ? (
+                    <OfflineWithFeedback
+                        pendingAction={loginData.pendingFields?.defaultLogin}
+                        errors={ErrorUtils.getLatestErrorField(loginData, isFailedRemovedContactMethod ? 'deletedLogin' : 'defaultLogin')}
+                        errorRowStyles={[themeStyles.ml8, themeStyles.mr5]}
+                        onClose={() => User.clearContactMethodErrors(contactMethod, isFailedRemovedContactMethod ? 'deletedLogin' : 'defaultLogin')}
+                    >
+                        <Text style={[themeStyles.ph5, themeStyles.mv3]}>{translate('contacts.yourDefaultContactMethod')}</Text>
+                    </OfflineWithFeedback>
+                ) : (
+                    <OfflineWithFeedback
+                        pendingAction={loginData.pendingFields?.deletedLogin}
+                        errors={ErrorUtils.getLatestErrorField(loginData, 'deletedLogin')}
+                        errorRowStyles={[themeStyles.mt6, themeStyles.ph5]}
+                        onClose={() => User.clearContactMethodErrors(contactMethod, 'deletedLogin')}
+                    >
+                        <MenuItem
+                            title={translate('common.remove')}
+                            icon={Expensicons.Trashcan}
+                            iconFill={theme.danger}
+                            onPress={() => toggleDeleteModal(true)}
+                        />
+                    </OfflineWithFeedback>
+                )}
 
-            <ConfirmModal
-                title={translate('contacts.removeContactMethod')}
-                onConfirm={confirmDeleteAndHideModal}
-                onCancel={() => toggleDeleteModal(false)}
-                onModalHide={() => {
-                    InteractionManager.runAfterInteractions(() => {
-                        validateCodeFormRef.current?.focusLastSelected?.();
-                    });
-                }}
-                prompt={translate('contacts.removeAreYouSure')}
-                confirmText={translate('common.yesContinue')}
-                cancelText={translate('common.cancel')}
-                isVisible={isDeleteModalOpen && !isDefaultContactMethod}
-                danger
-            />
-        </>
-    );
+                <ConfirmModal
+                    title={translate('contacts.removeContactMethod')}
+                    onConfirm={confirmDeleteAndHideModal}
+                    onCancel={() => toggleDeleteModal(false)}
+                    onModalHide={() => {
+                        InteractionManager.runAfterInteractions(() => {
+                            validateCodeFormRef.current?.focusLastSelected?.();
+                        });
+                    }}
+                    prompt={translate('contacts.removeAreYouSure')}
+                    confirmText={translate('common.yesContinue')}
+                    cancelText={translate('common.cancel')}
+                    isVisible={isDeleteModalOpen && !isDefaultContactMethod}
+                    danger
+                />
+            </>
+        );
+    };
 
     return (
         <ScreenWrapper
@@ -273,6 +309,7 @@ function ContactMethodDetailsPage({route}: ContactMethodDetailsPageProps) {
                     }}
                     sendValidateCode={() => User.requestContactMethodValidateCode(contactMethod)}
                     descriptionPrimary={translate('contacts.enterMagicCode', {contactMethod: formattedContactMethod})}
+                    footer={() => getMenuItems(true)}
                 />
 
                 {!isValidateCodeActionModalVisible && getMenuItems()}
