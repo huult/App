@@ -1,6 +1,6 @@
 import {Str} from 'expensify-common';
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
-import {InteractionManager, Keyboard} from 'react-native';
+import {InteractionManager, Keyboard, View} from 'react-native';
 import {useOnyx} from 'react-native-onyx';
 import FullPageNotFoundView from '@components/BlockingViews/FullPageNotFoundView';
 import ConfirmModal from '@components/ConfirmModal';
@@ -179,6 +179,9 @@ function ContactMethodDetailsPage({route}: ContactMethodDetailsPageProps) {
 
     const getMenuItems = (onlyRemove = false) => {
         if (onlyRemove) {
+            if (isDefaultContactMethod) {
+                return <View />;
+            }
             return (
                 <>
                     <OfflineWithFeedback
