@@ -34,6 +34,8 @@ type PushRowWithModalProps = {
 
     /** The ID of the input that should be reset when the value changes */
     stateInputIDToReset?: string;
+
+    onBlur?: () => void;
 };
 
 function PushRowWithModal({
@@ -47,10 +49,15 @@ function PushRowWithModal({
     errorText,
     onInputChange = () => {},
     stateInputIDToReset,
+    onBlur,
 }: PushRowWithModalProps) {
     const [isModalVisible, setIsModalVisible] = useState(false);
+    const [valueChanged, setValueChanged] = useState(false);
 
     const handleModalClose = () => {
+        if (!value || valueChanged) {
+            onBlur?.();
+        }
         setIsModalVisible(false);
     };
 
@@ -60,6 +67,7 @@ function PushRowWithModal({
 
     const handleOptionChange = (optionValue: string) => {
         onInputChange(optionValue);
+        setValueChanged(optionValue !== value);
 
         if (stateInputIDToReset) {
             onInputChange('', stateInputIDToReset);
