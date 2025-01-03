@@ -19,6 +19,7 @@ import * as styleConst from '@components/TextInput/styleConst';
 import TextInputClearButton from '@components/TextInput/TextInputClearButton';
 import TextInputLabel from '@components/TextInput/TextInputLabel';
 import useHtmlPaste from '@hooks/useHtmlPaste';
+import useIsScrollBarVisible from '@hooks/useIsScrollBarVisible';
 import useLocalize from '@hooks/useLocalize';
 import useMarkdownStyle from '@hooks/useMarkdownStyle';
 import useStyleUtils from '@hooks/useStyleUtils';
@@ -27,6 +28,7 @@ import useThemeStyles from '@hooks/useThemeStyles';
 import * as Browser from '@libs/Browser';
 import * as InputUtils from '@libs/InputUtils';
 import isInputAutoFilled from '@libs/isInputAutoFilled';
+import updateMultilineInputRange from '@libs/updateMultilineInputRange';
 import variables from '@styles/variables';
 import CONST from '@src/CONST';
 import type {BaseTextInputProps, BaseTextInputRef} from './types';
@@ -107,6 +109,9 @@ function BaseTextInput(
     const input = useRef<HTMLInputElement | null>(null);
     const isLabelActive = useRef(initialActiveLabel);
     const didScrollToEndRef = useRef(false);
+    const [h, setH] = useState(0);
+
+    const isScrollBarVisible = useIsScrollBarVisible(input, value ?? '');
 
     useHtmlPaste(input as MutableRefObject<TextInput | null>, undefined, isMarkdownEnabled);
 
@@ -212,6 +217,16 @@ function BaseTextInput(
             deactivateLabel();
         }
     }, [activateLabel, deactivateLabel, hasValue, isFocused]);
+
+    useEffect(() => {
+        if (!isScrollBarVisible || !autoGrowHeight) {
+            return;
+        }
+
+        if (input.current && 'value' in input.current && typeof input.current.value === 'string' && typeof input.current.setSelectionRange === 'function') {
+            input.current.scrollTop = h;
+        }
+    }, [isScrollBarVisible, h, autoGrowHeight]);
 
     // When the value prop gets cleared externally, we need to keep the ref in sync:
     useEffect(() => {
@@ -366,7 +381,7 @@ function BaseTextInput(
                                     input.current = element as HTMLInputElement | null;
                                 }}
                                 // eslint-disable-next-line
-                                {...inputProps}
+
                                 autoCorrect={inputProps.secureTextEntry ? false : autoCorrect}
                                 placeholder={newPlaceholder}
                                 placeholderTextColor={theme.placeholderText}
@@ -413,6 +428,14 @@ function BaseTextInput(
                                 readOnly={isReadOnly}
                                 defaultValue={defaultValue}
                                 markdownStyle={markdownStyle}
+                                {...inputProps}
+                                onContentSizeChange={(e) => {
+                                    if (inputProps?.onContentSizeChange) {
+                                        inputProps.onContentSizeChange(e);
+                                    }
+                                    console.log('****** onContentSizeChange ******', e.nativeEvent.contentSize.height);
+                                    setH(e.nativeEvent.contentSize.height);
+                                }}
                             />
                             {!!suffixCharacter && (
                                 <View style={[styles.textInputSuffixWrapper, suffixContainerStyle]}>
@@ -520,6 +543,8 @@ function BaseTextInput(
                         styles.visibilityHidden,
                     ]}
                     onLayout={(e) => {
+                        console.log('****** input scrollHeight during the initial layout ******', input?.current?.scrollHeight);
+
                         if (e.nativeEvent.layout.width === 0 && e.nativeEvent.layout.height === 0) {
                             return;
                         }
