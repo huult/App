@@ -60,6 +60,10 @@ function TabSelectorItem({
         isFocused,
     );
 
+    console.log('****** shouldShowEducationalTooltip ******', shouldShowEducationalTooltip);
+
+    console.log('****** shouldShowProductTrainingTooltip ******', shouldShowProductTrainingTooltip);
+
     return (
         <EducationalTooltip
             shouldRender={!!(shouldShowEducationalTooltip && shouldShowProductTrainingTooltip)}
@@ -72,10 +76,8 @@ function TabSelectorItem({
                 wrapperStyle={[styles.flexGrow1]}
                 onPress={() => {
                     onPress();
-                    if (isActive) {
-                        return;
-                    }
-                    hideProductTrainingTooltip();
+
+                    // hideProductTrainingTooltip();
                 }}
                 onHoverIn={() => setIsHovered(true)}
                 onHoverOut={() => setIsHovered(false)}
