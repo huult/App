@@ -12,6 +12,7 @@ const {
     BOTTOM_NAV_INBOX_TOOLTIP,
     LHN_WORKSPACE_CHAT_TOOLTIP,
     GLOBAL_CREATE_TOOLTIP,
+    CREATE_EXPENSE_PER_DIEM,
 } = CONST.PRODUCT_TRAINING_TOOLTIP_NAMES;
 
 type ProductTrainingTooltipName = ValueOf<typeof CONST.PRODUCT_TRAINING_TOOLTIP_NAMES>;
@@ -110,6 +111,17 @@ const TOOLTIPS: Record<ProductTrainingTooltipName, TooltipData> = {
         ],
         onHideTooltip: () => dismissProductTraining(LHN_WORKSPACE_CHAT_TOOLTIP),
         name: LHN_WORKSPACE_CHAT_TOOLTIP,
+        priority: 800,
+        shouldShow: () => true,
+    },
+    [CREATE_EXPENSE_PER_DIEM]: {
+        content: [
+            {text: 'productTrainingTooltip.createExpensePerDiem.part1', isBold: true},
+            {text: 'productTrainingTooltip.createExpensePerDiem.part2', isBold: false},
+            {text: 'productTrainingTooltip.createExpensePerDiem.part3', isBold: false},
+        ],
+        onHideTooltip: () => dismissProductTraining(CREATE_EXPENSE_PER_DIEM),
+        name: CREATE_EXPENSE_PER_DIEM,
         priority: 800,
         shouldShow: () => true,
     },

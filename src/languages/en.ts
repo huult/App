@@ -5628,6 +5628,11 @@ const translations = {
             part2: ', start chatting,',
             part3: '\nand more!',
         },
+        createExpensePerDiem: {
+            part1: 'Log per diem expenses',
+            part2: ', track your daily allowances,',
+            part3: '\nand stay on top of your expenses!',
+        },
     },
     discardChangesConfirmation: {
         title: 'Discard changes?',

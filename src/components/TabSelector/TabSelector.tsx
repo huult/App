@@ -1,9 +1,12 @@
 import type {MaterialTopTabBarProps} from '@react-navigation/material-top-tabs/lib/typescript/src/types';
+import {useIsFocused} from '@react-navigation/native';
 import React, {useEffect, useMemo, useState} from 'react';
 import {View} from 'react-native';
 import FocusTrapContainerElement from '@components/FocusTrap/FocusTrapContainerElement';
 import * as Expensicons from '@components/Icon/Expensicons';
 import type {LocaleContextProps} from '@components/LocaleContextProvider';
+import {useProductTrainingContext} from '@components/ProductTrainingContext';
+import EducationalTooltip from '@components/Tooltip/EducationalTooltip';
 import useLocalize from '@hooks/useLocalize';
 import useTheme from '@hooks/useTheme';
 import useThemeStyles from '@hooks/useThemeStyles';
@@ -104,6 +107,7 @@ function TabSelector({state, navigation, onTabPress = () => {}, position, onFocu
                             backgroundColor={backgroundColor}
                             isActive={isActive}
                             shouldShowLabelWhenInactive={shouldShowLabelWhenInactive}
+                            shouldShowEducationalTooltip={!!isActive && route.name === CONST.TAB_REQUEST.DISTANCE}
                         />
                     );
                 })}

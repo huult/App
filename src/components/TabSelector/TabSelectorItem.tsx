@@ -1,6 +1,9 @@
+import {useIsFocused} from '@react-navigation/native';
 import React, {useState} from 'react';
 import {Animated} from 'react-native';
 import PressableWithFeedback from '@components/Pressable/PressableWithFeedback';
+import {useProductTrainingContext} from '@components/ProductTrainingContext';
+import EducationalTooltip from '@components/Tooltip/EducationalTooltip';
 import useThemeStyles from '@hooks/useThemeStyles';
 import CONST from '@src/CONST';
 import type IconAsset from '@src/types/utils/IconAsset';
@@ -33,6 +36,8 @@ type TabSelectorItemProps = {
 
     /** Whether to show the label when the tab is inactive */
     shouldShowLabelWhenInactive?: boolean;
+
+    shouldShowEducationalTooltip?: boolean;
 };
 
 function TabSelectorItem({
@@ -44,34 +49,53 @@ function TabSelectorItem({
     inactiveOpacity = 1,
     isActive = false,
     shouldShowLabelWhenInactive = true,
+    shouldShowEducationalTooltip = false,
 }: TabSelectorItemProps) {
     const styles = useThemeStyles();
     const [isHovered, setIsHovered] = useState(false);
+    const isFocused = useIsFocused();
+
+    const {renderProductTrainingTooltip, shouldShowProductTrainingTooltip, hideProductTrainingTooltip} = useProductTrainingContext(
+        CONST.PRODUCT_TRAINING_TOOLTIP_NAMES.CREATE_EXPENSE_PER_DIEM,
+        isFocused,
+    );
 
     return (
-        <AnimatedPressableWithFeedback
-            accessibilityLabel={title}
-            style={[styles.tabSelectorButton, styles.tabBackground(isHovered, isActive, backgroundColor), styles.userSelectNone]}
-            wrapperStyle={[styles.flexGrow1]}
-            onPress={onPress}
-            onHoverIn={() => setIsHovered(true)}
-            onHoverOut={() => setIsHovered(false)}
-            role={CONST.ROLE.BUTTON}
-            dataSet={{[CONST.SELECTION_SCRAPER_HIDDEN_ELEMENT]: true}}
+        <EducationalTooltip
+            shouldRender={!!(shouldShowEducationalTooltip && shouldShowProductTrainingTooltip)}
+            renderTooltipContent={renderProductTrainingTooltip}
+            wrapperStyle={styles.reportActionComposeTooltipWrapper}
         >
-            <TabIcon
-                icon={icon}
-                activeOpacity={styles.tabOpacity(isHovered, isActive, activeOpacity, inactiveOpacity).opacity}
-                inactiveOpacity={styles.tabOpacity(isHovered, isActive, inactiveOpacity, activeOpacity).opacity}
-            />
-            {(shouldShowLabelWhenInactive || isActive) && (
-                <TabLabel
-                    title={title}
+            <AnimatedPressableWithFeedback
+                accessibilityLabel={title}
+                style={[styles.tabSelectorButton, styles.tabBackground(isHovered, isActive, backgroundColor), styles.userSelectNone]}
+                wrapperStyle={[styles.flexGrow1]}
+                onPress={() => {
+                    onPress();
+                    if (isActive) {
+                        return;
+                    }
+                    hideProductTrainingTooltip();
+                }}
+                onHoverIn={() => setIsHovered(true)}
+                onHoverOut={() => setIsHovered(false)}
+                role={CONST.ROLE.BUTTON}
+                dataSet={{[CONST.SELECTION_SCRAPER_HIDDEN_ELEMENT]: true}}
+            >
+                <TabIcon
+                    icon={icon}
                     activeOpacity={styles.tabOpacity(isHovered, isActive, activeOpacity, inactiveOpacity).opacity}
                     inactiveOpacity={styles.tabOpacity(isHovered, isActive, inactiveOpacity, activeOpacity).opacity}
                 />
-            )}
-        </AnimatedPressableWithFeedback>
+                {(shouldShowLabelWhenInactive || isActive) && (
+                    <TabLabel
+                        title={title}
+                        activeOpacity={styles.tabOpacity(isHovered, isActive, activeOpacity, inactiveOpacity).opacity}
+                        inactiveOpacity={styles.tabOpacity(isHovered, isActive, inactiveOpacity, activeOpacity).opacity}
+                    />
+                )}
+            </AnimatedPressableWithFeedback>
+        </EducationalTooltip>
     );
 }
 
