@@ -23,17 +23,19 @@ import useWaitForNavigation from '@hooks/useWaitForNavigation';
 import {isConnectionInProgress} from '@libs/actions/connections';
 import * as CardUtils from '@libs/CardUtils';
 import * as CurrencyUtils from '@libs/CurrencyUtils';
+import getTopmostBottomTabRoute from '@libs/Navigation/getTopmostBottomTabRoute';
 import getTopmostRouteName from '@libs/Navigation/getTopmostRouteName';
-import Navigation from '@libs/Navigation/Navigation';
+import Navigation, {navigationRef} from '@libs/Navigation/Navigation';
 import type {PlatformStackScreenProps} from '@libs/Navigation/PlatformStackNavigation/types';
 import * as PolicyUtils from '@libs/PolicyUtils';
 import {getDefaultWorkspaceAvatar, getIcons, getPolicyExpenseChat, getReportName, getReportOfflinePendingActionAndErrors} from '@libs/ReportUtils';
-import type {FullScreenNavigatorParamList} from '@navigation/types';
+import type {FullScreenNavigatorParamList, RootStackParamList, State} from '@navigation/types';
 import * as App from '@userActions/App';
 import * as Policy from '@userActions/Policy/Policy';
 import * as ReimbursementAccount from '@userActions/ReimbursementAccount';
 import CONST from '@src/CONST';
 import type {TranslationPaths} from '@src/languages/types';
+import NAVIGATORS from '@src/NAVIGATORS';
 import ONYXKEYS from '@src/ONYXKEYS';
 import type {Route} from '@src/ROUTES';
 import ROUTES from '@src/ROUTES';
@@ -403,7 +405,21 @@ function WorkspaceInitialPage({policyDraft, policy: policyProp, route}: Workspac
                             Navigation.resetToHome();
                             Navigation.isNavigationReady().then(() => Navigation.navigate(route.params?.backTo as Route));
                         } else {
-                            Navigation.dismissModal();
+                            const state = navigationRef.current?.getRootState() as State<RootStackParamList>;
+                            const shouldPopHome =
+                                state.routes?.length >= 3 &&
+                                state.routes.at(-1)?.name === NAVIGATORS.FULL_SCREEN_NAVIGATOR &&
+                                state.routes.at(-2)?.name === SCREENS.SETTINGS.WORKSPACES &&
+                                state.routes.at(-3)?.name === SCREENS.REPORT &&
+                                getTopmostBottomTabRoute(state)?.name === SCREENS.SETTINGS.ROOT;
+
+                            if (shouldPopHome) {
+                                Navigation.resetToHome();
+                                navigationRef.goBack();
+                                Navigation.navigate(ROUTES.REPORT_WITH_ID_DETAILS.getRoute(`${currentUserPolicyExpenseChat?.reportID ?? CONST.DEFAULT_NUMBER_ID}`));
+                            } else {
+                                Navigation.dismissModal();
+                            }
                         }
                     }}
                     policyAvatar={policyAvatar}
