@@ -394,6 +394,7 @@ function WorkspaceProfilePage({policyDraft, policy: policyProp, route}: Workspac
                             </View>
                         )}
                         {isPolicyUser && readOnly && (
+                            // or {!(isAdmin || isOwner) && ( like https://github.com/Expensify/App/blob/46e252577d25630e33bc5e23f8992004b5d06ccb/src/pages/workspace/WorkspacesListPage.tsx#L198
                             <View style={[styles.flexRow, styles.mt6, styles.mnw120]}>
                                 <Button
                                     accessibilityLabel={translate('common.leave')}
