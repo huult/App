@@ -56,6 +56,7 @@ function WorkspaceProfilePage({policyDraft, policy: policyProp, route}: Workspac
     // When we create a new workspace, the policy prop will be empty on the first render. Therefore, we have to use policyDraft until policy has been set in Onyx.
     const policy = policyDraft?.id ? policyDraft : policyProp;
     const isPolicyAdmin = PolicyUtils.isPolicyAdmin(policy);
+    const isPolicyUser = PolicyUtils.isPolicyUser(policy);
     const outputCurrency = policy?.outputCurrency ?? '';
     const currencySymbol = currencyList?.[outputCurrency]?.symbol ?? '';
     const formattedCurrency = !isEmptyObject(policy) && !isEmptyObject(currencyList) ? `${outputCurrency} - ${currencySymbol}` : '';
@@ -160,6 +161,7 @@ function WorkspaceProfilePage({policyDraft, policy: policyProp, route}: Workspac
     );
 
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false);
 
     const confirmDeleteAndHideModal = useCallback(() => {
         if (!policy?.id || !policyName) {
@@ -167,6 +169,26 @@ function WorkspaceProfilePage({policyDraft, policy: policyProp, route}: Workspac
         }
 
         Policy.deleteWorkspace(policy.id, policyName);
+        setIsDeleteModalOpen(false);
+
+        // If the workspace being deleted is the active workspace, switch to the "All Workspaces" view
+        if (activeWorkspaceID === policy.id) {
+            setActiveWorkspaceID(undefined);
+            Navigation.dismissModal();
+            const rootState = navigationRef.current?.getRootState() as State<RootStackParamList>;
+            const topmostBottomTabRoute = getTopmostBottomTabRoute(rootState);
+            if (topmostBottomTabRoute?.name === SCREENS.SETTINGS.ROOT) {
+                Navigation.setParams({policyID: undefined}, topmostBottomTabRoute?.key);
+            }
+        }
+    }, [policy?.id, policyName, activeWorkspaceID, setActiveWorkspaceID]);
+
+    const confirmLeaveAndHideModal = useCallback(() => {
+        if (!policy?.id || !policyName) {
+            return;
+        }
+
+        Policy.leaveWorkspace(policy.id);
         setIsDeleteModalOpen(false);
 
         // If the workspace being deleted is the active workspace, switch to the "All Workspaces" view
@@ -227,7 +249,7 @@ function WorkspaceProfilePage({policyDraft, policy: policyProp, route}: Workspac
                                 styles.sectionMenuItemTopDescription,
                             ]}
                             editIconStyle={styles.smallEditIconWorkspace}
-                            isUsingDefaultAvatar={!policy?.avatarURL ?? false}
+                            isUsingDefaultAvatar={!policy?.avatarURL}
                             onImageSelected={(file) => {
                                 if (!policy?.id) {
                                     return;
@@ -371,6 +393,16 @@ function WorkspaceProfilePage({policyDraft, policy: policyProp, route}: Workspac
                                 )}
                             </View>
                         )}
+                        {isPolicyUser && readOnly && (
+                            <View style={[styles.flexRow, styles.mt6, styles.mnw120]}>
+                                <Button
+                                    accessibilityLabel={translate('common.leave')}
+                                    text={translate('common.leave')}
+                                    onPress={() => setIsLeaveModalOpen(true)}
+                                    icon={Expensicons.Exit}
+                                />
+                            </View>
+                        )}
                     </Section>
                     <ConfirmModal
                         title={translate('workspace.common.delete')}
@@ -379,6 +411,16 @@ function WorkspaceProfilePage({policyDraft, policy: policyProp, route}: Workspac
                         onCancel={() => setIsDeleteModalOpen(false)}
                         prompt={hasCardFeedOrExpensifyCard ? translate('workspace.common.deleteWithCardsConfirmation') : translate('workspace.common.deleteConfirmation')}
                         confirmText={translate('common.delete')}
+                        cancelText={translate('common.cancel')}
+                        danger
+                    />
+                    <ConfirmModal
+                        title={translate('common.leave')}
+                        isVisible={isLeaveModalOpen}
+                        onConfirm={confirmLeaveAndHideModal}
+                        onCancel={() => setIsLeaveModalOpen(false)}
+                        prompt={translate('workspace.common.leaveConfirmation')}
+                        confirmText={translate('common.leave')}
                         cancelText={translate('common.cancel')}
                         danger
                     />

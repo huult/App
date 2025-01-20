@@ -2640,6 +2640,8 @@ const translations = {
             planType: 'Plan type',
             submitExpense: 'Submit expenses using your workspace chat below:',
             defaultCategory: 'Default category',
+            leaveConfirmation:
+                'Are you sure you want to leave this workspace? Once you leave, you will lose access to all data and settings associated with this workspace. This action cannot be undone.',
         },
         perDiem: {
             subtitle: 'Set per diem rates to control daily employee spend. ',
