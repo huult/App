@@ -141,6 +141,7 @@ import {
     getCurrency,
     getMerchant,
     getTransaction,
+    getTransactionViolations,
     getUpdatedTransaction,
     hasReceipt as hasReceiptTransactionUtils,
     isDistanceRequest as isDistanceRequestTransactionUtils,
@@ -6522,6 +6523,36 @@ function deleteMoneyRequest(transactionID: string | undefined, reportAction: Ony
         reportPreviewAction,
     } = prepareToCleanUpMoneyRequest(transactionID, reportAction);
 
+    const duplicates =
+        allTransactionViolations?.[`${ONYXKEYS.COLLECTION.TRANSACTION_VIOLATIONS}${transactionID}`]?.find((violation) => violation.name === CONST.VIOLATIONS.DUPLICATED_TRANSACTION)?.data
+            ?.duplicates ?? [];
+    const transactionViolationsDuplicates = duplicates.map((item) => {
+        const violations = getTransactionViolations(item, allTransactionViolations);
+
+        // Filter and update violations
+        const filteredViolations =
+            violations?.map((violation) => {
+                if (violation.name === CONST.VIOLATIONS.DUPLICATED_TRANSACTION) {
+                    const updatedDuplicates = violation.data?.duplicates?.filter((id) => id !== transactionID);
+
+                    if (!updatedDuplicates?.length) {
+                        return null;
+                    }
+
+                    return {
+                        ...violation,
+                        data: {
+                            ...violation.data,
+                            duplicates: updatedDuplicates,
+                        },
+                    };
+                }
+
+                return violation;
+            }) ?? [];
+        return {transactionID: item, data: filteredViolations.filter((item) => !!item)};
+    });
+
     const urlToNavigateBack = getNavigationUrlOnMoneyRequestDelete(transactionID, reportAction, isSingleTransactionView);
 
     // STEP 2: Build Onyx data
@@ -6538,6 +6569,14 @@ function deleteMoneyRequest(transactionID: string | undefined, reportAction: Ony
         onyxMethod: Onyx.METHOD.SET,
         key: `${ONYXKEYS.COLLECTION.TRANSACTION_VIOLATIONS}${transactionID}`,
         value: null,
+    });
+
+    transactionViolationsDuplicates.forEach((item) => {
+        optimisticData.push({
+            onyxMethod: Onyx.METHOD.SET,
+            key: `${ONYXKEYS.COLLECTION.TRANSACTION_VIOLATIONS}${item.transactionID}`,
+            value: item.data.length ? item.data : null,
+        });
     });
 
     if (shouldDeleteTransactionThread) {
@@ -6692,6 +6731,14 @@ function deleteMoneyRequest(transactionID: string | undefined, reportAction: Ony
             value: transaction ?? null,
         },
     ];
+
+    transactionViolationsDuplicates.forEach((item) => {
+        failureData.push({
+            onyxMethod: Onyx.METHOD.SET,
+            key: `${ONYXKEYS.COLLECTION.TRANSACTION_VIOLATIONS}${item.transactionID}`,
+            value: item.data.length ? item.data : null,
+        });
+    });
 
     failureData.push({
         onyxMethod: Onyx.METHOD.SET,
