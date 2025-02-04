@@ -1,12 +1,13 @@
 import React, {useCallback} from 'react';
 import {View} from 'react-native';
+import {useOnyx} from 'react-native-onyx';
 import useLocalize from '@hooks/useLocalize';
 import useThemeStyles from '@hooks/useThemeStyles';
 import * as ErrorUtils from '@libs/ErrorUtils';
 import * as ValidationUtils from '@libs/ValidationUtils';
 import type {Country} from '@src/CONST';
 import CONST from '@src/CONST';
-import type ONYXKEYS from '@src/ONYXKEYS';
+import ONYXKEYS from '@src/ONYXKEYS';
 import INPUT_IDS from '@src/types/form/HomeAddressForm';
 import type {Errors} from '@src/types/onyx/OnyxCommon';
 import AddressSearch from './AddressSearch';
@@ -73,12 +74,14 @@ function AddressForm({
 }: AddressFormProps) {
     const styles = useThemeStyles();
     const {translate} = useLocalize();
+    const [defaultCountry] = useOnyx(ONYXKEYS.COUNTRY);
+    const countryValue = country || defaultCountry;
 
-    const zipSampleFormat = (country && (CONST.COUNTRY_ZIP_REGEX_DATA[country] as CountryZipRegex)?.samples) ?? '';
+    const zipSampleFormat = (countryValue && (CONST.COUNTRY_ZIP_REGEX_DATA[countryValue] as CountryZipRegex)?.samples) ?? '';
 
     const zipFormat = translate('common.zipCodeExampleFormat', {zipSampleFormat});
 
-    const isUSAForm = country === CONST.COUNTRY.US;
+    const isUSAForm = countryValue === CONST.COUNTRY.US;
 
     /**
      * @param translate - translate function
@@ -182,7 +185,7 @@ function AddressForm({
                 <InputWrapper
                     InputComponent={CountrySelector}
                     inputID={INPUT_IDS.COUNTRY}
-                    value={country}
+                    value={countryValue}
                     onValueChange={onAddressChanged}
                     shouldSaveDraft={shouldSaveDraft}
                 />
