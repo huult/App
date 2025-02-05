@@ -1,6 +1,6 @@
 import {useIsFocused} from '@react-navigation/native';
 import React, {useCallback, useEffect, useMemo, useState} from 'react';
-import {View} from 'react-native';
+import {InteractionManager, View} from 'react-native';
 import type {OnyxEntry} from 'react-native-onyx';
 import {useOnyx} from 'react-native-onyx';
 import type {FileObject} from '@components/AttachmentModal';
@@ -120,7 +120,7 @@ function AttachmentPickerWithMenuItems({
     const {isDelegateAccessRestricted} = useDelegateUserDetails();
     const [isNoDelegateAccessMenuVisible, setIsNoDelegateAccessMenuVisible] = useState(false);
     const [policy] = useOnyx(`${ONYXKEYS.COLLECTION.POLICY}${report?.policyID}`);
-
+    const [isShow, setIsShow] = useState(true);
     /**
      * Returns the list of IOU Options
      */
@@ -292,12 +292,19 @@ function AttachmentPickerWithMenuItems({
                                 </View>
                                 <View style={expandCollapseButtonContainerStyles}>
                                     {isComposerFullSize ? (
-                                        <Tooltip text={translate('reportActionCompose.collapse')}>
+                                        <Tooltip
+                                            text={translate('reportActionCompose.collapse')}
+                                            shouldRender={isShow}
+                                        >
                                             <PressableWithFeedback
                                                 onPress={(e) => {
+                                                    setIsShow(false);
                                                     e?.preventDefault();
                                                     raiseIsScrollLikelyLayoutTriggered();
                                                     setIsComposerFullSize(reportID, false);
+                                                    InteractionManager.runAfterInteractions(() => {
+                                                        setIsShow(true);
+                                                    });
                                                 }}
                                                 // Keep focus on the composer when Collapse button is clicked.
                                                 onMouseDown={(e) => e.preventDefault()}
@@ -313,12 +320,19 @@ function AttachmentPickerWithMenuItems({
                                             </PressableWithFeedback>
                                         </Tooltip>
                                     ) : (
-                                        <Tooltip text={translate('reportActionCompose.expand')}>
+                                        <Tooltip
+                                            text={translate('reportActionCompose.expand')}
+                                            shouldRender={isShow}
+                                        >
                                             <PressableWithFeedback
                                                 onPress={(e) => {
+                                                    setIsShow(false);
                                                     e?.preventDefault();
                                                     raiseIsScrollLikelyLayoutTriggered();
                                                     setIsComposerFullSize(reportID, true);
+                                                    InteractionManager.runAfterInteractions(() => {
+                                                        setIsShow(true);
+                                                    });
                                                 }}
                                                 // Keep focus on the composer when Expand button is clicked.
                                                 onMouseDown={(e) => e.preventDefault()}
