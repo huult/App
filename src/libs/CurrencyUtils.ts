@@ -165,10 +165,10 @@ function convertToShortDisplayString(amountInCents = 0, currency: string = CONST
  * @param amount – should be a float.
  * @param currency - IOU currency
  */
-function convertAmountToDisplayString(amount = 0, currency: string = CONST.CURRENCY.USD): string {
+function convertAmountToDisplayString(amount = 0, currency: string = CONST.CURRENCY.USD, displayAsCurrency = true): string {
     const convertedAmount = amount / 100.0;
     return format(BaseLocaleListener.getPreferredLocale(), convertedAmount, {
-        style: 'currency',
+        style: displayAsCurrency ? 'currency' : 'decimal',
         currency,
         minimumFractionDigits: CONST.MIN_TAX_RATE_DECIMAL_PLACES,
         maximumFractionDigits: CONST.MAX_TAX_RATE_DECIMAL_PLACES,
