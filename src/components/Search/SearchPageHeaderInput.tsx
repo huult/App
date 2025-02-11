@@ -87,6 +87,15 @@ function SearchPageHeaderInput({queryJSON, children}: SearchPageHeaderInputProps
 
     const [currentSearchResults] = useOnyx(`${ONYXKEYS.COLLECTION.SNAPSHOT}${hash}`);
 
+    // const [lastKnownErrors, setLastKnownErrors] = useState(null);
+
+    // useEffect(() => {
+    //     if (!isOffline && currentSearchResults?.errors) {
+    //         setLastKnownErrors(currentSearchResults.errors);
+    //     }
+    // }, [isOffline, currentSearchResults?.errors]);
+
+    // const isError = !isOffline ? Object.keys(currentSearchResults?.errors ?? {}).length > 0 : Object.keys(lastKnownErrors ?? {}).length > 0;
     const isError = Object.keys(currentSearchResults?.errors ?? {}).length > 0 && !isOffline;
 
     // The actual input text that the user sees
