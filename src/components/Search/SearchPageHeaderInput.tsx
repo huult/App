@@ -2,7 +2,8 @@ import {useIsFocused} from '@react-navigation/native';
 import isEqual from 'lodash/isEqual';
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {View} from 'react-native';
-import {useOnyx} from 'react-native-onyx';
+import Onyx, {useOnyx} from 'react-native-onyx';
+import ErrorMessageRow from '@components/ErrorMessageRow';
 import Header from '@components/Header';
 import Icon from '@components/Icon';
 import * as Expensicons from '@components/Icon/Expensicons';
@@ -14,9 +15,10 @@ import type {SearchQueryItem} from '@components/SelectionList/Search/SearchQuery
 import type {SelectionListHandle} from '@components/SelectionList/types';
 import Text from '@components/Text';
 import useLocalize from '@hooks/useLocalize';
+import useNetwork from '@hooks/useNetwork';
 import useThemeStyles from '@hooks/useThemeStyles';
 import {navigateToAndOpenReport} from '@libs/actions/Report';
-import {clearAllFilters} from '@libs/actions/Search';
+import {clearAllFilters, clearSearchError} from '@libs/actions/Search';
 import {mergeCardListWithWorkspaceFeeds} from '@libs/CardUtils';
 import Navigation from '@libs/Navigation/Navigation';
 import {getAllTaxRates} from '@libs/PolicyUtils';
@@ -76,11 +78,16 @@ function SearchPageHeaderInput({queryJSON, children}: SearchPageHeaderInputProps
     const [userCardList = {}] = useOnyx(ONYXKEYS.CARD_LIST);
     const [workspaceCardFeeds = {}] = useOnyx(ONYXKEYS.COLLECTION.WORKSPACE_CARDS_LIST);
     const allCards = useMemo(() => mergeCardListWithWorkspaceFeeds(workspaceCardFeeds, userCardList), [userCardList, workspaceCardFeeds]);
-
+    const {isOffline} = useNetwork();
     const {type, inputQuery: originalInputQuery} = queryJSON;
     const isCannedQuery = isCannedSearchQuery(queryJSON);
     const queryText = buildUserReadableQueryString(queryJSON, personalDetails, reports, taxRates, allCards);
     const headerText = isCannedQuery ? translate(getHeaderContent(type).titleText) : '';
+    const {hash} = queryJSON;
+
+    const [currentSearchResults] = useOnyx(`${ONYXKEYS.COLLECTION.SNAPSHOT}${hash}`);
+
+    const isError = Object.keys(currentSearchResults?.errors ?? {}).length > 0 && !isOffline;
 
     // The actual input text that the user sees
     const [textInputValue, setTextInputValue] = useState(queryText);
@@ -111,6 +118,12 @@ function SearchPageHeaderInput({queryJSON, children}: SearchPageHeaderInputProps
     useEffect(() => {
         setTextInputValue(queryText);
     }, [queryText]);
+
+    useEffect(() => {
+        return () => {
+            clearSearchError(hash);
+        };
+    }, [hash]);
 
     useEffect(() => {
         const substitutionsMap = buildSubstitutionsMap(originalInputQuery, personalDetails, reports, taxRates, allCards);
@@ -286,7 +299,7 @@ function SearchPageHeaderInput({queryJSON, children}: SearchPageHeaderInputProps
                     autoFocus={false}
                     onFocus={showAutocompleteList}
                     onBlur={hideAutocompleteList}
-                    wrapperStyle={[styles.searchAutocompleteInputResults, styles.br2]}
+                    wrapperStyle={[styles.searchAutocompleteInputResults, styles.br2, isError && styles.borderColorDanger]}
                     wrapperFocusedStyle={styles.searchAutocompleteInputResultsFocused}
                     outerWrapperStyle={[inputWrapperActiveStyle, styles.pb2]}
                     rightComponent={children}
@@ -305,6 +318,15 @@ function SearchPageHeaderInput({queryJSON, children}: SearchPageHeaderInputProps
                         ref={listRef}
                     />
                 </View>
+                {isError && (
+                    <ErrorMessageRow
+                        errors={{err: translate('common.genericErrorMessage')}}
+                        onClose={() => {
+                            clearSearchError(hash);
+                        }}
+                        canDismissError
+                    />
+                )}
             </View>
         </View>
     );

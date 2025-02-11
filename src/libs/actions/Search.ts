@@ -103,7 +103,7 @@ function getPayActionCallback(hash: number, item: TransactionListItemType | Repo
     goToItem();
 }
 
-function getOnyxLoadingData(hash: number, queryJSON?: SearchQueryJSON): {optimisticData: OnyxUpdate[]; finallyData: OnyxUpdate[]; failureData: OnyxUpdate[]} {
+function getOnyxLoadingData(hash: number, queryJSON?: SearchQueryJSON): {optimisticData: OnyxUpdate[]; finallyData: OnyxUpdate[]; failureData: OnyxUpdate[]; successData: OnyxUpdate[]} {
     const optimisticData: OnyxUpdate[] = [
         {
             onyxMethod: Onyx.METHOD.MERGE,
@@ -112,6 +112,13 @@ function getOnyxLoadingData(hash: number, queryJSON?: SearchQueryJSON): {optimis
                 search: {
                     isLoading: true,
                 },
+            },
+        },
+        {
+            onyxMethod: Onyx.METHOD.MERGE,
+            key: `${ONYXKEYS.COLLECTION.SNAPSHOT}${hash}`,
+            value: {
+                errors: null,
             },
         },
     ];
@@ -138,11 +145,22 @@ function getOnyxLoadingData(hash: number, queryJSON?: SearchQueryJSON): {optimis
                     status: queryJSON?.status,
                     type: queryJSON?.type,
                 },
+                errors: getMicroSecondOnyxErrorWithTranslationKey('common.genericErrorMessage'),
             },
         },
     ];
 
-    return {optimisticData, finallyData, failureData};
+    const successData: OnyxUpdate[] = [
+        {
+            onyxMethod: Onyx.METHOD.MERGE,
+            key: `${ONYXKEYS.COLLECTION.SNAPSHOT}${hash}`,
+            value: {
+                errors: null,
+            },
+        },
+    ];
+
+    return {optimisticData, finallyData, failureData, successData};
 }
 
 function saveSearch({queryJSON, newName}: {queryJSON: SearchQueryJSON; newName?: string}) {
@@ -233,15 +251,26 @@ function openSearchFiltersCardPage() {
 }
 
 function search({queryJSON, offset}: {queryJSON: SearchQueryJSON; offset?: number}) {
-    const {optimisticData, finallyData, failureData} = getOnyxLoadingData(queryJSON.hash, queryJSON);
+    const {optimisticData, finallyData, failureData, successData} = getOnyxLoadingData(queryJSON.hash, queryJSON);
     const {flatFilters, ...queryJSONWithoutFlatFilters} = queryJSON;
     const queryWithOffset = {
         ...queryJSONWithoutFlatFilters,
         offset,
     };
-    const jsonQuery = JSON.stringify(queryWithOffset);
+    // hard code test error case
+    // const jsonQuery = JSON.stringify(queryWithOffset);
+    const jsonQuery = JSON.stringify('');
 
-    API.write(WRITE_COMMANDS.SEARCH, {hash: queryJSON.hash, jsonQuery}, {optimisticData, finallyData, failureData});
+    API.write(
+        WRITE_COMMANDS.SEARCH,
+        {hash: queryJSON.hash, jsonQuery},
+        {
+            optimisticData,
+            finallyData,
+            failureData,
+            successData,
+        },
+    );
 }
 
 /**
@@ -393,6 +422,12 @@ function clearAllFilters() {
     Onyx.set(ONYXKEYS.FORMS.SEARCH_ADVANCED_FILTERS_FORM, null);
 }
 
+function clearSearchError(hash: number) {
+    Onyx.merge(`${ONYXKEYS.COLLECTION.SNAPSHOT}${hash}`, {
+        errors: null,
+    });
+}
+
 function clearAdvancedFilters() {
     const values: Partial<Record<ValueOf<typeof FILTER_KEYS>, null>> = {};
     Object.values(FILTER_KEYS)
@@ -421,4 +456,5 @@ export {
     handleActionButtonPress,
     submitMoneyRequestOnSearch,
     openSearchFiltersCardPage,
+    clearSearchError,
 };
