@@ -40,7 +40,7 @@ function ItemListSkeletonView({
     const themeStyles = useThemeStyles();
 
     const [numItems, setNumItems] = useState(fixedNumItems ?? 0);
-
+    const [containerHeight, setContainerHeight] = useState(0);
     const totalItemHeight = itemViewHeight + getVerticalMargin(itemViewStyle);
 
     const handleLayout = useCallback(
@@ -49,8 +49,10 @@ function ItemListSkeletonView({
                 return;
             }
 
-            const totalHeight = event.nativeEvent.layout.height;
-            const newNumItems = Math.ceil(totalHeight / totalItemHeight);
+            const availableHeight = event.nativeEvent.layout.height;
+            setContainerHeight(availableHeight);
+
+            const newNumItems = Math.floor(availableHeight / totalItemHeight);
             if (newNumItems !== numItems) {
                 setNumItems(newNumItems);
             }
@@ -59,10 +61,9 @@ function ItemListSkeletonView({
     );
 
     const skeletonViewItems = useMemo(() => {
-        const items = [];
-        for (let i = 0; i < numItems; i++) {
+        return Array.from({length: numItems}, (_, i) => {
             const opacity = gradientOpacityEnabled ? 1 - i / (numItems - 1) : 1;
-            items.push(
+            return (
                 <SkeletonViewContentLoader
                     key={`skeletonContainer${i}`}
                     animate={shouldAnimate}
@@ -72,15 +73,17 @@ function ItemListSkeletonView({
                     style={[themeStyles.mr5, itemViewStyle, {opacity}, {minHeight: itemViewHeight}]}
                 >
                     {renderSkeletonItem({itemIndex: i})}
-                </SkeletonViewContentLoader>,
+                </SkeletonViewContentLoader>
             );
-        }
-        return items;
+        });
     }, [numItems, shouldAnimate, theme, themeStyles, renderSkeletonItem, gradientOpacityEnabled, itemViewHeight, itemViewStyle]);
 
     return (
         <View
-            style={[themeStyles.flex1]}
+            style={[
+                themeStyles.flex1,
+                {height: containerHeight}, // Prevent scrolling
+            ]}
             onLayout={handleLayout}
         >
             {skeletonViewItems}
