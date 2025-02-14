@@ -5,6 +5,7 @@ import Button from '@components/Button';
 import CaretWrapper from '@components/CaretWrapper';
 import Icon from '@components/Icon';
 import * as Expensicons from '@components/Icon/Expensicons';
+import style from '@components/Icon/IconWrapperStyles';
 import {PressableWithFeedback} from '@components/Pressable';
 import Text from '@components/Text';
 import TextLink from '@components/TextLink';
@@ -40,7 +41,7 @@ function WorkspaceCompanyCardsListHeaderButtons({policyID, selectedFeed, shouldS
     const {translate} = useLocalize();
     const theme = useTheme();
     const StyleUtils = useStyleUtils();
-    const {shouldUseNarrowLayout, isMediumScreenWidth} = useResponsiveLayout();
+    const {shouldUseNarrowLayout, isMediumScreenWidth, isLargeScreenWidth} = useResponsiveLayout();
     const workspaceAccountID = getWorkspaceAccountID(policyID);
     const [cardFeeds] = useOnyx(`${ONYXKEYS.COLLECTION.SHARED_NVP_PRIVATE_DOMAIN_MEMBER}${workspaceAccountID}`);
     const [allFeedsCards] = useOnyx(`${ONYXKEYS.COLLECTION.WORKSPACE_CARDS_LIST}`);
@@ -51,6 +52,7 @@ function WorkspaceCompanyCardsListHeaderButtons({policyID, selectedFeed, shouldS
     const currentFeedData = companyFeeds?.[selectedFeed];
     const bankName = getBankName(selectedFeed);
     const isSelectedFeedConnectionBroken = checkIfFeedConnectionIsBroken(allFeedsCards?.[`${ONYXKEYS.COLLECTION.WORKSPACE_CARDS_LIST}${workspaceAccountID}_${selectedFeed}`]);
+    console.log('****** isLargeScreenWidth ******', isLargeScreenWidth);
 
     return (
         <View>
@@ -59,6 +61,7 @@ function WorkspaceCompanyCardsListHeaderButtons({policyID, selectedFeed, shouldS
                     onPress={() => Navigation.navigate(ROUTES.WORKSPACE_COMPANY_CARDS_SELECT_FEED.getRoute(policyID))}
                     style={[styles.flexRow, styles.alignItemsCenter, styles.gap3, shouldChangeLayout && styles.mb3]}
                     accessibilityLabel={formattedFeedName ?? ''}
+                    wrapperStyle={[styles.flex1, isLargeScreenWidth && styles.pr1]}
                 >
                     <Icon
                         src={getCardFeedIcon(selectedFeed)}
@@ -66,10 +69,14 @@ function WorkspaceCompanyCardsListHeaderButtons({policyID, selectedFeed, shouldS
                         width={variables.cardIconWidth}
                         additionalStyles={styles.cardIcon}
                     />
-                    <View>
+                    <View style={styles.flex1}>
                         <View style={[styles.flexRow, styles.gap1]}>
                             <CaretWrapper>
-                                <Text style={styles.textStrong}>{formattedFeedName}</Text>
+                                <Text style={[styles.flexShrink1, styles.textStrong]}>
+                                    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin ac diam eget nisl volutpat tincidunt. Nulla facilisi. Morbi luctus metus ut orci luctus,
+                                    nec efficitur velit tincidunt. Nam pretium, lorem eget pretium convallis, libero lorem sodales ipsum, sed ullamcorper turpis orci nec purus. Integer
+                                    tincidunt tincidunt metus, nec luctus augue varius et. Integer
+                                </Text>
                             </CaretWrapper>
                             {checkIfFeedConnectionIsBroken(flatAllCardsList(allFeedsCards, workspaceAccountID), selectedFeed) && (
                                 <Icon
