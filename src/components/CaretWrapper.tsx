@@ -9,12 +9,15 @@ import * as Expensicons from './Icon/Expensicons';
 
 type CaretWrapperProps = ChildrenProps;
 
-function CaretWrapper({children}: CaretWrapperProps) {
+function CaretWrapper({children, customStyle}: CaretWrapperProps) {
+    console.log('****** customStyle ******', customStyle);
+
     const theme = useTheme();
     const styles = useThemeStyles();
+    console.log('****** styles.alignItemsCenter ******', styles.alignItemsCenter);
 
     return (
-        <View style={[styles.flex1, styles.flexRow, styles.gap1, styles.alignItemsCenter]}>
+        <View style={[styles.flexRow, styles.gap1, styles.alignItemsCenter, customStyle]}>
             {children}
             <Icon
                 src={Expensicons.DownArrow}

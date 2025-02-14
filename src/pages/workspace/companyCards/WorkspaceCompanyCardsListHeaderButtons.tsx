@@ -71,7 +71,7 @@ function WorkspaceCompanyCardsListHeaderButtons({policyID, selectedFeed, shouldS
                     />
                     <View style={styles.flex1}>
                         <View style={[styles.flexRow, styles.gap1]}>
-                            <CaretWrapper>
+                            <CaretWrapper customStyle={styles.flex1}>
                                 <Text style={[styles.flexShrink1, styles.textStrong]}>
                                     Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin ac diam eget nisl volutpat tincidunt. Nulla facilisi. Morbi luctus metus ut orci luctus,
                                     nec efficitur velit tincidunt. Nam pretium, lorem eget pretium convallis, libero lorem sodales ipsum, sed ullamcorper turpis orci nec purus. Integer
