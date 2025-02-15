@@ -1,5 +1,5 @@
 import {useFocusEffect} from '@react-navigation/native';
-import React, {useCallback, useMemo} from 'react';
+import React, {useCallback, useEffect, useMemo} from 'react';
 import {useOnyx} from 'react-native-onyx';
 import HeaderWithBackButton from '@components/HeaderWithBackButton';
 import ScreenWrapper from '@components/ScreenWrapper';
@@ -12,8 +12,10 @@ import Navigation from '@libs/Navigation/Navigation';
 import type {PlatformStackScreenProps} from '@libs/Navigation/PlatformStackNavigation/types';
 import type {SettingsNavigatorParamList} from '@libs/Navigation/types';
 import * as PolicyUtils from '@libs/PolicyUtils';
+import {convertPolicyEmployeesToApprovalWorkflows, INITIAL_APPROVAL_WORKFLOW} from '@libs/WorkflowUtils';
 import NotFoundPage from '@pages/ErrorPage/NotFoundPage';
 import * as PerDiem from '@userActions/Policy/PerDiem';
+import * as Workflow from '@userActions/Workflow';
 import CONST from '@src/CONST';
 import * as Policy from '@src/libs/actions/Policy/Policy';
 import ONYXKEYS from '@src/ONYXKEYS';
@@ -54,18 +56,49 @@ function WorkspaceUpgradePage({route}: WorkspaceUpgradePageProps) {
 
     const perDiemCustomUnit = PolicyUtils.getPerDiemCustomUnit(policy);
     const categoryId = route.params?.categoryId;
+    const policyApproverEmail = policy?.approver;
+    const [personalDetails] = useOnyx(ONYXKEYS.PERSONAL_DETAILS_LIST);
+
+    const {availableMembers, usedApproverEmails} = useMemo(
+        () =>
+            convertPolicyEmployeesToApprovalWorkflows({
+                employees: policy?.employeeList ?? {},
+                defaultApprover: policyApproverEmail ?? policy?.owner ?? '',
+                personalDetails: personalDetails ?? {},
+            }),
+        [personalDetails, policy?.employeeList, policy?.owner, policyApproverEmail],
+    );
+
+    // useEffect(() => {
+    //     if (!policy || !isUpgraded || feature?.id !== CONST.UPGRADE_FEATURE_INTRO_MAPPING.approvals.id) {
+    //         return;
+    //     }
+
+    //     Workflow.setApprovalWorkflow({
+    //         ...INITIAL_APPROVAL_WORKFLOW,
+    //         availableMembers,
+    //         usedApproverEmails,
+    //     });
+
+    //     Navigation.goBack();
+    //     Navigation.navigate(ROUTES.WORKSPACE_WORKFLOWS_APPROVALS_EXPENSES_FROM.getRoute(route.params.policyID ?? ''));
+    // }, [availableMembers, feature?.id, isUpgraded, policy, route.params.policyID, usedApproverEmails]);
 
     const goBack = useCallback(() => {
         if (!feature || !policyID) {
             Navigation.dismissModal();
             return;
         }
+
         switch (feature.id) {
             case CONST.UPGRADE_FEATURE_INTRO_MAPPING.approvals.id:
+                Workflow.setApprovalWorkflow({
+                    ...INITIAL_APPROVAL_WORKFLOW,
+                    availableMembers,
+                    usedApproverEmails,
+                });
                 Navigation.goBack();
-                if (route.params.backTo) {
-                    Navigation.navigate(route.params.backTo);
-                }
+                Navigation.navigate(ROUTES.WORKSPACE_WORKFLOWS_APPROVALS_EXPENSES_FROM.getRoute(route.params.policyID));
                 return;
             case CONST.UPGRADE_FEATURE_INTRO_MAPPING.reportFields.id:
                 switch (route.params.featureName) {
