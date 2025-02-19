@@ -3883,7 +3883,9 @@ function setPolicyMaxExpenseAge(policyID: string, maxExpenseAge: string) {
 function updateCustomRules(policyID: string, customRules: string) {
     const policy = getPolicy(policyID);
     const originalCustomRules = policy?.customRules;
+
     const parsedCustomRules = ReportUtils.getParsedComment(customRules);
+
     if (parsedCustomRules === originalCustomRules) {
         return;
     }
@@ -3895,6 +3897,7 @@ function updateCustomRules(policyID: string, customRules: string) {
                 key: `${ONYXKEYS.COLLECTION.POLICY}${policyID}`,
                 value: {
                     customRules: parsedCustomRules,
+                    isLoading: true,
                 },
             },
         ],
@@ -3907,6 +3910,7 @@ function updateCustomRules(policyID: string, customRules: string) {
                         // TODO
                         // maxExpenseAge: null,
                     },
+                    isLoading: false,
                 },
             },
         ],
@@ -3916,6 +3920,7 @@ function updateCustomRules(policyID: string, customRules: string) {
                 key: `${ONYXKEYS.COLLECTION.POLICY}${policyID}`,
                 value: {
                     customRules: originalCustomRules,
+                    isLoading: false,
                     // TODO
                     // pendingFields: {maxExpenseAge: null},
                     // errorFields: {maxExpenseAge: ErrorUtils.getMicroSecondOnyxErrorWithTranslationKey('common.genericErrorMessage')},
