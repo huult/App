@@ -2,6 +2,7 @@ import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {View} from 'react-native';
 import type {OnyxEntry} from 'react-native-onyx';
 import {useOnyx} from 'react-native-onyx';
+import ConfirmModal from '@components/ConfirmModal';
 import FullScreenLoadingIndicator from '@components/FullscreenLoadingIndicator';
 import HeaderWithBackButton from '@components/HeaderWithBackButton';
 import * as Expensicons from '@components/Icon/Expensicons';
@@ -126,6 +127,7 @@ function IOURequestStepConfirmation({
 
     const gpsRequired = transaction?.amount === 0 && iouType !== CONST.IOU.TYPE.SPLIT && receiptFile;
     const [isConfirmed, setIsConfirmed] = useState(false);
+    const [isUnableToShareToAccount, setIsUnableToShareToAccount] = useState(false);
 
     const headerTitle = useMemo(() => {
         if (isCategorizingTrackExpense) {
@@ -597,6 +599,21 @@ function IOURequestStepConfirmation({
                         return;
                     }
 
+                    if (action === CONST.IOU.ACTION.SHARE) {
+                        if (
+                            !(
+                                policy?.areWorkflowsEnabled &&
+                                (policy.approvalMode !== CONST.POLICY.APPROVAL_MODE.OPTIONAL ||
+                                    policy.autoReportingFrequency !== CONST.POLICY.AUTO_REPORTING_FREQUENCIES.INSTANT ||
+                                    policy?.reimbursementChoice !== CONST.POLICY.REIMBURSEMENT_CHOICES.REIMBURSEMENT_NO)
+                            )
+                        ) {
+                            setIsUnableToShareToAccount(true);
+
+                            return;
+                        }
+                    }
+
                     // Otherwise, the money is being requested through the "Manual" flow with an attached image and the GPS coordinates are not needed.
                     trackExpense(selectedParticipants, trimmedComment, receiptFile);
                     return;
@@ -660,6 +677,7 @@ function IOURequestStepConfirmation({
             policyTags,
             policyCategories,
             trackExpense,
+            action,
             submitPerDiemExpense,
         ],
     );
@@ -785,6 +803,18 @@ function IOURequestStepConfirmation({
                     payeePersonalDetails={payeePersonalDetails}
                     shouldPlaySound={iouType === CONST.IOU.TYPE.PAY}
                     isConfirmed={isConfirmed}
+                />
+                <ConfirmModal
+                    title={'Unable to Share Expense'}
+                    isVisible={isUnableToShareToAccount}
+                    onConfirm={() => {
+                        setIsUnableToShareToAccount(false);
+                        Navigation.goBack();
+                    }}
+                    prompt={'This expense cannot be shared because the "Make or Track Payments" workflow is not enabled in your workspace settings.'}
+                    confirmText={'Got it'}
+                    shouldShowCancelButton={false}
+                    danger
                 />
             </View>
         </ScreenWrapper>
