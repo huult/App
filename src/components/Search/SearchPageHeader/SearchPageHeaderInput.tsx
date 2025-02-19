@@ -19,6 +19,7 @@ import type {SearchQueryJSON, SearchQueryString} from '@components/Search/types'
 import {isSearchQueryItem} from '@components/SelectionList/Search/SearchQueryListItem';
 import type {SearchQueryItem} from '@components/SelectionList/Search/SearchQueryListItem';
 import type {SelectionListHandle} from '@components/SelectionList/types';
+import useLocalize from '@hooks/useLocalize';
 import useNetwork from '@hooks/useNetwork';
 import useResponsiveLayout from '@hooks/useResponsiveLayout';
 import useThemeStyles from '@hooks/useThemeStyles';
@@ -66,6 +67,7 @@ function SearchPageHeaderInput({queryJSON, searchRouterListVisible, hideSearchRo
     const {hash} = queryJSON;
     const {isOffline} = useNetwork();
     const [currentSearchResults] = useOnyx(`${ONYXKEYS.COLLECTION.SNAPSHOT}${hash}`);
+    const {translate} = useLocalize();
 
     // const [lastKnownErrors, setLastKnownErrors] = useState(null);
 
@@ -337,7 +339,11 @@ function SearchPageHeaderInput({queryJSON, searchRouterListVisible, hideSearchRo
                     autoFocus={false}
                     onFocus={showAutocompleteList}
                     onBlur={hideAutocompleteList}
-                    wrapperStyle={[styles.searchAutocompleteInputResults, styles.br2, isError && styles.borderColorDanger]}
+                    wrapperStyle={{
+                        ...styles.searchAutocompleteInputResults,
+                        ...styles.br2,
+                        ...(isError ? styles.borderColorDanger : {}),
+                    }}
                     wrapperFocusedStyle={styles.searchAutocompleteInputResultsFocused}
                     outerWrapperStyle={[inputWrapperActiveStyle, styles.pb2]}
                     rightComponent={inputRightComponent}

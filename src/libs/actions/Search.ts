@@ -257,9 +257,14 @@ function search({queryJSON, offset}: {queryJSON: SearchQueryJSON; offset?: numbe
         ...queryJSONWithoutFlatFilters,
         offset,
     };
-    // hard code test error case
-    // const jsonQuery = JSON.stringify(queryWithOffset);
-    const jsonQuery = JSON.stringify('');
+
+    let jsonQuery = '';
+
+    if (queryJSON.inputQuery.includes('test error')) {
+        jsonQuery = JSON.stringify('');
+    } else {
+        jsonQuery = JSON.stringify(queryWithOffset);
+    }
 
     API.write(
         WRITE_COMMANDS.SEARCH,
