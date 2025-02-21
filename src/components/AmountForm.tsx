@@ -1,7 +1,7 @@
 import type {ForwardedRef} from 'react';
 import React, {forwardRef, useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import type {NativeSyntheticEvent} from 'react-native';
-import {View} from 'react-native';
+import {InteractionManager, View} from 'react-native';
 import useLocalize from '@hooks/useLocalize';
 import useThemeStyles from '@hooks/useThemeStyles';
 import * as Browser from '@libs/Browser';
@@ -93,6 +93,10 @@ function AmountForm(
 
     const [shouldUpdateSelection, setShouldUpdateSelection] = useState(true);
 
+    const [inputWidth, setInputWidth] = useState(0);
+    const [increaseHeight, setIncreaseHeight] = useState(false);
+    const hasDotRef = useRef(false);
+
     const [selection, setSelection] = useState({
         start: currentAmount.length,
         end: currentAmount.length,
@@ -142,9 +146,24 @@ function AmountForm(
             const strippedAmount = MoneyRequestUtils.stripCommaFromAmount(newAmountWithoutSpaces);
             const isForwardDelete = currentAmount.length > strippedAmount.length && forwardDeletePressedRef.current;
             setSelection(getNewSelection(selection, isForwardDelete ? strippedAmount.length : currentAmount.length, strippedAmount.length));
-            onInputChange?.(strippedAmount);
+
+            if (strippedAmount.includes('.') && !hasDotRef.current) {
+                setIncreaseHeight(true);
+                hasDotRef.current = true;
+            }
+
+            if (!strippedAmount.includes('.')) {
+                hasDotRef.current = false; // Reset tracking
+            }
+
+            InteractionManager.runAfterInteractions(() => {
+                requestAnimationFrame(() => {
+                    onInputChange?.(strippedAmount);
+                    setIncreaseHeight(false);
+                });
+            });
         },
-        [amountMaxLength, currentAmount, decimals, onInputChange, selection],
+        [amountMaxLength, currentAmount.length, decimals, onInputChange, selection],
     );
 
     /**
@@ -167,6 +186,7 @@ function AmountForm(
         const strippedAmount = MoneyRequestUtils.stripCommaFromAmount(withLeadingZero);
         const isForwardDelete = currentAmount.length > strippedAmount.length && forwardDeletePressedRef.current;
         setSelection(getNewSelection(selection, isForwardDelete ? strippedAmount.length : currentAmount.length, strippedAmount.length));
+
         onInputChange?.(strippedAmount);
     };
 
@@ -301,8 +321,11 @@ function AmountForm(
                     }}
                     onKeyPress={textInputKeyPress}
                     isCurrencyPressable={isCurrencyPressable}
-                    style={[styles.iouAmountTextInput]}
+                    style={[styles.iouAmountTextInput, increaseHeight ? {width: inputWidth + 10} : undefined]}
                     containerStyle={[styles.iouAmountTextInputContainer]}
+                    onLayout={(event) => {
+                        !increaseHeight && setInputWidth(event?.nativeEvent?.layout?.width);
+                    }}
                     // eslint-disable-next-line react/jsx-props-no-spreading
                     {...rest}
                 />
