@@ -8,6 +8,7 @@ import SearchTableHeader from '@components/SelectionList/SearchTableHeader';
 import type {ReportActionListItemType, ReportListItemType, TransactionListItemType} from '@components/SelectionList/types';
 import SelectionListWithModal from '@components/SelectionListWithModal';
 import SearchRowSkeleton from '@components/Skeletons/SearchRowSkeleton';
+import Text from '@components/Text';
 import useMobileSelectionMode from '@hooks/useMobileSelectionMode';
 import useNetwork from '@hooks/useNetwork';
 import usePrevious from '@hooks/usePrevious';
@@ -36,6 +37,7 @@ import {
 import {isOnHold} from '@libs/TransactionUtils';
 import Navigation from '@navigation/Navigation';
 import type {AuthScreensParamList} from '@navigation/types';
+import GenericErrorPage from '@pages/ErrorPage/GenericErrorPage';
 import EmptySearchView from '@pages/Search/EmptySearchView';
 import variables from '@styles/variables';
 import CONST from '@src/CONST';
@@ -156,6 +158,9 @@ function Search({queryJSON, onSearchListScroll, isSearchScreenFocused, contentCo
     const previousTransactions = usePrevious(transactions);
     const [reportActions] = useOnyx(ONYXKEYS.COLLECTION.REPORT_ACTIONS);
     const previousReportActions = usePrevious(reportActions);
+    const isError = Object.keys(currentSearchResults?.errors ?? {}).length > 0 && !isOffline;
+
+    console.log('****** isError ******', isError);
 
     useEffect(() => {
         if (!currentSearchResults?.search?.type) {
@@ -380,6 +385,14 @@ function Search({queryJSON, onSearchListScroll, isSearchScreenFocused, contentCo
     });
 
     const shouldShowEmptyState = !isDataLoaded || data.length === 0;
+
+    if (isError) {
+        return (
+            <View style={[shouldUseNarrowLayout ? styles.searchListContentContainerStyles : styles.mt3, styles.flex1]}>
+                <Text>Oops... ST</Text>
+            </View>
+        );
+    }
 
     if (shouldShowEmptyState) {
         return (

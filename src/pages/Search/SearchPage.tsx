@@ -1,5 +1,6 @@
 import React, {useMemo} from 'react';
 import {View} from 'react-native';
+import {useOnyx} from 'react-native-onyx';
 import FullPageNotFoundView from '@components/BlockingViews/FullPageNotFoundView';
 import HeaderGap from '@components/HeaderGap';
 import HeaderWithBackButton from '@components/HeaderWithBackButton';
@@ -12,6 +13,7 @@ import {useSearchContext} from '@components/Search/SearchContext';
 import SearchPageHeader from '@components/Search/SearchPageHeader/SearchPageHeader';
 import SearchStatusBar from '@components/Search/SearchPageHeader/SearchStatusBar';
 import useLocalize from '@hooks/useLocalize';
+import useNetwork from '@hooks/useNetwork';
 import useResponsiveLayout from '@hooks/useResponsiveLayout';
 import useThemeStyles from '@hooks/useThemeStyles';
 import {turnOffMobileSelectionMode} from '@libs/actions/MobileSelectionMode';
@@ -21,6 +23,7 @@ import type {PlatformStackScreenProps} from '@libs/Navigation/PlatformStackNavig
 import type {AuthScreensParamList} from '@libs/Navigation/types';
 import {buildCannedSearchQuery, buildSearchQueryJSON, getPolicyIDFromSearchQuery} from '@libs/SearchQueryUtils';
 import CONST from '@src/CONST';
+import ONYXKEYS from '@src/ONYXKEYS';
 import ROUTES from '@src/ROUTES';
 import type SCREENS from '@src/SCREENS';
 import SearchPageNarrow from './SearchPageNarrow';
@@ -32,6 +35,7 @@ function SearchPage({route}: SearchPageProps) {
     const {translate} = useLocalize();
     const {shouldUseNarrowLayout} = useResponsiveLayout();
     const styles = useThemeStyles();
+    const {isOffline} = useNetwork();
 
     const {q, name, groupBy} = route.params;
 
@@ -49,6 +53,8 @@ function SearchPage({route}: SearchPageProps) {
 
     const isSearchNameModified = name === q;
     const searchName = isSearchNameModified ? undefined : name;
+    const [currentSearchResults] = useOnyx(`${ONYXKEYS.COLLECTION.SNAPSHOT}${queryJSON.hash}`);
+    const isError = Object.keys(currentSearchResults?.errors ?? {}).length > 0 && !isOffline;
 
     if (shouldUseNarrowLayout) {
         return (
@@ -107,7 +113,7 @@ function SearchPage({route}: SearchPageProps) {
                                 queryJSON={queryJSON}
                                 shouldGroupByReports={shouldGroupByReports}
                             />
-                            <SearchStatusBar queryJSON={queryJSON} />
+                            {!isError && <SearchStatusBar queryJSON={queryJSON} />}
                             <Search
                                 key={queryJSON.hash}
                                 queryJSON={queryJSON}

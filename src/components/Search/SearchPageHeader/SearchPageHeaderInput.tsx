@@ -73,10 +73,10 @@ function SearchPageHeaderInput({
     const isDefaultQuery = isDefaultExpensesQuery(queryJSON);
     const queryText = buildUserReadableQueryString(queryJSON, personalDetails, reports, taxRates, allCards);
 
-    const {hash} = queryJSON;
-    const {isOffline} = useNetwork();
-    const [currentSearchResults] = useOnyx(`${ONYXKEYS.COLLECTION.SNAPSHOT}${hash}`);
-    const {translate} = useLocalize();
+    // const {hash} = queryJSON;
+    // const {isOffline} = useNetwork();
+    // const [currentSearchResults] = useOnyx(`${ONYXKEYS.COLLECTION.SNAPSHOT}${hash}`);
+    // const {translate} = useLocalize();
 
     // const [lastKnownErrors, setLastKnownErrors] = useState(null);
 
@@ -87,7 +87,7 @@ function SearchPageHeaderInput({
     // }, [isOffline, currentSearchResults?.errors]);
 
     // const isError = !isOffline ? Object.keys(currentSearchResults?.errors ?? {}).length > 0 : Object.keys(lastKnownErrors ?? {}).length > 0;
-    const isError = Object.keys(currentSearchResults?.errors ?? {}).length > 0 && !isOffline;
+    // const isError = Object.keys(currentSearchResults?.errors ?? {}).length > 0 && !isOffline;
     // The actual input text that the user sees
     const [textInputValue, setTextInputValue] = useState(isDefaultQuery ? '' : queryText);
     // The input text that was last used for autocomplete; needed for the SearchAutocompleteList when browsing list via arrow keys
@@ -124,11 +124,11 @@ function SearchPageHeaderInput({
         setAutocompleteQueryValue(isDefaultQuery ? '' : queryText);
     }, [isDefaultQuery, queryText]);
 
-    useEffect(() => {
-        return () => {
-            clearSearchError(hash);
-        };
-    }, [hash]);
+    // useEffect(() => {
+    //     return () => {
+    //         clearSearchError(hash);
+    //     };
+    // }, [hash]);
 
     useEffect(() => {
         const substitutionsMap = buildSubstitutionsMap(originalInputQuery, personalDetails, reports, taxRates, allCards);
@@ -349,11 +349,12 @@ function SearchPageHeaderInput({
                     autoFocus={false}
                     onFocus={showAutocompleteList}
                     onBlur={hideAutocompleteList}
-                    wrapperStyle={{
-                        ...styles.searchAutocompleteInputResults,
-                        ...styles.br2,
-                        ...(isError ? styles.borderColorDanger : {}),
-                    }}
+                    wrapperStyle={{...styles.searchAutocompleteInputResults, ...styles.br2}}
+                    // wrapperStyle={{
+                    //     ...styles.searchAutocompleteInputResults,
+                    //     ...styles.br2,
+                    //     ...(isError ? styles.borderColorDanger : {}),
+                    // }}
                     wrapperFocusedStyle={styles.searchAutocompleteInputResultsFocused}
                     outerWrapperStyle={[inputWrapperActiveStyle, styles.pb2]}
                     rightComponent={inputRightComponent}
@@ -373,7 +374,7 @@ function SearchPageHeaderInput({
                         shouldSubscribeToArrowKeyEvents={isAutocompleteListVisible}
                     />
                 </View>
-                {isError && (
+                {/* {isError && (
                     <ErrorMessageRow
                         errors={{err: translate('common.genericErrorMessage')}}
                         onClose={() => {
@@ -381,7 +382,7 @@ function SearchPageHeaderInput({
                         }}
                         canDismissError
                     />
-                )}
+                )} */}
             </View>
         </View>
     );
