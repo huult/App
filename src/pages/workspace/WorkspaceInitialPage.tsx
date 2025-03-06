@@ -385,7 +385,7 @@ function WorkspaceInitialPage({policyDraft, policy: policyProp, route}: Workspac
     const prevIsPendingDelete = isPendingDeletePolicy(prevPolicy);
     // We check isPendingDelete and prevIsPendingDelete to prevent the NotFound view from showing right after we delete the workspace
     // eslint-disable-next-line rulesdir/no-negated-variables
-    const shouldShowNotFoundPage = !shouldShowPolicy && (!isPendingDelete || prevIsPendingDelete);
+    const shouldShowNotFoundPage = !shouldShowPolicy && (!isPendingDelete || prevIsPendingDelete) && !policy?.isLoading;
 
     useEffect(() => {
         if (isEmptyObject(prevPolicy) || prevIsPendingDelete || !isPendingDelete) {

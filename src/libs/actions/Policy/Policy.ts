@@ -316,6 +316,7 @@ function deleteWorkspace(policyID: string, policyName: string) {
                 avatarURL: '',
                 pendingAction: CONST.RED_BRICK_ROAD_PENDING_ACTION.DELETE,
                 errors: null,
+                isLoading: true,
             },
         },
         ...(!hasActiveChatEnabledPolicies(filteredPolicies, true)
@@ -407,9 +408,18 @@ function deleteWorkspace(policyID: string, policyName: string) {
             value: {
                 avatarURL: policy?.avatarURL,
                 pendingAction: null,
+                isLoading: false,
             },
         },
     ];
+
+    finallyData.push({
+        onyxMethod: Onyx.METHOD.MERGE,
+        key: `${ONYXKEYS.COLLECTION.POLICY}${policyID}`,
+        value: {
+            isLoading: false,
+        },
+    });
 
     reportsToArchive.forEach((report) => {
         const {reportID, oldPolicyName} = report ?? {};
