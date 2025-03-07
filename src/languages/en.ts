@@ -1,5 +1,6 @@
 import {CONST as COMMON_CONST} from 'expensify-common';
 import startCase from 'lodash/startCase';
+import {title} from 'process';
 import CONST from '@src/CONST';
 import type {Country} from '@src/CONST';
 import type {
@@ -1963,6 +1964,10 @@ const translations = {
         pageNotFound: 'Oops, this page cannot be found',
         noAccess: "That chat doesn't exist or you don't have access to it. Try using search to find a chat.",
         goBackHome: 'Go back to home page',
+    },
+    pageError: {
+        title: 'Oops... Something went wrong.',
+        description: 'Your request could not be completed. Please try again later.',
     },
     setPasswordPage: {
         enterPassword: 'Enter a password',
