@@ -195,6 +195,10 @@ function SearchRouter({onRouterClose, shouldHideInputCaret}: SearchRouterProps, 
             setAutocompleteQueryValue(updatedUserQuery);
 
             const updatedSubstitutionsMap = getUpdatedSubstitutionsMap(singleLineUserQuery, autocompleteSubstitutions);
+
+            console.log('****** autocompleteSubstitutions ******', autocompleteSubstitutions);
+            console.log('****** updatedSubstitutionsMap ******', updatedSubstitutionsMap);
+
             if (!isEqual(autocompleteSubstitutions, updatedSubstitutionsMap)) {
                 setAutocompleteSubstitutions(updatedSubstitutionsMap);
             }
@@ -348,6 +352,7 @@ function SearchRouter({onRouterClose, shouldHideInputCaret}: SearchRouterProps, 
                         onListItemPress={onListItemPress}
                         setTextQuery={setTextAndUpdateSelection}
                         updateAutocompleteSubstitutions={updateAutocompleteSubstitutions}
+                        onHighlightFirstItem={() => listRef.current?.updateAndScrollToFocusedIndex(1)}
                         ref={listRef}
                     />
                 </>

@@ -130,6 +130,7 @@ function SearchAutocompleteList(
         setTextQuery,
         updateAutocompleteSubstitutions,
         shouldSubscribeToArrowKeyEvents,
+        onHighlightFirstItem,
     }: SearchAutocompleteListProps,
     ref: ForwardedRef<SelectionListHandle>,
 ) {
@@ -501,6 +502,34 @@ function SearchAutocompleteList(
         },
         [autocompleteQueryValue, setTextQuery, updateAutocompleteSubstitutions],
     );
+
+    function checkTextMatch(sections, targetText = '') {
+        // Extract reference text safely and normalize case
+        const referenceText = sections?.[1]?.data?.[0]?.text?.toLowerCase() || '';
+        const normalizedTargetText = targetText.toLowerCase().trim();
+
+        // Case 1: Exact match with "invite"
+        if (normalizedTargetText === 'invite') return true;
+
+        // Reject single-letter targetText (avoids "t" matching "t's")
+        if (normalizedTargetText.length < 2) return false;
+
+        // Case 2: Ensure targetText is a valid word or valid full prefix (not a partial cut-off)
+        const regex = new RegExp(`\\b${normalizedTargetText}\\b`, 'i');
+
+        // Ensure targetText is not ending in a non-word character (e.g., ' @ #)
+        if (/[^a-zA-Z0-9]$/.test(normalizedTargetText)) return false;
+
+        return regex.test(referenceText);
+    }
+
+    useEffect(() => {
+        const isHighlightFirstItem = checkTextMatch(sections, autocompleteQueryValue);
+        if (isHighlightFirstItem) {
+            // ref.current?.updateAndScrollToFocusedIndex(1);
+            onHighlightFirstItem();
+        }
+    }, [autocompleteQueryValue, ref, sections]);
 
     return (
         <SelectionList<OptionData | SearchQueryItem>
