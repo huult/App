@@ -1,4 +1,4 @@
-import React, {useMemo} from 'react';
+import React, {useMemo, useState} from 'react';
 import {View} from 'react-native';
 import FullPageNotFoundView from '@components/BlockingViews/FullPageNotFoundView';
 import HeaderGap from '@components/HeaderGap';
@@ -31,6 +31,7 @@ function SearchPage({route}: SearchPageProps) {
     const {translate} = useLocalize();
     const {shouldUseNarrowLayout} = useResponsiveLayout();
     const styles = useThemeStyles();
+    const [showOfflineIndicator, setShowOfflineIndicator] = useState(true);
 
     const {q, name, groupBy} = route.params;
 
@@ -59,6 +60,8 @@ function SearchPage({route}: SearchPageProps) {
             />
         );
     }
+
+    console.log('****** showOfflineIndicator ******', showOfflineIndicator);
 
     return (
         <ScreenWrapper
@@ -101,7 +104,7 @@ function SearchPage({route}: SearchPageProps) {
                         </View>
                         <ScreenWrapper
                             testID={Search.displayName}
-                            shouldShowOfflineIndicatorInWideScreen
+                            shouldShowOfflineIndicatorInWideScreen={showOfflineIndicator}
                             offlineIndicatorStyle={styles.mtAuto}
                         >
                             <SearchPageHeader
@@ -113,6 +116,7 @@ function SearchPage({route}: SearchPageProps) {
                                 key={queryJSON.hash}
                                 queryJSON={queryJSON}
                                 shouldGroupByReports={shouldGroupByReports}
+                                setShowOfflineIndicator={setShowOfflineIndicator}
                             />
                         </ScreenWrapper>
                     </View>

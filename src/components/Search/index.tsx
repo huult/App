@@ -52,6 +52,7 @@ type SearchProps = {
     isSearchScreenFocused?: boolean;
     onContentSizeChange?: (w: number, h: number) => void;
     shouldGroupByReports?: boolean;
+    setShowOfflineIndicator?: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
 const transactionItemMobileHeight = 100;
@@ -126,7 +127,7 @@ function prepareTransactionsList(item: TransactionListItemType, selectedTransact
     };
 }
 
-function Search({queryJSON, onSearchListScroll, isSearchScreenFocused, contentContainerStyle, onContentSizeChange, shouldGroupByReports}: SearchProps) {
+function Search({queryJSON, onSearchListScroll, isSearchScreenFocused, contentContainerStyle, onContentSizeChange, shouldGroupByReports, setShowOfflineIndicator}: SearchProps) {
     const {isOffline} = useNetwork();
     const {shouldUseNarrowLayout} = useResponsiveLayout();
     const styles = useThemeStyles();
@@ -342,6 +343,13 @@ function Search({queryJSON, onSearchListScroll, isSearchScreenFocused, contentCo
         },
         [isFocused, clearSelectedTransactions],
     );
+
+    useEffect(() => {
+        if (!setShowOfflineIndicator) {
+            return;
+        }
+        setShowOfflineIndicator(!(searchResults === undefined));
+    }, [searchResults, setShowOfflineIndicator]);
 
     if (shouldShowLoadingState) {
         return (

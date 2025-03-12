@@ -47,6 +47,7 @@ function SearchPageNarrow({queryJSON, policyID, searchName, shouldGroupByReports
     const [selectionMode] = useOnyx(ONYXKEYS.MOBILE_SELECTION_MODE);
     const {clearSelectedTransactions} = useSearchContext();
     const [searchRouterListVisible, setSearchRouterListVisible] = useState(false);
+    const [showOfflineIndicator, setShowOfflineIndicator] = useState(true);
 
     // Controls the visibility of the educational tooltip based on user scrolling.
     // Hides the tooltip when the user is scrolling and displays it once scrolling stops.
@@ -132,6 +133,7 @@ function SearchPageNarrow({queryJSON, policyID, searchName, shouldGroupByReports
             offlineIndicatorStyle={styles.mtAuto}
             bottomContent={<BottomTabBar selectedTab={BOTTOM_TABS.SEARCH} />}
             headerGapStyles={styles.searchHeaderGap}
+            shouldShowOfflineIndicator={showOfflineIndicator}
         >
             <View style={[styles.flex1, styles.overflowHidden]}>
                 {!selectionMode?.isEnabled ? (
@@ -198,6 +200,7 @@ function SearchPageNarrow({queryJSON, policyID, searchName, shouldGroupByReports
                             onContentSizeChange={onContentSizeChange}
                             contentContainerStyle={!selectionMode?.isEnabled ? [styles.searchListContentContainerStyles] : undefined}
                             shouldGroupByReports={shouldGroupByReports}
+                            setShowOfflineIndicator={setShowOfflineIndicator}
                         />
                     </View>
                 )}
