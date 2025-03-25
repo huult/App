@@ -32,6 +32,8 @@ function NewChatSelectorPage() {
         setActiveTabContainerElement(activeTabElement ?? null);
     }, []);
 
+    console.log('****** formState?.isLoading ******', formState?.isLoading);
+
     return (
         <ScreenWrapper
             shouldEnableKeyboardAvoidingView={false}
@@ -56,7 +58,7 @@ function NewChatSelectorPage() {
                 tabBar={TabSelector}
                 onTabBarFocusTrapContainerElementChanged={setTabBarContainerElement}
                 onActiveTabFocusTrapContainerElementChanged={onTabFocusTrapContainerElementChanged}
-                disableSwipe={formState?.isLoading}
+                disableSwipe={!!formState?.isLoading}
             >
                 <TopTab.Screen name={CONST.TAB.NEW_CHAT}>
                     {() => (
