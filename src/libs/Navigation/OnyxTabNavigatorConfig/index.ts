@@ -1,5 +1,6 @@
 const defaultScreenOptions = {
     animationEnabled: true,
+    swipeEnabled: false,
 } as const;
 
 export {
