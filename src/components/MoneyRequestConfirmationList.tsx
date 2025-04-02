@@ -4,6 +4,7 @@ import React, {memo, useCallback, useEffect, useMemo, useRef, useState} from 're
 import {InteractionManager, View} from 'react-native';
 import type {OnyxEntry} from 'react-native-onyx';
 import {useOnyx} from 'react-native-onyx';
+import useCharWidthRef from '@hooks/useCharWidthRef';
 import useCurrentUserPersonalDetails from '@hooks/useCurrentUserPersonalDetails';
 import useDebouncedState from '@hooks/useDebouncedState';
 import useLocalize from '@hooks/useLocalize';
@@ -251,6 +252,8 @@ function MoneyRequestConfirmationList({
     const isTypeInvoice = iouType === CONST.IOU.TYPE.INVOICE;
     const isScanRequest = useMemo(() => isScanRequestUtil(transaction), [transaction]);
     const isCreateExpenseFlow = transaction?.isFromGlobalCreate && !isPerDiemRequest;
+
+    const [charWidth, setCharWidth] = useState();
 
     const transactionID = transaction?.transactionID;
     const customUnitRateID = getRateID(transaction);
@@ -624,25 +627,35 @@ function MoneyRequestConfirmationList({
             isSelected: false,
             isInteractive: false,
             rightElement: (
-                <MoneyRequestAmountInput
-                    autoGrow={false}
-                    amount={transaction?.splitShares?.[participantOption.accountID ?? CONST.DEFAULT_NUMBER_ID]?.amount}
-                    currency={iouCurrencyCode}
-                    prefixCharacter={currencySymbol}
-                    disableKeyboard={false}
-                    isCurrencyPressable={false}
-                    hideFocusedState={false}
-                    hideCurrencySymbol
-                    formatAmountOnBlur
-                    prefixContainerStyle={[styles.pv0]}
-                    inputStyle={[styles.optionRowAmountInput]}
-                    containerStyle={[styles.textInputContainer]}
-                    touchableInputWrapperStyle={[styles.ml3]}
-                    onFormatAmount={convertToDisplayStringWithoutCurrency}
-                    onAmountChange={(value: string) => onSplitShareChange(participantOption.accountID ?? CONST.DEFAULT_NUMBER_ID, Number(value))}
-                    maxLength={formattedTotalAmount.length}
-                    contentWidth={formattedTotalAmount.length * 8}
-                />
+                <>
+                    <Text
+                        onLayout={(event) => {
+                            setCharWidth(event.nativeEvent.layout.width / formattedTotalAmount.length);
+                        }}
+                        style={{position: 'absolute', left: -1000, top: -1000, opacity: 0}}
+                    >
+                        {formattedTotalAmount}
+                    </Text>
+                    <MoneyRequestAmountInput
+                        autoGrow={false}
+                        amount={transaction?.splitShares?.[participantOption.accountID ?? CONST.DEFAULT_NUMBER_ID]?.amount}
+                        currency={iouCurrencyCode}
+                        prefixCharacter={currencySymbol}
+                        disableKeyboard={false}
+                        isCurrencyPressable={false}
+                        hideFocusedState={false}
+                        hideCurrencySymbol
+                        formatAmountOnBlur
+                        prefixContainerStyle={[styles.pv0]}
+                        inputStyle={[styles.optionRowAmountInput]}
+                        containerStyle={[styles.textInputContainer]}
+                        touchableInputWrapperStyle={[styles.ml3]}
+                        onFormatAmount={convertToDisplayStringWithoutCurrency}
+                        onAmountChange={(value: string) => onSplitShareChange(participantOption.accountID ?? CONST.DEFAULT_NUMBER_ID, Number(value))}
+                        maxLength={formattedTotalAmount.length}
+                        contentWidth={formattedTotalAmount.length * charWidth}
+                    />
+                </>
             ),
         }));
     }, [
@@ -662,6 +675,7 @@ function MoneyRequestConfirmationList({
         styles.ml3,
         transaction?.comment?.splits,
         transaction?.splitShares,
+        charWidth,
         onSplitShareChange,
     ]);
 
