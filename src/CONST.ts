@@ -6546,6 +6546,13 @@ const CONST = {
             SORT_ORDER: 'sortOrder',
             GROUP_BY: 'groupBy',
         },
+        FILTER_SECTION_TITLES: {
+            GENERAL: 'General',
+            EXPENSES: 'Expenses',
+            CARD: 'Card',
+            REPORTS: 'Reports',
+            TIME: 'Time',
+        },
         SYNTAX_FILTER_KEYS: {
             DATE: 'date',
             AMOUNT: 'amount',

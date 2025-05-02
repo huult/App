@@ -11,6 +11,7 @@ import {usePersonalDetails} from '@components/OnyxProvider';
 import ScrollView from '@components/ScrollView';
 import type {SearchDateFilterKeys, SearchFilterKey} from '@components/Search/types';
 import SpacerView from '@components/SpacerView';
+import Text from '@components/Text';
 import useLocalize from '@hooks/useLocalize';
 import usePermissions from '@hooks/usePermissions';
 import useSingleExecution from '@hooks/useSingleExecution';
@@ -160,82 +161,130 @@ const baseFilterConfig = {
  * typeFiltersKeys is stored as an object keyed by the different search types.
  * Each value is then an array of arrays where each inner array is a separate section in the UI.
  */
-const typeFiltersKeys: Record<string, Array<Array<ValueOf<typeof CONST.SEARCH.SYNTAX_FILTER_KEYS>>>> = {
+const typeFiltersKeys: Record<
+    string,
+    Array<{
+        title: ValueOf<typeof CONST.SEARCH.FILTER_SECTION_TITLES>;
+        filters: Array<ValueOf<typeof CONST.SEARCH.SYNTAX_FILTER_KEYS>>;
+    }>
+> = {
     [CONST.SEARCH.DATA_TYPES.EXPENSE]: [
-        [CONST.SEARCH.SYNTAX_FILTER_KEYS.KEYWORD, CONST.SEARCH.SYNTAX_FILTER_KEYS.FROM, CONST.SEARCH.SYNTAX_FILTER_KEYS.TO, CONST.SEARCH.SYNTAX_FILTER_KEYS.POLICY_ID],
-        [
-            CONST.SEARCH.SYNTAX_FILTER_KEYS.EXPENSE_TYPE,
-            CONST.SEARCH.SYNTAX_FILTER_KEYS.MERCHANT,
-            CONST.SEARCH.SYNTAX_FILTER_KEYS.DATE,
-            CONST.SEARCH.SYNTAX_FILTER_KEYS.AMOUNT,
-            CONST.SEARCH.SYNTAX_FILTER_KEYS.CURRENCY,
-            CONST.SEARCH.SYNTAX_FILTER_KEYS.CATEGORY,
-            CONST.SEARCH.SYNTAX_FILTER_KEYS.TAG,
-            CONST.SEARCH.SYNTAX_FILTER_KEYS.DESCRIPTION,
-            CONST.SEARCH.SYNTAX_FILTER_KEYS.TAX_RATE,
-            CONST.SEARCH.SYNTAX_FILTER_KEYS.REIMBURSABLE,
-            CONST.SEARCH.SYNTAX_FILTER_KEYS.BILLABLE,
-        ],
-        [CONST.SEARCH.SYNTAX_FILTER_KEYS.CARD_ID, CONST.SEARCH.SYNTAX_FILTER_KEYS.POSTED],
-        [
-            CONST.SEARCH.SYNTAX_FILTER_KEYS.REPORT_ID,
-            CONST.SEARCH.SYNTAX_FILTER_KEYS.SUBMITTED,
-            CONST.SEARCH.SYNTAX_FILTER_KEYS.APPROVED,
-            CONST.SEARCH.SYNTAX_FILTER_KEYS.PAID,
-            CONST.SEARCH.SYNTAX_FILTER_KEYS.EXPORTED,
-        ],
+        {
+            title: CONST.SEARCH.FILTER_SECTION_TITLES.GENERAL,
+            filters: [CONST.SEARCH.SYNTAX_FILTER_KEYS.KEYWORD, CONST.SEARCH.SYNTAX_FILTER_KEYS.FROM, CONST.SEARCH.SYNTAX_FILTER_KEYS.TO, CONST.SEARCH.SYNTAX_FILTER_KEYS.POLICY_ID],
+        },
+        {
+            title: CONST.SEARCH.FILTER_SECTION_TITLES.EXPENSES,
+            filters: [
+                CONST.SEARCH.SYNTAX_FILTER_KEYS.EXPENSE_TYPE,
+                CONST.SEARCH.SYNTAX_FILTER_KEYS.MERCHANT,
+                CONST.SEARCH.SYNTAX_FILTER_KEYS.DATE,
+                CONST.SEARCH.SYNTAX_FILTER_KEYS.AMOUNT,
+                CONST.SEARCH.SYNTAX_FILTER_KEYS.CURRENCY,
+                CONST.SEARCH.SYNTAX_FILTER_KEYS.CATEGORY,
+                CONST.SEARCH.SYNTAX_FILTER_KEYS.TAG,
+                CONST.SEARCH.SYNTAX_FILTER_KEYS.DESCRIPTION,
+                CONST.SEARCH.SYNTAX_FILTER_KEYS.TAX_RATE,
+                CONST.SEARCH.SYNTAX_FILTER_KEYS.REIMBURSABLE,
+                CONST.SEARCH.SYNTAX_FILTER_KEYS.BILLABLE,
+            ],
+        },
+        {
+            title: CONST.SEARCH.FILTER_SECTION_TITLES.CARD,
+            filters: [CONST.SEARCH.SYNTAX_FILTER_KEYS.CARD_ID, CONST.SEARCH.SYNTAX_FILTER_KEYS.POSTED],
+        },
+        {
+            title: CONST.SEARCH.FILTER_SECTION_TITLES.REPORTS,
+            filters: [
+                CONST.SEARCH.SYNTAX_FILTER_KEYS.REPORT_ID,
+                CONST.SEARCH.SYNTAX_FILTER_KEYS.SUBMITTED,
+                CONST.SEARCH.SYNTAX_FILTER_KEYS.APPROVED,
+                CONST.SEARCH.SYNTAX_FILTER_KEYS.PAID,
+                CONST.SEARCH.SYNTAX_FILTER_KEYS.EXPORTED,
+            ],
+        },
     ],
     [CONST.SEARCH.DATA_TYPES.INVOICE]: [
-        [CONST.SEARCH.SYNTAX_FILTER_KEYS.KEYWORD, CONST.SEARCH.SYNTAX_FILTER_KEYS.FROM, CONST.SEARCH.SYNTAX_FILTER_KEYS.TO, CONST.SEARCH.SYNTAX_FILTER_KEYS.POLICY_ID],
-        [
-            CONST.SEARCH.SYNTAX_FILTER_KEYS.MERCHANT,
-            CONST.SEARCH.SYNTAX_FILTER_KEYS.DATE,
-            CONST.SEARCH.SYNTAX_FILTER_KEYS.AMOUNT,
-            CONST.SEARCH.SYNTAX_FILTER_KEYS.CURRENCY,
-            CONST.SEARCH.SYNTAX_FILTER_KEYS.CATEGORY,
-            CONST.SEARCH.SYNTAX_FILTER_KEYS.TAG,
-            CONST.SEARCH.SYNTAX_FILTER_KEYS.DESCRIPTION,
-            CONST.SEARCH.SYNTAX_FILTER_KEYS.TAX_RATE,
-        ],
-        [CONST.SEARCH.SYNTAX_FILTER_KEYS.CARD_ID, CONST.SEARCH.SYNTAX_FILTER_KEYS.POSTED],
-        [
-            CONST.SEARCH.SYNTAX_FILTER_KEYS.REPORT_ID,
-            CONST.SEARCH.SYNTAX_FILTER_KEYS.SUBMITTED,
-            CONST.SEARCH.SYNTAX_FILTER_KEYS.APPROVED,
-            CONST.SEARCH.SYNTAX_FILTER_KEYS.PAID,
-            CONST.SEARCH.SYNTAX_FILTER_KEYS.EXPORTED,
-        ],
+        {
+            title: CONST.SEARCH.FILTER_SECTION_TITLES.GENERAL,
+            filters: [CONST.SEARCH.SYNTAX_FILTER_KEYS.KEYWORD, CONST.SEARCH.SYNTAX_FILTER_KEYS.FROM, CONST.SEARCH.SYNTAX_FILTER_KEYS.TO, CONST.SEARCH.SYNTAX_FILTER_KEYS.POLICY_ID],
+        },
+        {
+            title: CONST.SEARCH.FILTER_SECTION_TITLES.EXPENSES,
+            filters: [
+                CONST.SEARCH.SYNTAX_FILTER_KEYS.MERCHANT,
+                CONST.SEARCH.SYNTAX_FILTER_KEYS.DATE,
+                CONST.SEARCH.SYNTAX_FILTER_KEYS.AMOUNT,
+                CONST.SEARCH.SYNTAX_FILTER_KEYS.CURRENCY,
+                CONST.SEARCH.SYNTAX_FILTER_KEYS.CATEGORY,
+                CONST.SEARCH.SYNTAX_FILTER_KEYS.TAG,
+                CONST.SEARCH.SYNTAX_FILTER_KEYS.DESCRIPTION,
+                CONST.SEARCH.SYNTAX_FILTER_KEYS.TAX_RATE,
+            ],
+        },
+        {
+            title: CONST.SEARCH.FILTER_SECTION_TITLES.CARD,
+            filters: [CONST.SEARCH.SYNTAX_FILTER_KEYS.CARD_ID, CONST.SEARCH.SYNTAX_FILTER_KEYS.POSTED],
+        },
+        {
+            title: CONST.SEARCH.FILTER_SECTION_TITLES.REPORTS,
+            filters: [
+                CONST.SEARCH.SYNTAX_FILTER_KEYS.REPORT_ID,
+                CONST.SEARCH.SYNTAX_FILTER_KEYS.SUBMITTED,
+                CONST.SEARCH.SYNTAX_FILTER_KEYS.APPROVED,
+                CONST.SEARCH.SYNTAX_FILTER_KEYS.PAID,
+                CONST.SEARCH.SYNTAX_FILTER_KEYS.EXPORTED,
+            ],
+        },
     ],
     [CONST.SEARCH.DATA_TYPES.TRIP]: [
-        [CONST.SEARCH.SYNTAX_FILTER_KEYS.KEYWORD, CONST.SEARCH.SYNTAX_FILTER_KEYS.FROM, CONST.SEARCH.SYNTAX_FILTER_KEYS.TO, CONST.SEARCH.SYNTAX_FILTER_KEYS.POLICY_ID],
-        [
-            CONST.SEARCH.SYNTAX_FILTER_KEYS.MERCHANT,
-            CONST.SEARCH.SYNTAX_FILTER_KEYS.DATE,
-            CONST.SEARCH.SYNTAX_FILTER_KEYS.AMOUNT,
-            CONST.SEARCH.SYNTAX_FILTER_KEYS.CURRENCY,
-            CONST.SEARCH.SYNTAX_FILTER_KEYS.CATEGORY,
-            CONST.SEARCH.SYNTAX_FILTER_KEYS.TAG,
-            CONST.SEARCH.SYNTAX_FILTER_KEYS.DESCRIPTION,
-            CONST.SEARCH.SYNTAX_FILTER_KEYS.TAX_RATE,
-        ],
-        [CONST.SEARCH.SYNTAX_FILTER_KEYS.CARD_ID, CONST.SEARCH.SYNTAX_FILTER_KEYS.POSTED],
-        [
-            CONST.SEARCH.SYNTAX_FILTER_KEYS.REPORT_ID,
-            CONST.SEARCH.SYNTAX_FILTER_KEYS.SUBMITTED,
-            CONST.SEARCH.SYNTAX_FILTER_KEYS.APPROVED,
-            CONST.SEARCH.SYNTAX_FILTER_KEYS.PAID,
-            CONST.SEARCH.SYNTAX_FILTER_KEYS.EXPORTED,
-        ],
+        {
+            title: CONST.SEARCH.FILTER_SECTION_TITLES.GENERAL,
+            filters: [CONST.SEARCH.SYNTAX_FILTER_KEYS.KEYWORD, CONST.SEARCH.SYNTAX_FILTER_KEYS.FROM, CONST.SEARCH.SYNTAX_FILTER_KEYS.TO, CONST.SEARCH.SYNTAX_FILTER_KEYS.POLICY_ID],
+        },
+        {
+            title: CONST.SEARCH.FILTER_SECTION_TITLES.EXPENSES,
+            filters: [
+                CONST.SEARCH.SYNTAX_FILTER_KEYS.MERCHANT,
+                CONST.SEARCH.SYNTAX_FILTER_KEYS.DATE,
+                CONST.SEARCH.SYNTAX_FILTER_KEYS.AMOUNT,
+                CONST.SEARCH.SYNTAX_FILTER_KEYS.CURRENCY,
+                CONST.SEARCH.SYNTAX_FILTER_KEYS.CATEGORY,
+                CONST.SEARCH.SYNTAX_FILTER_KEYS.TAG,
+                CONST.SEARCH.SYNTAX_FILTER_KEYS.DESCRIPTION,
+                CONST.SEARCH.SYNTAX_FILTER_KEYS.TAX_RATE,
+            ],
+        },
+        {
+            title: CONST.SEARCH.FILTER_SECTION_TITLES.CARD,
+            filters: [CONST.SEARCH.SYNTAX_FILTER_KEYS.CARD_ID, CONST.SEARCH.SYNTAX_FILTER_KEYS.POSTED],
+        },
+        {
+            title: CONST.SEARCH.FILTER_SECTION_TITLES.REPORTS,
+            filters: [
+                CONST.SEARCH.SYNTAX_FILTER_KEYS.REPORT_ID,
+                CONST.SEARCH.SYNTAX_FILTER_KEYS.SUBMITTED,
+                CONST.SEARCH.SYNTAX_FILTER_KEYS.APPROVED,
+                CONST.SEARCH.SYNTAX_FILTER_KEYS.PAID,
+                CONST.SEARCH.SYNTAX_FILTER_KEYS.EXPORTED,
+            ],
+        },
     ],
     [CONST.SEARCH.DATA_TYPES.CHAT]: [
-        [
-            CONST.SEARCH.SYNTAX_FILTER_KEYS.KEYWORD,
-            CONST.SEARCH.SYNTAX_FILTER_KEYS.FROM,
-            CONST.SEARCH.SYNTAX_FILTER_KEYS.TO,
-            CONST.SEARCH.SYNTAX_FILTER_KEYS.IN,
-            CONST.SEARCH.SYNTAX_FILTER_KEYS.POLICY_ID,
-        ],
-        [CONST.SEARCH.SYNTAX_FILTER_KEYS.DATE],
+        {
+            title: CONST.SEARCH.FILTER_SECTION_TITLES.GENERAL,
+            filters: [
+                CONST.SEARCH.SYNTAX_FILTER_KEYS.KEYWORD,
+                CONST.SEARCH.SYNTAX_FILTER_KEYS.FROM,
+                CONST.SEARCH.SYNTAX_FILTER_KEYS.TO,
+                CONST.SEARCH.SYNTAX_FILTER_KEYS.IN,
+                CONST.SEARCH.SYNTAX_FILTER_KEYS.POLICY_ID,
+            ],
+        },
+        {
+            title: CONST.SEARCH.FILTER_SECTION_TITLES.TIME,
+            filters: [CONST.SEARCH.SYNTAX_FILTER_KEYS.DATE],
+        },
     ],
 };
 
@@ -484,7 +533,7 @@ function AdvancedSearchFilters() {
 
     const shouldDisplayCategoryFilter = shouldDisplayFilter(nonPersonalPolicyCategoryCount, areCategoriesEnabled, !!singlePolicyCategories);
     const shouldDisplayTagFilter = shouldDisplayFilter(tagListsUnpacked.length, areTagsEnabled, !!singlePolicyTagLists);
-    const shouldDisplayCardFilter = shouldDisplayFilter(Object.keys(allCards).length, areCardsEnabled);
+    const shouldDisplayCardFilter = true;
     const shouldDisplayTaxFilter = shouldDisplayFilter(Object.keys(taxRates).length, areTaxEnabled);
     const shouldDisplayWorkspaceFilter = useMemo(() => {
         return canUseLeftHandBar && workspaces.some((section) => section.data.length !== 0);
@@ -525,7 +574,7 @@ function AdvancedSearchFilters() {
 
     const filters = typeFiltersKeys[currentType]
         .map((section) => {
-            return section
+            return section.filters
                 .map((key) => {
                     // 'feed' filter row does not appear in advanced filters, it is created using selected cards
                     if (key === CONST.SEARCH.SYNTAX_FILTER_KEYS.FEED) {
@@ -587,11 +636,14 @@ function AdvancedSearchFilters() {
                         const workspacesData = workspaces.flatMap((value) => value.data);
                         filterTitle = baseFilterConfig[key].getTitle(searchAdvancedFilters, workspacesData);
                     }
+                    console.log('****** baseFilterConfig[key] ******', baseFilterConfig[key]);
+
                     return {
                         key,
                         title: filterTitle,
                         description: translate(baseFilterConfig[key].description),
                         onPress,
+                        sectionTitle: section.title,
                     };
                 })
                 .filter((filter): filter is NonNullable<typeof filter> => !!filter);
@@ -613,18 +665,19 @@ function AdvancedSearchFilters() {
                                         style={[styles.reportHorizontalRule]}
                                     />
                                 )}
-                                {section.map((item) => {
-                                    return (
-                                        <MenuItemWithTopDescription
-                                            key={item.description}
-                                            title={item.title}
-                                            titleStyle={styles.flex1}
-                                            description={item.description}
-                                            shouldShowRightIcon
-                                            onPress={item.onPress}
-                                        />
-                                    );
-                                })}
+
+                                <Text style={[styles.headerText, styles.ph5, styles.mb1, index !== 0 ? styles.mt5 : undefined]}>{section.at(0)?.sectionTitle}</Text>
+
+                                {section.map((item) => (
+                                    <MenuItemWithTopDescription
+                                        key={item.description}
+                                        title={item.title}
+                                        titleStyle={styles.flex1}
+                                        description={item.description}
+                                        shouldShowRightIcon
+                                        onPress={item.onPress}
+                                    />
+                                ))}
                             </View>
                         );
                     })}
