@@ -1,3 +1,4 @@
+import {useRoute} from '@react-navigation/native';
 import React, {useEffect, useLayoutEffect, useState} from 'react';
 import {View} from 'react-native';
 import {useOnyx} from 'react-native-onyx';
@@ -45,6 +46,8 @@ function OnboardingWelcomeVideo() {
     const {shouldUseNarrowLayout} = useResponsiveLayout();
     const [isModalDisabled, setIsModalDisabled] = useState(true);
 
+    const route = useRoute();
+
     const [tryNewDot, tryNewDotMetadata] = useOnyx(ONYXKEYS.NVP_TRY_NEW_DOT, {
         selector: tryNewDotOnyxSelector,
     });
@@ -56,13 +59,13 @@ function OnboardingWelcomeVideo() {
         }
         const {hasBeenAddedToNudgeMigration} = tryNewDot ?? {};
 
-        if (hasBeenAddedToNudgeMigration && !dismissedProductTraining?.migratedUserWelcomeModal) {
+        if ((hasBeenAddedToNudgeMigration && !dismissedProductTraining?.migratedUserWelcomeModal) || route?.params?.isNavigationRoot === 'true') {
             return;
         }
         setIsModalDisabled(false);
         const defaultCannedQuery = buildCannedSearchQuery();
         Navigation.navigate(ROUTES.SEARCH_ROOT.getRoute({query: defaultCannedQuery}));
-    }, [dismissedProductTraining?.migratedUserWelcomeModal, setIsModalDisabled, tryNewDotMetadata, dismissedProductTrainingMetadata, tryNewDot]);
+    }, [dismissedProductTraining?.migratedUserWelcomeModal, setIsModalDisabled, tryNewDotMetadata, dismissedProductTrainingMetadata, tryNewDot, route?.params?.isNavigationRoot]);
 
     /**
      * Extracts values from the non-scraped attribute WEB_PROP_ATTR at build time
