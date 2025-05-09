@@ -405,10 +405,10 @@ function BaseSelectionList<TItem extends ListItem>(
             }
             // In single-selection lists we don't care about updating the focused index, because the list is closed after selecting an item
             if (canSelectMultiple) {
-                if (sections.length > 1 && !item.isSelected) {
-                    // If we're selecting an item, scroll to it's position at the top, so we can see it
-                    scrollToIndex(0, true);
-                }
+                // if (sections.length > 1 && !item.isSelected) {
+                //     // If we're selecting an item, scroll to it's position at the top, so we can see it
+                //     scrollToIndex(0, true);
+                // }
 
                 if (shouldShowTextInput) {
                     clearInputAfterSelect();
