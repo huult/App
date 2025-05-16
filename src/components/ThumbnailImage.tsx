@@ -88,6 +88,8 @@ function ThumbnailImage({
     isDeleted,
     onLoadFailure,
     onMeasure,
+    loadingIconSize,
+    loadingIndicatorStyles,
 }: ThumbnailImageProps) {
     const styles = useThemeStyles();
     const theme = useTheme();
@@ -161,6 +163,8 @@ function ThumbnailImage({
                     }}
                     isAuthTokenRequired={isAuthTokenRequired}
                     objectPosition={objectPosition}
+                    loadingIconSize={loadingIconSize}
+                    loadingIndicatorStyles={loadingIndicatorStyles}
                 />
             </View>
         </View>

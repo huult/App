@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useState} from 'react';
 import type {StyleProp, ViewStyle} from 'react-native';
 import {View} from 'react-native';
 import useThemeStyles from '@hooks/useThemeStyles';
@@ -130,6 +130,7 @@ function ReceiptImage({
     isPerDiemRequest,
     shouldUseFullHeight,
     loadingIndicatorStyles,
+    isSearch,
 }: ReceiptImageProps) {
     const styles = useThemeStyles();
 
@@ -188,6 +189,7 @@ function ReceiptImage({
                 fallbackIconColor={fallbackIconColor}
                 fallbackIconBackground={fallbackIconBackground}
                 objectPosition={shouldUseInitialObjectPosition ? CONST.IMAGE_OBJECT_POSITION.INITIAL : CONST.IMAGE_OBJECT_POSITION.TOP}
+                loadingIconSize={isSearch ? 'small' : undefined}
             />
         );
     }

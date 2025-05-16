@@ -49,7 +49,16 @@ type ImageWithSizeCalculationProps = {
  * performing some calculation on a network image after fetching dimensions so
  * it can be appropriately resized.
  */
-function ImageWithSizeCalculation({url, altText, style, onMeasure, onLoadFailure, isAuthTokenRequired, objectPosition = CONST.IMAGE_OBJECT_POSITION.INITIAL}: ImageWithSizeCalculationProps) {
+function ImageWithSizeCalculation({
+    url,
+    altText,
+    style,
+    onMeasure,
+    onLoadFailure,
+    isAuthTokenRequired,
+    objectPosition = CONST.IMAGE_OBJECT_POSITION.INITIAL,
+    loadingIconSize,
+}: ImageWithSizeCalculationProps) {
     const styles = useThemeStyles();
     const isLoadedRef = useRef<boolean | null>(null);
     const [isImageCached, setIsImageCached] = useState(true);
@@ -120,7 +129,12 @@ function ImageWithSizeCalculation({url, altText, style, onMeasure, onLoadFailure
                 }}
                 objectPosition={objectPosition}
             />
-            {isLoading && !isImageCached && !isOffline && <FullscreenLoadingIndicator style={[styles.opacity1, styles.bgTransparent]} />}
+            {isLoading && !isImageCached && !isOffline && (
+                <FullscreenLoadingIndicator
+                    iconSize={loadingIconSize}
+                    style={[styles.opacity1, styles.bgTransparent]}
+                />
+            )}
             {isLoading && !isImageCached && <AttachmentOfflineIndicator isPreview />}
         </View>
     );

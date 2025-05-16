@@ -116,8 +116,9 @@ function ReceiptCell({transactionItem}: TransactionCellProps) {
                 source={source}
                 isEReceipt={transactionItem.hasEReceipt && !hasReceiptSource(transactionItem)}
                 transactionID={transactionItem.transactionID}
-                shouldUseThumbnailImage={!transactionItem?.receipt?.source}
+                shouldUseThumbnailImage={!transactionItem?.receipt?.source || Str.isImage(source)}
                 isAuthTokenRequired
+                isSearch
                 fallbackIcon={Expensicons.Receipt}
                 fallbackIconSize={20}
                 fallbackIconColor={theme.icon}
