@@ -554,21 +554,24 @@ function TimePicker(
                     clearSelectedValue(hours, selectionHour, setHours, setSelectionHour);
                 } else if (isMinuteFocused) {
                     if (selectionMinute.start === 0 && selectionMinute.end === 0) {
-                        focusHourInputOnLastCharacter();
+                        minuteInputRef.current?.blur();
+                        setCursorPosition(2, hourInputRef, setSelectionHour, false);
                         return;
                     }
 
                     clearSelectedValue(minutes, selectionMinute, setMinutes, setSelectionMinute);
                 } else if (isSecondFocused) {
                     if (selectionSecond.start === 0 && selectionSecond.end === 0) {
-                        focusMinuteInputOnLastCharacter();
+                        secondInputRef.current?.blur();
+                        setCursorPosition(2, hourInputRef, setSelectionMinute, false);
                         return;
                     }
 
                     clearSelectedValue(seconds, selectionSecond, setSeconds, setSelectionSecond);
                 } else if (isMillisecondFocused) {
                     if (selectionMillisecond.start === 0 && selectionMillisecond.end === 0) {
-                        focusSecondInputOnLastCharacter();
+                        millisecondInputRef.current?.blur();
+                        setCursorPosition(2, hourInputRef, setSelectionSecond, false);
                         return;
                     }
 
@@ -810,6 +813,9 @@ function TimePicker(
                         containerStyle={[styles.iouAmountTextInputContainer]}
                         touchableInputWrapperStyle={!showFullFormat && styles.timePickerHeight100}
                         selection={selectionMinute}
+                        onBlur={() => {
+                            hourInputRef.current?.focus();
+                        }}
                     />
                     {showFullFormat && (
                         <>
@@ -833,6 +839,9 @@ function TimePicker(
                                 containerStyle={[styles.iouAmountTextInputContainer]}
                                 touchableInputWrapperStyle={!showFullFormat && styles.timePickerHeight100}
                                 selection={selectionSecond}
+                                onBlur={() => {
+                                    minuteInputRef.current?.focus();
+                                }}
                             />
                             <Text style={[styles.timePickerSemiDot, showFullFormat && [styles.textXXLarge, {height: undefined}]]}>{CONST.COLON}</Text>
                             <AmountTextInput
@@ -857,6 +866,9 @@ function TimePicker(
                                 containerStyle={[styles.iouAmountTextInputContainer]}
                                 touchableInputWrapperStyle={!showFullFormat && styles.timePickerHeight100}
                                 selection={selectionMillisecond}
+                                onBlur={() => {
+                                    secondInputRef.current?.focus();
+                                }}
                             />
                         </>
                     )}
