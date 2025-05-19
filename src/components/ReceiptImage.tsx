@@ -10,6 +10,7 @@ import type {IconSize} from './EReceiptThumbnail';
 import EReceiptWithSizeCalculation from './EReceiptWithSizeCalculation';
 import type {FullScreenLoadingIndicatorIconSize} from './FullscreenLoadingIndicator';
 import Image from './Image';
+import ImageWithLoading from './ImageWithLoading';
 import PDFThumbnail from './PDFThumbnail';
 import ReceiptEmptyState from './ReceiptEmptyState';
 import type {TransactionListItemType} from './SelectionList/types';
@@ -130,6 +131,7 @@ function ReceiptImage({
     isPerDiemRequest,
     shouldUseFullHeight,
     loadingIndicatorStyles,
+    shouldUseImageWithLoading,
 }: ReceiptImageProps) {
     const styles = useThemeStyles();
 
@@ -188,6 +190,16 @@ function ReceiptImage({
                 fallbackIconColor={fallbackIconColor}
                 fallbackIconBackground={fallbackIconBackground}
                 objectPosition={shouldUseInitialObjectPosition ? CONST.IMAGE_OBJECT_POSITION.INITIAL : CONST.IMAGE_OBJECT_POSITION.TOP}
+            />
+        );
+    }
+
+    if (shouldUseImageWithLoading) {
+        return (
+            <ImageWithLoading
+                url={source ?? ''}
+                style={[style ?? [styles.w100, styles.h100], styles.overflowHidden]}
+                isAuthTokenRequired={isAuthTokenRequired ?? false}
             />
         );
     }

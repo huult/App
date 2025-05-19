@@ -126,6 +126,7 @@ function ReceiptCell({transactionItem}: TransactionCellProps) {
                 loadingIconSize="small"
                 loadingIndicatorStyles={styles.bgTransparent}
                 transactionItem={transactionItem}
+                shouldUseImageWithLoading
             />
         </View>
     );
