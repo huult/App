@@ -563,7 +563,7 @@ function TimePicker(
                 } else if (isSecondFocused) {
                     if (selectionSecond.start === 0 && selectionSecond.end === 0) {
                         secondInputRef.current?.blur();
-                        setCursorPosition(2, hourInputRef, setSelectionMinute, false);
+                        setCursorPosition(2, minuteInputRef, setSelectionMinute, false);
                         return;
                     }
 
@@ -571,7 +571,7 @@ function TimePicker(
                 } else if (isMillisecondFocused) {
                     if (selectionMillisecond.start === 0 && selectionMillisecond.end === 0) {
                         millisecondInputRef.current?.blur();
-                        setCursorPosition(2, hourInputRef, setSelectionSecond, false);
+                        setCursorPosition(2, secondInputRef, setSelectionSecond, false);
                         return;
                     }
 
