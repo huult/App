@@ -116,6 +116,7 @@ function FormProvider(
     const inputRefs = useRef<InputRefs>({});
     const touchedInputs = useRef<Record<string, boolean>>({});
     const [inputValues, setInputValues] = useState<Form>(() => ({...draftValues}));
+    const [focusedInputID, setFocusedInputID] = useState('');
     const [errors, setErrors] = useState<GenericFormInputErrors>({});
     const hasServerError = useMemo(() => !!formState && !isEmptyObject(formState?.errors), [formState]);
     const {setIsBlurred} = useInputBlurContext();
@@ -225,6 +226,8 @@ function FormProvider(
 
             // Validate form and return early if any errors are found
             if (!isEmptyObject(onValidate(trimmedStringValues))) {
+                focusedInputID && inputRefs.current[focusedInputID]?.current?.focus?.();
+
                 return;
             }
 
@@ -388,7 +391,7 @@ function FormProvider(
                                 return;
                             }
                             setTouchedInput(inputID);
-                            // We don't validate the form on blur in case the current screen is not focused
+                            // We do't validate the form on blur in case the current screen is not focused
                             if (shouldValidateOnBlur && isFocusedRef.current) {
                                 onValidate(inputValues, !hasServerError);
                             }
@@ -419,6 +422,10 @@ function FormProvider(
                         setDraftValues(formID, {[inputKey]: value});
                     }
                     inputProps.onValueChange?.(value, inputKey);
+                },
+                onFocus: (event) => {
+                    setFocusedInputID(inputID); // You need a useState for this
+                    inputProps.onFocus?.(event);
                 },
             };
         },
