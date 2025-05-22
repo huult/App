@@ -279,7 +279,14 @@ const typeFiltersKeys: Record<string, Array<Array<ValueOf<typeof CONST.SEARCH.SY
 };
 
 function getFilterWorkspaceDisplayTitle(filters: SearchAdvancedFiltersForm, policies: WorkspaceListItem[]) {
-    return policies.filter((value) => value.policyID === filters.policyID).at(0)?.text;
+    if (!Array.isArray(filters.policyIDS) || filters.policyIDS.length === 0) {
+        return '';
+    }
+
+    return policies
+        .filter((workspace) => filters.policyIDS.includes(workspace.policyID ?? ''))
+        .map((workspace) => workspace.text)
+        .join(', ');
 }
 
 function getFilterCardDisplayTitle(filters: Partial<SearchAdvancedFiltersForm>, cards: CardList, translate: LocaleContextProps['translate']) {
@@ -471,7 +478,7 @@ function AdvancedSearchFilters() {
     const [savedSearches] = useOnyx(ONYXKEYS.SAVED_SEARCHES, {canBeMissing: true});
     const [searchAdvancedFilters = {} as SearchAdvancedFiltersForm] = useOnyx(ONYXKEYS.FORMS.SEARCH_ADVANCED_FILTERS_FORM, {canBeMissing: true});
 
-    const policyID = searchAdvancedFilters.policyID;
+    const policyID = searchAdvancedFilters?.policyIDS?.length === 1 ? searchAdvancedFilters.policyIDS.at(0) : searchAdvancedFilters.policyID;
     const [userCardList] = useOnyx(ONYXKEYS.CARD_LIST, {canBeMissing: false});
     const [workspaceCardFeeds] = useOnyx(ONYXKEYS.COLLECTION.WORKSPACE_CARDS_LIST, {canBeMissing: false});
     const allCards = useMemo(() => mergeCardListWithWorkspaceFeeds(workspaceCardFeeds ?? CONST.EMPTY_OBJECT, userCardList, true), [userCardList, workspaceCardFeeds]);
@@ -489,9 +496,15 @@ function AdvancedSearchFilters() {
                 }),
             ),
     });
+
+    // what happend if multiple workspace case
     const singlePolicyCategories = allPolicyCategories[`${ONYXKEYS.COLLECTION.POLICY_CATEGORIES}${policyID}`];
     const [allPolicyTagLists = {}] = useOnyx(ONYXKEYS.COLLECTION.POLICY_TAGS, {canBeMissing: false});
+    // what happend if multiple workspace case
     const singlePolicyTagLists = allPolicyTagLists[`${ONYXKEYS.COLLECTION.POLICY_TAGS}${policyID}`];
+
+    console.log('****** policyID ******', policyID);
+
     const tagListsUnpacked = Object.values(allPolicyTagLists ?? {})
         .filter((item): item is NonNullable<PolicyTagLists> => !!item)
         .map(getTagNamesFromTagsLists)
@@ -551,6 +564,8 @@ function AdvancedSearchFilters() {
             applyFiltersAndNavigate();
             return;
         }
+
+        console.log('****** queryJSON ******', queryJSON);
 
         saveSearch({
             queryJSON,

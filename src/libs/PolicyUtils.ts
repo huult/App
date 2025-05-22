@@ -1130,13 +1130,19 @@ function getSageIntacctCreditCards(policy?: Policy, selectedAccount?: string): S
  * @param workspace2 Details of the second workspace to be compared.
  * @param selectedWorkspaceID ID of the selected workspace which needs to be at the beginning.
  */
-const sortWorkspacesBySelected = (workspace1: WorkspaceDetails, workspace2: WorkspaceDetails, selectedWorkspaceID: string | undefined): number => {
-    if (workspace1.policyID === selectedWorkspaceID) {
+const sortWorkspacesBySelected = (workspace1: WorkspaceDetails, workspace2: WorkspaceDetails, selectedWorkspaceIDs: string | string[] | undefined): number => {
+    const selectedIDs = Array.isArray(selectedWorkspaceIDs) ? selectedWorkspaceIDs : [selectedWorkspaceIDs].filter(Boolean);
+
+    const isSelected1 = selectedIDs.includes(workspace1.policyID ?? '');
+    const isSelected2 = selectedIDs.includes(workspace2.policyID ?? '');
+
+    if (isSelected1 && !isSelected2) {
         return -1;
     }
-    if (workspace2.policyID === selectedWorkspaceID) {
+    if (!isSelected1 && isSelected2) {
         return 1;
     }
+
     return workspace1.name?.toLowerCase().localeCompare(workspace2.name?.toLowerCase() ?? '') ?? 0;
 };
 

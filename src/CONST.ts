@@ -6618,6 +6618,7 @@ const CONST = {
             REIMBURSABLE: 'reimbursable',
             BILLABLE: 'billable',
             POLICY_ID: 'policyID',
+            POLICY_IDS: 'policyIDS',
         },
         EMPTY_VALUE: 'none',
         SEARCH_ROUTER_ITEM_TYPE: {

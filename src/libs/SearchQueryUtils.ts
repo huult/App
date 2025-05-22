@@ -278,6 +278,8 @@ function buildSearchQueryJSON(query: SearchQueryString) {
         const result = parseSearchQuery(query) as SearchQueryJSON;
         const flatFilters = getFilters(result);
 
+        console.log('****** result ******', result);
+
         // Add the full input and hash to the results
         result.inputQuery = query;
         result.flatFilters = flatFilters;
@@ -340,7 +342,7 @@ function buildSearchQueryString(queryJSON?: SearchQueryJSON) {
  */
 function buildQueryStringFromFilterFormValues(filterValues: Partial<SearchAdvancedFiltersForm>) {
     // We separate type and status filters from other filters to maintain hashes consistency for saved searches
-    const {type, status, policyID, groupBy, ...otherFilters} = filterValues;
+    const {type, status, policyID, groupBy, policyIDS, ...otherFilters} = filterValues;
     const filtersString: string[] = [];
 
     filtersString.push(`${CONST.SEARCH.SYNTAX_ROOT_KEYS.SORT_BY}:${CONST.SEARCH.TABLE_COLUMNS.DATE}`);
@@ -361,9 +363,15 @@ function buildQueryStringFromFilterFormValues(filterValues: Partial<SearchAdvanc
         filtersString.push(`${CONST.SEARCH.SYNTAX_ROOT_KEYS.GROUP_BY}:${sanitizedGroupBy}`);
     }
 
+    // what happend for case multiple workspace
     if (policyID) {
         const sanitizedPolicyID = sanitizeSearchValue(policyID);
         filtersString.push(`${CONST.SEARCH.SYNTAX_FILTER_KEYS.POLICY_ID}:${sanitizedPolicyID}`);
+    }
+
+    if (Array.isArray(policyIDS) && policyIDS.length > 0) {
+        const sanitizedPolicyIDs = policyIDS.map((id) => sanitizeSearchValue(id)).join(',');
+        filtersString.push(`${CONST.SEARCH.SYNTAX_FILTER_KEYS.POLICY_IDS}:${sanitizedPolicyIDs}`);
     }
 
     const mappedFilters = Object.entries(otherFilters)
@@ -576,7 +584,7 @@ function buildFilterFormValuesFromQuery(
 function getPolicyIDFromSearchQuery(queryJSON: SearchQueryJSON) {
     const policyIDFilter = queryJSON.policyID;
 
-    if (!policyIDFilter) {
+    if (true) {
         return;
     }
 

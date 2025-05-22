@@ -31,6 +31,7 @@ const FILTER_KEYS = {
     CURRENCY: 'currency',
     CATEGORY: 'category',
     POLICY_ID: 'policyID',
+    POLICY_IDS: 'policyIDS',
     CARD_ID: 'cardID',
     FEED: 'feed',
     MERCHANT: 'merchant',
@@ -75,6 +76,7 @@ type SearchAdvancedFiltersForm = Form<
         [FILTER_KEYS.CURRENCY]: string[];
         [FILTER_KEYS.CATEGORY]: string[];
         [FILTER_KEYS.POLICY_ID]: string;
+        [FILTER_KEYS.POLICY_IDS]: string[];
         [FILTER_KEYS.CARD_ID]: string[];
         [FILTER_KEYS.FEED]: string[];
         [FILTER_KEYS.MERCHANT]: string;

@@ -96,6 +96,8 @@ type CommonListItemProps<TItem extends ListItem> = {
 
     /** Callback to fire when the item is long pressed */
     onLongPressRow?: (item: TItem) => void;
+
+    shouldShowRightSelect?: boolean;
 } & TRightHandSideComponent<TItem>;
 
 type ListItemFocusEventHandler = (event: NativeSyntheticEvent<ExtendedTargetedEvent>) => void;

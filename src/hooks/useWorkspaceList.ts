@@ -20,7 +20,7 @@ type UseWorkspaceListParams = {
     policies: OnyxCollection<Policy>;
     currentUserLogin: string | undefined;
     shouldShowPendingDeletePolicy: boolean;
-    selectedPolicyID: string | undefined;
+    selectedPolicyID?: string | string[] | undefined; // updated to support both
     searchTerm: string;
     additionalFilter?: (policy: OnyxEntry<Policy>) => boolean;
 } & (
@@ -47,6 +47,13 @@ function useWorkspaceList({
     getIndicatorTypeForPolicy,
     additionalFilter,
 }: UseWorkspaceListParams) {
+    const excludedPolicyIDs = useMemo(() => {
+        if (!selectedPolicyID) {
+            return [];
+        }
+        return Array.isArray(selectedPolicyID) ? selectedPolicyID : [selectedPolicyID];
+    }, [selectedPolicyID]);
+
     const usersWorkspaces = useMemo(() => {
         if (!policies || isEmptyObject(policies)) {
             return [];
@@ -74,7 +81,7 @@ function useWorkspaceList({
                 ],
                 keyForList: policy?.id,
                 isPolicyAdmin: isPolicyAdmin(policy),
-                isSelected: selectedPolicyID === policy?.id,
+                isSelected: excludedPolicyIDs.includes(policy?.id ?? ''),
                 ...(isWorkspaceSwitcher &&
                     hasUnreadData &&
                     getIndicatorTypeForPolicy && {
@@ -82,14 +89,14 @@ function useWorkspaceList({
                         brickRoadIndicator: getIndicatorTypeForPolicy(policy?.id),
                     }),
             }));
-    }, [policies, shouldShowPendingDeletePolicy, currentUserLogin, additionalFilter, selectedPolicyID, getIndicatorTypeForPolicy, hasUnreadData, isWorkspaceSwitcher]);
+    }, [policies, shouldShowPendingDeletePolicy, currentUserLogin, additionalFilter, excludedPolicyIDs, isWorkspaceSwitcher, hasUnreadData, getIndicatorTypeForPolicy]);
 
     const filteredAndSortedUserWorkspaces = useMemo<WorkspaceListItem[]>(
         () =>
             usersWorkspaces
                 .filter((policy) => policy.text?.toLowerCase().includes(searchTerm?.toLowerCase() ?? ''))
-                .sort((policy1, policy2) => sortWorkspacesBySelected({policyID: policy1.policyID, name: policy1.text}, {policyID: policy2.policyID, name: policy2.text}, selectedPolicyID)),
-        [searchTerm, usersWorkspaces, selectedPolicyID],
+                .sort((policy1, policy2) => sortWorkspacesBySelected({policyID: policy1.policyID, name: policy1.text}, {policyID: policy2.policyID, name: policy2.text}, excludedPolicyIDs)),
+        [usersWorkspaces, searchTerm, excludedPolicyIDs],
     );
 
     const sections = useMemo(() => {
