@@ -1,7 +1,7 @@
 import {useIsFocused, useNavigation} from '@react-navigation/native';
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import type {NativeScrollEvent, NativeSyntheticEvent, StyleProp, ViewStyle, ViewToken} from 'react-native';
-import {View} from 'react-native';
+import {InteractionManager, View} from 'react-native';
 import {useOnyx} from 'react-native-onyx';
 import FullPageErrorView from '@components/BlockingViews/FullPageErrorView';
 import FullPageOfflineBlockingView from '@components/BlockingViews/FullPageOfflineBlockingView';
@@ -453,6 +453,26 @@ function Search({queryJSON, currentSearchResults, lastNonEmptySearchResults, onS
         [shouldShowLoadingState],
     );
 
+    // Derived values
+    const hasErrors = Object.keys(searchResults?.errors ?? {}).length > 0 && !isOffline;
+    const isLoading = searchResults?.search?.isLoading;
+
+    // State for display control
+    const [showError, setShowError] = useState(hasErrors);
+    const [showEmpty, setShowEmpty] = useState(shouldShowEmptyState(isDataLoaded, data.length, searchResults?.search?.type));
+
+    // Update once loading is finished
+    useEffect(() => {
+        if (typeof isLoading === 'undefined' || isLoading === true) {
+            return;
+        }
+
+        setShowError(hasErrors);
+        InteractionManager.runAfterInteractions(() => {
+            setShowEmpty(shouldShowEmptyState(isDataLoaded, data.length, searchResults?.search?.type));
+        });
+    }, [isLoading, hasErrors, isDataLoaded, data.length, searchResults?.search.type]);
+
     if (shouldShowLoadingState) {
         return (
             <SearchRowSkeleton
@@ -493,9 +513,8 @@ function Search({queryJSON, currentSearchResults, lastNonEmptySearchResults, onS
         return mapToItemWithSelectionInfo(item, selectedTransactions, canSelectMultiple, shouldAnimateInHighlight);
     });
 
-    const hasErrors = Object.keys(searchResults?.errors ?? {}).length > 0 && !isOffline;
-
-    if (hasErrors) {
+    // Error state
+    if (showError) {
         return (
             <View style={[shouldUseNarrowLayout ? styles.searchListContentContainerStyles : styles.mt3, styles.flex1]}>
                 <FullPageErrorView
@@ -508,7 +527,8 @@ function Search({queryJSON, currentSearchResults, lastNonEmptySearchResults, onS
         );
     }
 
-    if (shouldShowEmptyState(isDataLoaded, data.length, searchResults.search.type)) {
+    // Empty state
+    if (showEmpty) {
         return (
             <View style={[shouldUseNarrowLayout ? styles.searchListContentContainerStyles : styles.mt3, styles.flex1]}>
                 <EmptySearchView
