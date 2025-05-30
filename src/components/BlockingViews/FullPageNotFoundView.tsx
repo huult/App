@@ -93,7 +93,8 @@ function FullPageNotFoundView({
                         if (!onBackButtonPress) {
                             const backToReport = route?.params?.backToReport as string;
                             if (backToReport) {
-                                Navigation.goBack(backToReport);
+                                Navigation.resetToHome();
+                                Navigation.navigate(backToReport);
                                 return;
                             }
                             Navigation.goBack();
