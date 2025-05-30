@@ -1,3 +1,4 @@
+import {useRoute} from '@react-navigation/native';
 import React from 'react';
 import {View} from 'react-native';
 import type {StyleProp, TextStyle} from 'react-native';
@@ -68,7 +69,7 @@ function FullPageNotFoundView({
     titleKey = 'notFound.notHere',
     subtitleKey = 'notFound.pageNotFound',
     linkKey = 'notFound.goBackHome',
-    onBackButtonPress = () => Navigation.goBack(),
+    onBackButtonPress,
     shouldShowLink = true,
     shouldShowBackButton = true,
     onLinkPress = () => Navigation.goBackToHome(),
@@ -81,13 +82,25 @@ function FullPageNotFoundView({
     const styles = useThemeStyles();
     const {isMediumScreenWidth, isLargeScreenWidth} = useResponsiveLayout();
     const {translate} = useLocalize();
+    const route = useRoute();
 
     if (shouldShow) {
         StatsCounter('FullPageNotFoundView');
         return (
             <ForceFullScreenView shouldForceFullScreen={shouldForceFullScreen}>
                 <HeaderWithBackButton
-                    onBackButtonPress={onBackButtonPress}
+                    onBackButtonPress={() => {
+                        if (!onBackButtonPress) {
+                            const backToReport = route?.params?.backToReport as string;
+                            if (backToReport) {
+                                Navigation.goBack(backToReport);
+                                return;
+                            }
+                            Navigation.goBack();
+                            return;
+                        }
+                        onBackButtonPress();
+                    }}
                     shouldShowBackButton={shouldShowBackButton}
                     shouldDisplaySearchRouter={shouldDisplaySearchRouter && (isMediumScreenWidth || isLargeScreenWidth)}
                 />

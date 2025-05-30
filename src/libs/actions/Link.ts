@@ -5,7 +5,7 @@ import type {GenerateSpotnanaTokenParams} from '@libs/API/parameters';
 import {SIDE_EFFECT_REQUEST_COMMANDS} from '@libs/API/types';
 import asyncOpenURL from '@libs/asyncOpenURL';
 import * as Environment from '@libs/Environment/Environment';
-import Navigation from '@libs/Navigation/Navigation';
+import Navigation, {navigationRef} from '@libs/Navigation/Navigation';
 import * as Url from '@libs/Url';
 import CONFIG from '@src/CONFIG';
 import CONST from '@src/CONST';
@@ -129,11 +129,14 @@ function openTravelDotLink(policyID: OnyxEntry<string>, postLoginPath?: string) 
     });
 }
 
-function getInternalNewExpensifyPath(href: string) {
+function getInternalNewExpensifyPath(href: string, backToReport?: string) {
     if (!href) {
         return '';
     }
-    const attrPath = Url.getPathFromURL(href);
+    let attrPath = Url.getPathFromURL(href);
+    const separator = attrPath.includes('?') ? '&' : '?';
+    attrPath += `${separator}backToReport=${encodeURIComponent(backToReport ?? '')}`;
+
     return (Url.hasSameExpensifyOrigin(href, CONST.NEW_EXPENSIFY_URL) || Url.hasSameExpensifyOrigin(href, CONST.STAGING_NEW_EXPENSIFY_URL) || href.startsWith(CONST.DEV_NEW_EXPENSIFY_URL)) &&
         !CONST.PATHS_TO_TREAT_AS_EXTERNAL.find((path) => attrPath.startsWith(path))
         ? attrPath
@@ -157,8 +160,10 @@ function getInternalExpensifyPath(href: string) {
 function openLink(href: string, environmentURL: string, isAttachment = false) {
     const hasSameOrigin = Url.hasSameExpensifyOrigin(href, environmentURL);
     const hasExpensifyOrigin = Url.hasSameExpensifyOrigin(href, CONFIG.EXPENSIFY.EXPENSIFY_URL) || Url.hasSameExpensifyOrigin(href, CONFIG.EXPENSIFY.STAGING_API_ROOT);
-    const internalNewExpensifyPath = getInternalNewExpensifyPath(href);
+    const internalNewExpensifyPath = getInternalNewExpensifyPath(href, Navigation.getActiveRoute());
     const internalExpensifyPath = getInternalExpensifyPath(href);
+
+    console.log('****** internalNewExpensifyPath ******', internalNewExpensifyPath);
 
     // There can be messages from Concierge with links to specific NewDot reports. Those URLs look like this:
     // https://www.expensify.com.dev/newdotreport?reportID=3429600449838908 and they have a target="_blank" attribute. This is so that when a user is on OldDot,
@@ -179,6 +184,11 @@ function openLink(href: string, environmentURL: string, isAttachment = false) {
             signOutAndRedirectToSignIn();
             return;
         }
+
+        const activeRoute = Navigation.getActiveRoute();
+
+        console.log('****** activeRoute ******', activeRoute);
+
         Navigation.navigate(internalNewExpensifyPath as Route);
         return;
     }
