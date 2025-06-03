@@ -4023,6 +4023,13 @@ const updatePrivateNotes = (reportID: string, accountID: number, note: string) =
                 },
             },
         },
+        {
+            onyxMethod: Onyx.METHOD.MERGE,
+            key: `${ONYXKEYS.COLLECTION.REPORT_METADATA}${reportID}`,
+            value: {
+                isLoadedPrivateNotes: false,
+            },
+        },
     ];
 
     const successData: OnyxUpdate[] = [
@@ -4038,6 +4045,13 @@ const updatePrivateNotes = (reportID: string, accountID: number, note: string) =
                 },
             },
         },
+        {
+            onyxMethod: Onyx.METHOD.MERGE,
+            key: `${ONYXKEYS.COLLECTION.REPORT_METADATA}${reportID}`,
+            value: {
+                isLoadedPrivateNotes: true,
+            },
+        },
     ];
 
     const failureData: OnyxUpdate[] = [
@@ -4050,6 +4064,13 @@ const updatePrivateNotes = (reportID: string, accountID: number, note: string) =
                         errors: getMicroSecondOnyxErrorWithTranslationKey('privateNotes.error.genericFailureMessage'),
                     },
                 },
+            },
+        },
+        {
+            onyxMethod: Onyx.METHOD.MERGE,
+            key: `${ONYXKEYS.COLLECTION.REPORT_METADATA}${reportID}`,
+            value: {
+                isLoadedPrivateNotes: false,
             },
         },
     ];
