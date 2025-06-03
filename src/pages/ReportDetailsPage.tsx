@@ -242,6 +242,8 @@ function ReportDetailsPage({policies, report, route, reportMetadata}: ReportDeta
     });
 
     const isPrivateNotesFetchTriggered = reportMetadata?.isLoadingPrivateNotes !== undefined;
+    const isLoadedPrivateNotes = reportMetadata?.isLoadedPrivateNotes;
+    const needToFetchPrivateNotes = isLoadedPrivateNotes && !report.privateNotes;
 
     const requestParentReportAction = useMemo(() => {
         // 2. MoneyReport case
@@ -288,12 +290,12 @@ function ReportDetailsPage({policies, report, route, reportMetadata}: ReportDeta
 
     useEffect(() => {
         // Do not fetch private notes if isLoadingPrivateNotes is already defined, or if the network is offline, or if the report is a self DM.
-        if (isPrivateNotesFetchTriggered || isOffline || isSelfDM) {
+        if (!needToFetchPrivateNotes && (isPrivateNotesFetchTriggered || isOffline || isSelfDM)) {
             return;
         }
 
         getReportPrivateNote(report?.reportID);
-    }, [report?.reportID, isOffline, isPrivateNotesFetchTriggered, isSelfDM]);
+    }, [report?.reportID, isOffline, isPrivateNotesFetchTriggered, isSelfDM, needToFetchPrivateNotes]);
 
     const leaveChat = useCallback(() => {
         Navigation.dismissModal();
