@@ -1,6 +1,7 @@
 import React from 'react';
 import {View} from 'react-native';
 import Button from '@components/Button';
+import FormHelpMessage from '@components/FormHelpMessage';
 import MenuItem from '@components/MenuItem';
 import Text from '@components/Text';
 import useLocalize from '@hooks/useLocalize';
@@ -15,9 +16,10 @@ type RootViewProps = {
     applyChanges: () => void;
     resetChanges: () => void;
     setView: (view: SearchDateModifier) => void;
+    errorMessage?: string | null;
 };
 
-function RootView({value, applyChanges, resetChanges, setView}: RootViewProps) {
+function RootView({value, applyChanges, resetChanges, setView, errorMessage}: RootViewProps) {
     const styles = useThemeStyles();
     const {translate} = useLocalize();
     const {shouldUseNarrowLayout} = useResponsiveLayout();
@@ -46,6 +48,14 @@ function RootView({value, applyChanges, resetChanges, setView}: RootViewProps) {
                     );
                 })}
             </View>
+            {!!errorMessage && (
+                <FormHelpMessage
+                    style={[styles.ph4, styles.mb4]}
+                    isError
+                    shouldShowRedDotIndicator={false}
+                    message={errorMessage}
+                />
+            )}
 
             <View style={[styles.flexRow, styles.gap2, styles.ph5]}>
                 <Button

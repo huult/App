@@ -5451,6 +5451,9 @@ const translations = {
             selectAllMatchingItems: 'Seleccionar todos los elementos coincidentes',
             allMatchingItemsSelected: 'Todos los elementos coincidentes seleccionados',
         },
+        dateSelectPopup: {
+            errorMessage: 'El rango de fechas no es válido. Por favor, cambie la fecha anterior o posterior.',
+        },
     },
     genericErrorPage: {
         title: '¡Oh-oh, algo salió mal!',

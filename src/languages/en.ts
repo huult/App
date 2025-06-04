@@ -5397,6 +5397,9 @@ const translations = {
             selectAllMatchingItems: 'Select all matching items',
             allMatchingItemsSelected: 'All matching items selected',
         },
+        dateSelectPopup: {
+            errorMessage: 'Invalid date ranage. Please change the before or after date.',
+        },
     },
     genericErrorPage: {
         title: 'Uh-oh, something went wrong!',
