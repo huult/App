@@ -1,3 +1,4 @@
+import {isBefore} from 'date-fns';
 import React, {useCallback, useState} from 'react';
 import useLocalize from '@hooks/useLocalize';
 import type {SearchDateModifier} from '@libs/SearchUIUtils';
@@ -30,7 +31,7 @@ function DateSelectPopup({value, closeOverlay, onChange}: DateSelectPopupProps) 
             const beforeDate = newDateValues[BEFORE];
             const afterDate = newDateValues[AFTER];
 
-            if (beforeDate && afterDate && new Date(afterDate) < new Date(beforeDate)) {
+            if (beforeDate && afterDate && isBefore(new Date(afterDate), new Date(beforeDate))) {
                 setErrorMessage(translate('search.dateSelectPopup.errorMessage'));
                 return false;
             }
