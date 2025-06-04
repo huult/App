@@ -50,10 +50,10 @@ function RootView({value, applyChanges, resetChanges, setView, errorMessage}: Ro
             </View>
             {!!errorMessage && (
                 <FormHelpMessage
-                    style={[styles.ph4, styles.mb4]}
+                    style={[styles.pl4, styles.pr4, styles.mt2]}
+                    message={errorMessage}
                     isError
                     shouldShowRedDotIndicator={false}
-                    message={errorMessage}
                 />
             )}
 
