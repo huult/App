@@ -166,7 +166,8 @@ function UserSelectPopup({value, closeOverlay, onChange}: UserSelectPopupProps) 
                 textInputAutoFocus
                 shouldClearInputOnSelect={false}
                 headerMessage={headerMessage}
-                sections={sections}
+                shouldDelayFocus={false}
+                sections={[...sections, ...sections, ...sections, ...sections]}
                 ListItem={UserSelectionListItem}
                 containerStyle={[!shouldUseNarrowLayout && styles.pt4]}
                 contentContainerStyle={[styles.pb2]}

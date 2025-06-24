@@ -108,18 +108,27 @@ function PopoverWithMeasuredContent({
      */
     const measurePopover = ({nativeEvent}: LayoutChangeEvent) => {
         const {width, height} = nativeEvent.layout;
-        setPopoverWidth(width);
-        setPopoverHeight(height);
+        // Round to nearest integer to prevent floating-point precision issues
+        const roundedWidth = Math.round(width);
+        const roundedHeight = Math.round(height);
+
+        // Only update state if the rounded values have actually changed
+        if (popoverWidth !== roundedWidth) {
+            setPopoverWidth(roundedWidth);
+        }
+        if (popoverHeight !== roundedHeight) {
+            setPopoverHeight(roundedHeight);
+        }
         setIsContentMeasured(true);
 
         // it handles the case when `measurePopover` is called with values like: 192, 192.00003051757812, 192
         // if we update it, then animation in `ActionSheetAwareScrollView` may be re-running
         // and we'll see out-of-sync and junky animation
-        if (actionSheetAwareScrollViewContext.currentActionSheetState.get().current.payload?.popoverHeight !== Math.floor(height) && height !== 0) {
+        if (actionSheetAwareScrollViewContext.currentActionSheetState.get().current.payload?.popoverHeight !== roundedHeight && roundedHeight !== 0) {
             actionSheetAwareScrollViewContext.transitionActionSheetState({
                 type: ActionSheetAwareScrollView.Actions.MEASURE_POPOVER,
                 payload: {
-                    popoverHeight: Math.floor(height),
+                    popoverHeight: roundedHeight,
                 },
             });
         }
