@@ -274,6 +274,36 @@ function FloatingActionButtonAndPopover({onHideCreateMenu, onShowCreateMenu, isT
         }
     };
 
+    /**
+     * Handle long-press on FAB to directly navigate to scan expense flow
+     * This provides a one-tap access to scanning like in Expensify Classic
+     */
+    const handleLongPress = useCallback(() => {
+        // Only enable long-press on mobile (narrow layout)
+        if (!shouldUseNarrowLayout) {
+            return;
+        }
+
+        interceptAnonymousUser(() => {
+            if (shouldRedirectToExpensifyClassic) {
+                setModalVisible(true);
+                return;
+            }
+
+            // Start money request with CREATE type and SCAN request type
+            startMoneyRequest(CONST.IOU.TYPE.CREATE, generateReportID(), CONST.IOU.REQUEST_TYPE.SCAN);
+        });
+    }, [shouldUseNarrowLayout, shouldRedirectToExpensifyClassic]);
+
+    // Create accessibility label that mentions long-press functionality on mobile
+    const fabAccessibilityLabel = useMemo(() => {
+        const baseLabel = translate('sidebarScreen.fabNewChatExplained');
+        if (shouldUseNarrowLayout) {
+            return `${baseLabel}. Long press to scan expense`;
+        }
+        return baseLabel;
+    }, [translate, shouldUseNarrowLayout]);
+
     const expenseMenuItems = useMemo((): PopoverMenuItem[] => {
         return [
             {
@@ -591,11 +621,12 @@ function FloatingActionButtonAndPopover({onHideCreateMenu, onShowCreateMenu, isT
             />
             <FloatingActionButton
                 isTooltipAllowed={isTooltipAllowed}
-                accessibilityLabel={translate('sidebarScreen.fabNewChatExplained')}
+                accessibilityLabel={fabAccessibilityLabel}
                 role={CONST.ROLE.BUTTON}
                 isActive={isCreateMenuActive}
                 ref={fabRef}
                 onPress={toggleCreateMenu}
+                onLongPress={handleLongPress}
             />
         </View>
     );

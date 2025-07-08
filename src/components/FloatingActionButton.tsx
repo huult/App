@@ -27,6 +27,9 @@ type FloatingActionButtonProps = {
     /* Callback to fire on request to toggle the FloatingActionButton */
     onPress: (event: GestureResponderEvent | KeyboardEvent | undefined) => void;
 
+    /* Callback to fire on long press of the FloatingActionButton */
+    onLongPress?: () => void;
+
     /* Current state (active or not active) of the component */
     isActive: boolean;
 
@@ -40,7 +43,7 @@ type FloatingActionButtonProps = {
     isTooltipAllowed: boolean;
 };
 
-function FloatingActionButton({onPress, isActive, accessibilityLabel, role, isTooltipAllowed}: FloatingActionButtonProps, ref: ForwardedRef<HTMLDivElement | View | Text>) {
+function FloatingActionButton({onPress, onLongPress, isActive, accessibilityLabel, role, isTooltipAllowed}: FloatingActionButtonProps, ref: ForwardedRef<HTMLDivElement | View | Text>) {
     const {success, buttonDefaultBG, textLight} = useTheme();
     const styles = useThemeStyles();
     const borderRadius = styles.floatingActionButton.borderRadius;
@@ -111,9 +114,9 @@ function FloatingActionButton({onPress, isActive, accessibilityLabel, role, isTo
                 style={[styles.h100, styles.navigationTabBarItem]}
                 accessibilityLabel={accessibilityLabel}
                 onPress={toggleFabAction}
-                onLongPress={() => {}}
+                onLongPress={onLongPress}
                 role={role}
-                shouldUseHapticsOnLongPress={false}
+                shouldUseHapticsOnLongPress={!!onLongPress}
                 testID="floating-action-button"
             >
                 <Animated.View style={[styles.floatingActionButton, {borderRadius}, isLHBVisible && styles.floatingActionButtonSmall, animatedStyle]}>
