@@ -80,31 +80,7 @@ function BaseTwoFactorAuthForm({autoComplete, validateInsteadOfDisable}: BaseTwo
             }
             inputRef.current.focus();
         },
-        focusLastSelected() {
-            if (!inputRef.current) {
-                return;
-            }
-            setTimeout(() => {
-                inputRef.current?.focusLastSelected();
-            }, CONST.ANIMATED_TRANSITION);
-        },
     }));
-
-    useFocusEffect(
-        useCallback(() => {
-            if (!inputRef.current) {
-                return;
-            }
-            // Keyboard won't show if we focus the input with a delay, so we need to focus immediately.
-            if (!isMobileSafari()) {
-                setTimeout(() => {
-                    inputRef.current?.focusLastSelected();
-                }, CONST.ANIMATED_TRANSITION);
-            } else {
-                inputRef.current?.focusLastSelected();
-            }
-        }, []),
-    );
 
     return (
         <MagicCodeInput
