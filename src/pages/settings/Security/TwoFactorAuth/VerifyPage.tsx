@@ -119,7 +119,10 @@ function VerifyPage({route}: VerifyPageProps) {
             </ScrollView>
             <FixedFooter style={[styles.mt2, styles.pt2]}>
                 <View style={[styles.mh5, styles.mb4]}>
-                    <TwoFactorAuthForm innerRef={formRef} />
+                    <TwoFactorAuthForm
+                        innerRef={formRef}
+                        autoFocus={false}
+                    />
                 </View>
                 <Button
                     success
