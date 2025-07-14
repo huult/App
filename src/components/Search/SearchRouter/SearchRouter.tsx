@@ -102,6 +102,8 @@ function SearchRouter({onRouterClose, shouldHideInputCaret, isSearchRouterDispla
         }
     });
 
+    const [modalAnimation] = useOnyx(ONYXKEYS.MODAL_ANIMATION_ENDED, {canBeMissing: false});
+
     const getAdditionalSections: GetAdditionalSectionsCallback = useCallback(
         ({recentReports}) => {
             if (!contextualReportID) {
@@ -188,6 +190,13 @@ function SearchRouter({onRouterClose, shouldHideInputCaret, isSearchRouterDispla
         shouldScrollRef.current = false;
     }, [textInputValue]);
 
+    useEffect(() => {
+        if (!modalAnimation?.isModalAnimationEnded) {
+            return;
+        }
+
+        textInputRef.current?.focus();
+    }, [modalAnimation]);
     const onSearchQueryChange = useCallback(
         (userQuery: string, autoScrollToRight = false) => {
             const actionId = `search_query_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
@@ -446,6 +455,7 @@ function SearchRouter({onRouterClose, shouldHideInputCaret, isSearchRouterDispla
                 <>
                     <SearchInputSelectionWrapper
                         value={textInputValue}
+                        autoFocus={false}
                         isFullWidth={shouldUseNarrowLayout}
                         onSearchQueryChange={onSearchQueryChange}
                         onSubmit={() => {

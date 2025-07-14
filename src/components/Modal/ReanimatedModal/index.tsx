@@ -6,6 +6,7 @@ import {LayoutAnimationConfig} from 'react-native-reanimated';
 import KeyboardAvoidingView from '@components/KeyboardAvoidingView';
 import useThemeStyles from '@hooks/useThemeStyles';
 import getPlatform from '@libs/getPlatform';
+import {setModalAnimationEnded} from '@userActions/Modal';
 import CONST from '@src/CONST';
 import Backdrop from './Backdrop';
 import Container from './Container';
@@ -104,12 +105,14 @@ function ReanimatedModal({
 
             setIsVisibleState(true);
             setIsTransitioning(true);
+            setModalAnimationEnded(false); // Animation starts, set to false
         } else if (!isVisible && isContainerOpen && !isTransitioning) {
             handleRef.current = InteractionManager.createInteractionHandle();
             onModalWillHide();
 
             setIsVisibleState(false);
             setIsTransitioning(true);
+            setModalAnimationEnded(false); // Animation starts, set to false
         }
         // eslint-disable-next-line react-compiler/react-compiler, react-hooks/exhaustive-deps
     }, [isVisible, isContainerOpen, isTransitioning]);
@@ -126,6 +129,8 @@ function ReanimatedModal({
             InteractionManager.clearInteractionHandle(handleRef.current);
         }
         onModalShow();
+
+        setModalAnimationEnded(true); // Animation ends, set to true
     }, [onModalShow]);
 
     const onCloseCallBack = useCallback(() => {
@@ -136,6 +141,8 @@ function ReanimatedModal({
         }
         if (getPlatform() !== CONST.PLATFORM.IOS) {
             onModalHide();
+
+            setModalAnimationEnded(true); // Animation ends, set to true
         }
     }, [onModalHide]);
 
@@ -197,6 +204,7 @@ function ReanimatedModal({
                     onDismiss?.();
                     if (getPlatform() === CONST.PLATFORM.IOS) {
                         onModalHide();
+                        setModalAnimationEnded(false); // Reset animation state
                     }
                 }}
                 // eslint-disable-next-line react/jsx-props-no-spreading

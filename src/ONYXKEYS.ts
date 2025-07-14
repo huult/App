@@ -46,6 +46,7 @@ const ONYXKEYS = {
 
     /** Keeps track if there is modal currently visible or not */
     MODAL: 'modal',
+    MODAL_ANIMATION_ENDED: 'modalAnimationEnded',
 
     /** Keeps track if there is a full screen currently visible or not */
     FULLSCREEN_VISIBILITY: 'fullscreenVisibility',
@@ -1035,6 +1036,7 @@ type OnyxValuesMapping = {
     [ONYXKEYS.CREDENTIALS]: OnyxTypes.Credentials;
     [ONYXKEYS.STASHED_CREDENTIALS]: OnyxTypes.Credentials;
     [ONYXKEYS.MODAL]: OnyxTypes.Modal;
+    [ONYXKEYS.MODAL_ANIMATION_ENDED]: OnyxTypes.ModalAnimationEnded;
     [ONYXKEYS.FULLSCREEN_VISIBILITY]: boolean;
     [ONYXKEYS.NETWORK]: OnyxTypes.Network;
     [ONYXKEYS.NEW_GROUP_CHAT_DRAFT]: OnyxTypes.NewGroupChatDraft;

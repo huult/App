@@ -74,6 +74,10 @@ function setModalVisibility(isVisible: boolean, type: ModalType | null = null) {
     Onyx.merge(ONYXKEYS.MODAL, {isVisible, type});
 }
 
+function setModalAnimationEnded(isModalAnimationEnded: boolean, type: ModalType | null = null) {
+    Onyx.merge(ONYXKEYS.MODAL_ANIMATION_ENDED, {isModalAnimationEnded, type});
+}
+
 /**
  * Allows other parts of the app to set whether modals should be dismissible using the Escape key
  */
@@ -97,4 +101,4 @@ function areAllModalsHidden() {
     return closeModals.length === 0;
 }
 
-export {setCloseModal, close, onModalDidClose, setModalVisibility, willAlertModalBecomeVisible, setDisableDismissOnEscape, closeTop, areAllModalsHidden};
+export {setCloseModal, close, onModalDidClose, setModalVisibility, setModalAnimationEnded, willAlertModalBecomeVisible, setDisableDismissOnEscape, closeTop, areAllModalsHidden};

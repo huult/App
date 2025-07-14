@@ -47,6 +47,7 @@ import type Login from './Login';
 import type MapboxAccessToken from './MapboxAccessToken';
 import type MobileSelectionMode from './MobileSelectionMode';
 import type Modal from './Modal';
+import type ModalAnimationEnded from './ModalAnimationEnded';
 import type Network from './Network';
 import type NewGroupChatDraft from './NewGroupChatDraft';
 import type Onboarding from './Onboarding';
@@ -160,6 +161,7 @@ export type {
     PendingContactAction,
     MapboxAccessToken,
     Modal,
+    ModalAnimationEnded,
     Network,
     OnyxInputOrEntry,
     OnyxUpdateEvent,
