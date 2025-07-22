@@ -115,6 +115,7 @@ function NavigationTabBar({selectedTab, isTooltipAllowed = false, isTopLevelBar 
             return;
         }
 
+        clearSelectedText();
         hideInboxTooltip();
         Navigation.navigate(ROUTES.HOME);
     }, [hideInboxTooltip, selectedTab]);
@@ -153,6 +154,7 @@ function NavigationTabBar({selectedTab, isTooltipAllowed = false, isTopLevelBar 
         if (selectedTab === NAVIGATION_TABS.SETTINGS) {
             return;
         }
+        clearSelectedText();
         interceptAnonymousUser(() => {
             const settingsTabState = getSettingsTabStateFromSessionStorage();
             if (settingsTabState && !shouldUseNarrowLayout) {
@@ -178,6 +180,7 @@ function NavigationTabBar({selectedTab, isTooltipAllowed = false, isTopLevelBar 
      * If the user clicks on the settings tab while on this tab, this button should go back to the previous screen within the tab.
      */
     const showWorkspaces = useCallback(() => {
+        clearSelectedText();
         navigateToWorkspacesPage({shouldUseNarrowLayout, currentUserLogin, policy: lastViewedPolicy});
     }, [shouldUseNarrowLayout, currentUserLogin, lastViewedPolicy]);
 
