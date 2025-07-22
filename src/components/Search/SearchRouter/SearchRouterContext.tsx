@@ -1,4 +1,5 @@
 import React, {useContext, useEffect, useMemo, useRef, useState} from 'react';
+import {Keyboard} from 'react-native';
 import type {AnimatedTextInputRef} from '@components/RNTextInput';
 import isSearchTopmostFullScreenRoute from '@libs/Navigation/helpers/isSearchTopmostFullScreenRoute';
 import {navigationRef} from '@libs/Navigation/Navigation';
@@ -58,6 +59,11 @@ function SearchRouterContextProvider({children}: ChildrenProps) {
                 setIsSearchRouterDisplayed(true);
                 searchRouterDisplayedRef.current = true;
             } else {
+                // When closing via back button, ensure proper cleanup
+                if (searchPageInputRef.current) {
+                    searchPageInputRef.current.blur();
+                }
+                Keyboard.dismiss();
                 setIsSearchRouterDisplayed(false);
                 searchRouterDisplayedRef.current = false;
             }
@@ -82,6 +88,14 @@ function SearchRouterContextProvider({children}: ChildrenProps) {
             );
         };
         const closeSearchRouter = () => {
+            // Blur the search input to prevent keyboard from reopening
+            if (searchPageInputRef.current) {
+                searchPageInputRef.current.blur();
+            }
+
+            // Dismiss keyboard to prevent flicker when returning via back button
+            Keyboard.dismiss();
+
             setIsSearchRouterDisplayed(false);
             searchRouterDisplayedRef.current = false;
             if (isBrowserWithHistory) {
