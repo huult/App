@@ -206,7 +206,9 @@ function ReportActionsList({
     );
     const prevSortedVisibleReportActionsObjects = usePrevious(sortedVisibleReportActionsObjects);
 
-    const reportLastReadTime = report.lastReadTime ?? '';
+    const baseReportLastReadTime = report?.lastReadTime ?? '';
+    const transactionThreadLastReadTime = transactionThreadReport?.lastReadTime ?? '';
+    const reportLastReadTime = baseReportLastReadTime;
 
     /**
      * The timestamp for the unread marker.
@@ -256,6 +258,15 @@ function ReportActionsList({
             const nextAction = sortedVisibleReportActions.at(index + 1);
             const isEarliestReceivedOfflineMessage = index === earliestReceivedOfflineMessageIndex;
 
+            // Determine the correct lastReadTime to use for this specific action
+            // If the action belongs to the transaction thread, use the transaction thread's lastReadTime
+            // Otherwise, use the base report's lastReadTime
+            let actionSpecificUnreadMarkerTime = unreadMarkerTime;
+            if (transactionThreadReport?.reportID && reportAction?.reportID === transactionThreadReport.reportID) {
+                // For actions from the transaction thread, use the transaction thread's lastReadTime
+                actionSpecificUnreadMarkerTime = transactionThreadLastReadTime || unreadMarkerTime;
+            }
+
             // eslint-disable-next-line react-compiler/react-compiler
             const shouldDisplayNewMarker =
                 reportAction &&
@@ -265,7 +276,7 @@ function ReportActionsList({
                     isEarliestReceivedOfflineMessage,
                     accountID,
                     prevSortedVisibleReportActionsObjects,
-                    unreadMarkerTime,
+                    unreadMarkerTime: actionSpecificUnreadMarkerTime,
                     scrollingVerticalOffset: scrollingVerticalOffset.current,
                     prevUnreadMarkerReportActionID: prevUnreadMarkerReportActionID.current,
                 });
@@ -275,7 +286,15 @@ function ReportActionsList({
         }
 
         return null;
-    }, [accountID, earliestReceivedOfflineMessageIndex, prevSortedVisibleReportActionsObjects, sortedVisibleReportActions, unreadMarkerTime]);
+    }, [
+        accountID,
+        earliestReceivedOfflineMessageIndex,
+        prevSortedVisibleReportActionsObjects,
+        sortedVisibleReportActions,
+        unreadMarkerTime,
+        transactionThreadReport?.reportID,
+        transactionThreadLastReadTime,
+    ]);
     prevUnreadMarkerReportActionID.current = unreadMarkerReportActionID;
 
     /**
