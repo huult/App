@@ -23,6 +23,9 @@ type ScrollOffsetContextValue = {
 
     /** Clean scroll offsets of screen that aren't anymore in the state */
     cleanStaleScrollOffsets: (state: State) => void;
+
+    /** Clear all search scroll offsets when search type changes */
+    clearSearchScrollOffsets: () => void;
 };
 
 type ScrollOffsetContextProviderProps = {
@@ -36,6 +39,7 @@ const defaultValue: ScrollOffsetContextValue = {
     saveScrollIndex: () => {},
     getScrollIndex: () => undefined,
     cleanStaleScrollOffsets: () => {},
+    clearSearchScrollOffsets: () => {},
 };
 
 const ScrollOffsetContext = createContext<ScrollOffsetContextValue>(defaultValue);
@@ -131,6 +135,20 @@ function ScrollOffsetContextProvider({children}: ScrollOffsetContextProviderProp
         return scrollIndicesRef.current[getKey(route)];
     }, []);
 
+    const clearSearchScrollOffsets: ScrollOffsetContextValue['clearSearchScrollOffsets'] = useCallback(() => {
+        // Clear all search-related scroll offsets and indices when search type changes
+        for (const key of Object.keys(scrollOffsetsRef.current)) {
+            if (key.startsWith('Search_Root-')) {
+                delete scrollOffsetsRef.current[key];
+            }
+        }
+        for (const key of Object.keys(scrollIndicesRef.current)) {
+            if (key.startsWith('Search_Root-')) {
+                delete scrollIndicesRef.current[key];
+            }
+        }
+    }, []);
+
     const contextValue = useMemo(
         (): ScrollOffsetContextValue => ({
             saveScrollOffset,
@@ -138,8 +156,9 @@ function ScrollOffsetContextProvider({children}: ScrollOffsetContextProviderProp
             cleanStaleScrollOffsets,
             saveScrollIndex,
             getScrollIndex,
+            clearSearchScrollOffsets,
         }),
-        [saveScrollOffset, getScrollOffset, cleanStaleScrollOffsets, saveScrollIndex, getScrollIndex],
+        [saveScrollOffset, getScrollOffset, cleanStaleScrollOffsets, saveScrollIndex, getScrollIndex, clearSearchScrollOffsets],
     );
 
     return <ScrollOffsetContext.Provider value={contextValue}>{children}</ScrollOffsetContext.Provider>;
