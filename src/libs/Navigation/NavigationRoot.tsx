@@ -228,6 +228,44 @@ function NavigationRoot({authenticated, lastVisitedPath, initialUrl, onReady}: N
         });
     }, [authenticated, previousAuthenticated]);
 
+    // Helper functions for handling different navigation scenarios
+    const extractSearchTypeFromQuery = (query: string): string | undefined => {
+        const searchTypeMatch = query.match(/type:(\w+)/);
+        return searchTypeMatch?.[1];
+    };
+
+    const handleSearchScreenNavigation = (focusedRoute: ReturnType<typeof findFocusedRoute>) => {
+        // For search screens, only clean when search type/query changes significantly
+        const searchParams = focusedRoute?.params as {q?: string} | undefined;
+        const currentSearchQuery = searchParams?.q;
+
+        if (typeof currentSearchQuery === 'string') {
+            const currentSearchType = extractSearchTypeFromQuery(currentSearchQuery);
+
+            // Store the previous search type to compare
+            if (!previousSearchTypeRef.current) {
+                previousSearchTypeRef.current = currentSearchType;
+            } else if (previousSearchTypeRef.current !== currentSearchType) {
+                // Search type changed, clear all search scroll offsets and update tracking
+                clearSearchScrollOffsets();
+                previousSearchTypeRef.current = currentSearchType;
+            }
+        }
+    };
+
+    const handleSearchMoneyRequestReportNavigation = (state: NavigationState) => {
+        // For Search_Money_Request_Report screen, don't clear search scroll offsets
+        // Just clean stale offsets normally but preserve search data
+        cleanStaleScrollOffsets(state);
+    };
+
+    const handleNonSearchScreenNavigation = (state: NavigationState) => {
+        // For non-search screens, clear search scroll offsets and reset tracking
+        clearSearchScrollOffsets();
+        cleanStaleScrollOffsets(state);
+        previousSearchTypeRef.current = undefined;
+    };
+
     const handleStateChange = (state: NavigationState | undefined) => {
         if (!state) {
             return;
@@ -241,35 +279,20 @@ function NavigationRoot({authenticated, lastVisitedPath, initialUrl, onReady}: N
         }, 0);
         parseAndLogRoute(state);
 
-        // Clean scroll offsets when:
-        // 1. Switching between different tab screens (e.g., Search tab to Reports tab)
-        // 2. Search type changes (different search queries)
+        // Clean scroll offsets based on navigation context
         const focusedRoute = findFocusedRoute(state);
-        const isSearchScreen = focusedRoute?.name === 'Search_Root';
+        const routeName = focusedRoute?.name;
+
+        // Define screen types for cleaner logic
+        const isSearchScreen = routeName === 'Search_Root';
+        const isSearchMoneyRequestReport = routeName === 'Search_Money_Request_Report';
 
         if (isSearchScreen) {
-            // For search screens, only clean when search type/query changes significantly
-            const searchParams = focusedRoute?.params as {q?: string} | undefined;
-            const currentSearchQuery = searchParams?.q;
-            if (typeof currentSearchQuery === 'string') {
-                // Extract search type from query (e.g., "type:expense" vs "type:report")
-                const searchTypeMatch = currentSearchQuery.match(/type:(\w+)/);
-                const currentSearchType = searchTypeMatch?.[1];
-
-                // Store the previous search type to compare
-                if (!previousSearchTypeRef.current) {
-                    previousSearchTypeRef.current = currentSearchType;
-                } else if (previousSearchTypeRef.current !== currentSearchType) {
-                    // Search type changed, clear all search scroll offsets and update tracking
-                    clearSearchScrollOffsets();
-                    previousSearchTypeRef.current = currentSearchType;
-                }
-            }
+            handleSearchScreenNavigation(focusedRoute);
+        } else if (isSearchMoneyRequestReport) {
+            handleSearchMoneyRequestReportNavigation(state);
         } else {
-            // For non-search screens, clean scroll offsets normally
-            cleanStaleScrollOffsets(state);
-            // Reset search type tracking when leaving search
-            previousSearchTypeRef.current = undefined;
+            handleNonSearchScreenNavigation(state);
         }
 
         cleanPreservedNavigatorStates(state);
