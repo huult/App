@@ -1,7 +1,7 @@
-import {useIsFocused} from '@react-navigation/native';
+import {useIsFocused, useRoute} from '@react-navigation/native';
 import {FlashList} from '@shopify/flash-list';
 import type {FlashListProps, ViewToken} from '@shopify/flash-list';
-import React, {forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState} from 'react';
+import React, {forwardRef, useCallback, useContext, useEffect, useImperativeHandle, useMemo, useRef, useState} from 'react';
 import type {ForwardedRef} from 'react';
 import {View} from 'react-native';
 import type {NativeSyntheticEvent, StyleProp, ViewStyle} from 'react-native';
@@ -11,6 +11,7 @@ import * as Expensicons from '@components/Icon/Expensicons';
 import MenuItem from '@components/MenuItem';
 import Modal from '@components/Modal';
 import {PressableWithFeedback} from '@components/Pressable';
+import {ScrollOffsetContext} from '@components/ScrollOffsetContextProvider';
 import type ChatListItem from '@components/SelectionList/ChatListItem';
 import type TaskListItem from '@components/SelectionList/Search/TaskListItem';
 import type TransactionGroupListItem from '@components/SelectionList/Search/TransactionGroupListItem';
@@ -130,6 +131,7 @@ function SearchList(
     ref: ForwardedRef<SearchListHandle>,
 ) {
     const styles = useThemeStyles();
+    const route = useRoute();
 
     const {initialHeight, initialWidth} = useInitialWindowDimensions();
     const {hash, groupBy, type} = queryJSON;
@@ -167,7 +169,7 @@ function SearchList(
 
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [longPressedItem, setLongPressedItem] = useState<SearchListItem>();
-
+    const {saveScrollOffset, getScrollOffset, saveScrollIndex, getScrollIndex} = useContext(ScrollOffsetContext);
     const [policies] = useOnyx(ONYXKEYS.COLLECTION.POLICY, {
         canBeMissing: true,
     });
@@ -266,6 +268,40 @@ function SearchList(
 
         return () => removeKeyDownPressListener(setHasKeyBeenPressed);
     }, [setHasKeyBeenPressed]);
+
+    const handleScroll = useCallback<NonNullable<FlashListProps<SearchListItem>['onScroll']>>(
+        (e) => {
+            // Call the original onScroll function if provided
+            onScroll(e);
+
+            // Save the scroll offset and index
+            if (e.nativeEvent.layoutMeasurement.height > 0) {
+                saveScrollOffset(route, e.nativeEvent.contentOffset.y);
+                saveScrollIndex(route, Math.floor(e.nativeEvent.contentOffset.y / estimatedItemSize));
+            }
+        },
+        [onScroll, route, saveScrollOffset, saveScrollIndex, estimatedItemSize],
+    );
+
+    const handleLayout = useCallback(() => {
+        // Call the original onLayout function if provided
+        onLayout?.();
+
+        // Get the saved scroll offset and scroll to it
+        const offset = getScrollOffset(route);
+        if (!offset || !listRef.current) {
+            return;
+        }
+
+        // Use requestAnimationFrame to ensure proper scrolling on iOS
+        requestAnimationFrame(() => {
+            if (!offset || !listRef.current) {
+                return;
+            }
+
+            listRef.current.scrollToOffset({offset});
+        });
+    }, [onLayout, getScrollOffset, route]);
 
     /**
      * Highlights the items and scrolls to the first item present in the items list.
@@ -448,7 +484,7 @@ function SearchList(
                 data={data}
                 renderItem={renderItem}
                 keyExtractor={keyExtractor}
-                onScroll={onScroll}
+                onScroll={handleScroll}
                 showsVerticalScrollIndicator={false}
                 ref={listRef}
                 extraData={focusedIndex}
@@ -456,7 +492,7 @@ function SearchList(
                 onEndReachedThreshold={onEndReachedThreshold}
                 ListFooterComponent={ListFooterComponent}
                 onViewableItemsChanged={onViewableItemsChanged}
-                onLayout={onLayout}
+                onLayout={handleLayout}
                 removeClippedSubviews
                 drawDistance={1000}
                 estimatedItemSize={estimatedItemSize}
@@ -464,6 +500,7 @@ function SearchList(
                 estimatedListSize={estimatedListSize}
                 contentContainerStyle={contentContainerStyle}
                 overrideProps={{estimatedHeightSize: calculatedListHeight}}
+                // initialScrollIndex={getScrollIndex(route) ?? 0}
             />
             <Modal
                 isVisible={isModalVisible}
