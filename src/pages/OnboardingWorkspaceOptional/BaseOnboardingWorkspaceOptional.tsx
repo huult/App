@@ -14,6 +14,7 @@ import useOnyx from '@hooks/useOnyx';
 import usePermissions from '@hooks/usePermissions';
 import useResponsiveLayout from '@hooks/useResponsiveLayout';
 import useThemeStyles from '@hooks/useThemeStyles';
+import DomainUtils from '@libs/DomainUtils';
 import {navigateAfterOnboardingWithMicrotaskQueue} from '@libs/navigateAfterOnboarding';
 import Navigation from '@libs/Navigation/Navigation';
 import {completeOnboarding as completeOnboardingReport} from '@userActions/Report';
@@ -38,6 +39,8 @@ function BaseOnboardingWorkspaceOptional({shouldUseNativeStyles}: BaseOnboarding
     const [onboardingPolicyID] = useOnyx(ONYXKEYS.ONBOARDING_POLICY_ID, {canBeMissing: true});
     const [onboardingAdminsChatReportID] = useOnyx(ONYXKEYS.ONBOARDING_ADMINS_CHAT_REPORT_ID, {canBeMissing: true});
     const [conciergeChatReportID] = useOnyx(ONYXKEYS.CONCIERGE_REPORT_ID, {canBeMissing: true});
+    const [myDomainSecurityGroups] = useOnyx(ONYXKEYS.MY_DOMAIN_SECURITY_GROUPS);
+    const [securityGroups] = useOnyx(ONYXKEYS.COLLECTION.SECURITY_GROUP);
     const {onboardingMessages} = useOnboardingMessages();
     // When we merge public email with work email, we now want to navigate to the
     // concierge chat report of the new work email and not the last accessed report.
@@ -50,6 +53,9 @@ function BaseOnboardingWorkspaceOptional({shouldUseNativeStyles}: BaseOnboarding
     const ICON_SIZE = 48;
 
     const processedHelperText = `<comment><muted-text-label>${translate('onboarding.workspace.price')}</muted-text-label></comment>`;
+
+    // Check if user has domain workspace creation restrictions
+    const hasRestriction = DomainUtils(currentUserPersonalDetails.login, myDomainSecurityGroups, securityGroups);
 
     useEffect(() => {
         setOnboardingErrorMessage('');
@@ -155,6 +161,10 @@ function BaseOnboardingWorkspaceOptional({shouldUseNativeStyles}: BaseOnboarding
                         text={translate('onboarding.workspace.createWorkspace')}
                         onPress={() => {
                             setOnboardingErrorMessage('');
+                            if (hasRestriction) {
+                                Navigation.navigate(ROUTES.ONBOARDING_DOMAIN_RESTRICTED_WORKSPACE_MODAL);
+                                return;
+                            }
                             Navigation.navigate(ROUTES.ONBOARDING_WORKSPACE_CONFIRMATION.getRoute());
                         }}
                     />

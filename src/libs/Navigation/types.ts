@@ -1979,6 +1979,7 @@ type OnboardingModalNavigatorParamList = {
     [SCREENS.ONBOARDING.WORKSPACE_INVITE]: {
         backTo?: string;
     };
+    [SCREENS.ONBOARDING.DOMAIN_RESTRICTED_WORKSPACE_MODAL]: undefined;
 };
 
 type WelcomeVideoModalNavigatorParamList = {

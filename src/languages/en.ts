@@ -2452,6 +2452,10 @@ const translations = {
             price: 'Try it free for 30 days, then upgrade for just <strong>$5/month</strong>.',
             createWorkspace: 'Create workspace',
         },
+        domainWorkspaceRestriction: {
+            title: 'Join existing workspaces',
+            subtitle: 'Your company has disabled workspace creation. Please choose from existing workspaces below or skip for now.',
+        },
         confirmWorkspace: {
             title: 'Confirm workspace',
             subtitle: 'Create a workspace to track receipts, reimburse expenses, manage travel, create reports, and more — all at the speed of chat.',
