@@ -369,7 +369,15 @@ function ReportActionsList({
     useEffect(() => {
         userActiveSince.current = DateUtils.getDBTime();
         prevReportID = report.reportID;
+        setIsScrollToBottomEnabled(false);
     }, [report.reportID]);
+
+    // Reset scroll flag when visible actions change (indicates list update)
+    useEffect(() => {
+        // Reset the flag when actions change, as this indicates the list has been updated
+        // and any pending scroll-after-layout should be reconsidered
+        setIsScrollToBottomEnabled(false);
+    }, [sortedVisibleReportActions.length, lastAction?.reportActionID]);
 
     useEffect(() => {
         if (report.reportID !== prevReportID) {
@@ -461,9 +469,16 @@ function ReportActionsList({
                 } else {
                     setIsFloatingMessageCounterVisible(false);
                     reportScrollManager.scrollToBottom();
+                    // Reset the flag immediately after scrolling for non-REPORT_PREVIEW actions
+                    // since they don't require layout-dependent scrolling
+                    setIsScrollToBottomEnabled(false);
                 }
 
-                setIsScrollToBottomEnabled(true);
+                // Only set this flag if we need to scroll after a potential layout change
+                // This is primarily for REPORT_PREVIEW actions that might change layout
+                if (action?.actionName === CONST.REPORT.ACTIONS.TYPE.REPORT_PREVIEW && index <= 0) {
+                    setIsScrollToBottomEnabled(true);
+                }
             });
         },
         [report.reportID, reportScrollManager, setIsFloatingMessageCounterVisible, sortedVisibleReportActions],
