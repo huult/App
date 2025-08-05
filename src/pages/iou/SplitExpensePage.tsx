@@ -15,7 +15,7 @@ import useOnyx from '@hooks/useOnyx';
 import usePolicy from '@hooks/usePolicy';
 import useResponsiveLayout from '@hooks/useResponsiveLayout';
 import useThemeStyles from '@hooks/useThemeStyles';
-import {addSplitExpenseField, initDraftSplitExpenseDataForEdit, saveSplitTransactions, updateSplitExpenseAmountField} from '@libs/actions/IOU';
+import {addSplitExpenseField, clearSplitTransactionDraftErrors, initDraftSplitExpenseDataForEdit, saveSplitTransactions, updateSplitExpenseAmountField} from '@libs/actions/IOU';
 import {convertToBackendAmount, convertToDisplayString} from '@libs/CurrencyUtils';
 import DateUtils from '@libs/DateUtils';
 import {canUseTouchScreen} from '@libs/DeviceCapabilities';
@@ -66,11 +66,44 @@ function SplitExpensePage({route}: SplitExpensePageProps) {
         setErrorMessage('');
     }, [sumOfSplitExpenses, draftTransaction?.comment?.splitExpenses?.length]);
 
+    // Handle draft transaction errors (like invalid distance rate)
+    useEffect(() => {
+        if (!draftTransaction?.errors) {
+            return;
+        }
+
+        const errorKeys = Object.keys(draftTransaction.errors);
+        if (errorKeys.length === 0) {
+            return;
+        }
+
+        const firstErrorKey = errorKeys.at(0);
+        if (!firstErrorKey) {
+            return;
+        }
+
+        const errorText = draftTransaction.errors[firstErrorKey];
+        if (errorText) {
+            // Error can be either a string or ReceiptError object
+            const errorString = typeof errorText === 'string' ? errorText : errorText.source;
+            setErrorMessage(errorString);
+        }
+    }, [draftTransaction?.errors]);
+
     const onAddSplitExpense = useCallback(() => {
+        // Clear any existing draft transaction errors
+        if (draftTransaction?.errors) {
+            clearSplitTransactionDraftErrors(transactionID);
+        }
         addSplitExpenseField(transaction, draftTransaction);
-    }, [draftTransaction, transaction]);
+    }, [draftTransaction, transaction, transactionID]);
 
     const onSaveSplitExpense = useCallback(() => {
+        // Clear any existing draft transaction errors first
+        if (draftTransaction?.errors) {
+            clearSplitTransactionDraftErrors(transactionID);
+        }
+
         if (sumOfSplitExpenses > Math.abs(transactionDetailsAmount)) {
             const difference = sumOfSplitExpenses - Math.abs(transactionDetailsAmount);
             setErrorMessage(translate('iou.totalAmountGreaterThanOriginal', {amount: convertToDisplayString(difference, transactionDetails?.currency)}));
@@ -88,14 +121,18 @@ function SplitExpensePage({route}: SplitExpensePageProps) {
         }
 
         saveSplitTransactions(draftTransaction, currentSearchHash);
-    }, [currentSearchHash, draftTransaction, isCard, isPerDiem, sumOfSplitExpenses, transactionDetailsAmount, transactionDetails?.currency, translate]);
+    }, [currentSearchHash, draftTransaction, isCard, isPerDiem, sumOfSplitExpenses, transactionDetailsAmount, transactionDetails?.currency, transactionID, translate]);
 
     const onSplitExpenseAmountChange = useCallback(
         (currentItemTransactionID: string, value: number) => {
+            // Clear any existing draft transaction errors when user changes amounts
+            if (draftTransaction?.errors) {
+                clearSplitTransactionDraftErrors(transactionID);
+            }
             const amountInCents = convertToBackendAmount(value);
             updateSplitExpenseAmountField(draftTransaction, currentItemTransactionID, amountInCents);
         },
-        [draftTransaction],
+        [draftTransaction, transactionID],
     );
 
     const getTranslatedText = useCallback((item: TranslationPathOrText) => (item.translationPath ? translate(item.translationPath) : (item.text ?? '')), [translate]);
