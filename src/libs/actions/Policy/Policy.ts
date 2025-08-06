@@ -82,7 +82,7 @@ import type {Feature} from '@pages/OnboardingInterestedFeatures/types';
 import * as PaymentMethods from '@userActions/PaymentMethods';
 import * as PersistedRequests from '@userActions/PersistedRequests';
 import type {EnablePolicyFeatureCommand} from '@userActions/RequestConflictUtils';
-import {buildTaskData} from '@userActions/Task';
+import {buildTaskData, getFinishOnboardingTaskOnyxData} from '@userActions/Task';
 import {getOnboardingMessages} from '@userActions/Welcome/OnboardingFlow';
 import type {OnboardingCompanySize, OnboardingPurpose} from '@userActions/Welcome/OnboardingFlow';
 import CONST from '@src/CONST';
@@ -261,6 +261,17 @@ Onyx.connect({
     key: ONYXKEYS.NVP_INTRO_SELECTED,
     callback: (value) => (introSelected = value),
 });
+
+/**
+ * Helper function to append onboarding task completion data for workspace settings
+ */
+function appendReviewWorkspaceSettingsOnboardingData(onyxData: OnyxData) {
+    const finishOnboardingTaskData = getFinishOnboardingTaskOnyxData('reviewWorkspaceSettings');
+    onyxData.optimisticData?.push(...(finishOnboardingTaskData.optimisticData ?? []));
+    onyxData.successData?.push(...(finishOnboardingTaskData.successData ?? []));
+    onyxData.failureData?.push(...(finishOnboardingTaskData.failureData ?? []));
+    return onyxData;
+}
 
 /**
  * Stores in Onyx the policy ID of the last workspace that was accessed by the user
@@ -1368,7 +1379,7 @@ function updateWorkspaceAvatar(policyID: string, file: File) {
         file,
     };
 
-    API.write(WRITE_COMMANDS.UPDATE_WORKSPACE_AVATAR, params, {optimisticData, finallyData, failureData});
+    API.write(WRITE_COMMANDS.UPDATE_WORKSPACE_AVATAR, params, appendReviewWorkspaceSettingsOnboardingData({optimisticData, finallyData, failureData}));
 }
 
 /**
@@ -1592,11 +1603,15 @@ function updateGeneralSettings(policyID: string | undefined, name: string, curre
         return;
     }
 
-    API.write(WRITE_COMMANDS.UPDATE_WORKSPACE_GENERAL_SETTINGS, params, {
-        optimisticData,
-        finallyData,
-        failureData,
-    });
+    API.write(
+        WRITE_COMMANDS.UPDATE_WORKSPACE_GENERAL_SETTINGS,
+        params,
+        appendReviewWorkspaceSettingsOnboardingData({
+            optimisticData,
+            finallyData,
+            failureData,
+        }),
+    );
 }
 
 function updateWorkspaceDescription(policyID: string, description: string, currentDescription: string | undefined) {
@@ -1648,11 +1663,15 @@ function updateWorkspaceDescription(policyID: string, description: string, curre
         description: parsedDescription,
     };
 
-    API.write(WRITE_COMMANDS.UPDATE_WORKSPACE_DESCRIPTION, params, {
-        optimisticData,
-        finallyData,
-        failureData,
-    });
+    API.write(
+        WRITE_COMMANDS.UPDATE_WORKSPACE_DESCRIPTION,
+        params,
+        appendReviewWorkspaceSettingsOnboardingData({
+            optimisticData,
+            finallyData,
+            failureData,
+        }),
+    );
 }
 
 function setWorkspaceErrors(policyID: string, errors: Errors) {
@@ -1714,10 +1733,14 @@ function updateAddress(policyID: string, newAddress: CompanyAddress) {
         },
     ];
 
-    API.write(WRITE_COMMANDS.UPDATE_POLICY_ADDRESS, parameters, {
-        optimisticData,
-        finallyData,
-    });
+    API.write(
+        WRITE_COMMANDS.UPDATE_POLICY_ADDRESS,
+        parameters,
+        appendReviewWorkspaceSettingsOnboardingData({
+            optimisticData,
+            finallyData,
+        }),
+    );
 }
 
 /**
