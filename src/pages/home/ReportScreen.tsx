@@ -141,7 +141,8 @@ function ReportScreen({route, navigation}: ReportScreenProps) {
     const prevIsFocused = usePrevious(isFocused);
     const firstRenderRef = useRef(true);
     const [firstRender, setFirstRender] = useState(true);
-    const isSkippingOpenReport = useRef(false);
+    const [isSkippingOpenReport, setIsSkippingOpenReport] = useState(true);
+    // const isSkippingOpenReport = useRef(false);
     const flatListRef = useRef<FlatList>(null);
     const {isBetaEnabled} = usePermissions();
     const {isOffline} = useNetwork();
@@ -482,7 +483,15 @@ function ReportScreen({route, navigation}: ReportScreenProps) {
         // When we get here with a moneyRequestReportActionID and a transactionID from the route it means we don't have the transaction thread created yet
         // so we have to call OpenReport in a way that the transaction thread will be created and attached to the parentReportAction
         if (transactionID && currentUserEmail) {
+            if (isSkippingOpenReport) {
+                setIsSkippingOpenReport(false);
+                return;
+            }
             openReport(reportIDFromRoute, '', [currentUserEmail], undefined, moneyRequestReportActionID, false, [], undefined, transactionID);
+            return;
+        }
+        if (isSkippingOpenReport) {
+            setIsSkippingOpenReport(false);
             return;
         }
         openReport(reportIDFromRoute, reportActionIDFromRoute);
@@ -493,6 +502,7 @@ function ReportScreen({route, navigation}: ReportScreenProps) {
         route.params?.moneyRequestReportActionID,
         route.params?.transactionID,
         currentUserEmail,
+        isSkippingOpenReport,
         reportIDFromRoute,
         reportActionIDFromRoute,
     ]);
@@ -518,7 +528,7 @@ function ReportScreen({route, navigation}: ReportScreenProps) {
             if (!preexistingReportID) {
                 return;
             }
-            isSkippingOpenReport.current = true;
+            setIsSkippingOpenReport(true);
         });
 
         return () => {
@@ -586,6 +596,10 @@ function ReportScreen({route, navigation}: ReportScreenProps) {
     // If a user has chosen to leave a thread, and then returns to it (e.g. with the back button), we need to call `openReport` again in order to allow the user to rejoin and to receive real-time updates
     useEffect(() => {
         if (!shouldUseNarrowLayout || !isFocused || prevIsFocused || !isChatThread(report) || !isHiddenForCurrentUser(report) || isTransactionThreadView) {
+            return;
+        }
+        if (isSkippingOpenReport) {
+            setIsSkippingOpenReport(false);
             return;
         }
         openReport(reportID);
