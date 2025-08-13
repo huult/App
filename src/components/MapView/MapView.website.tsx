@@ -13,6 +13,7 @@ const MapView = forwardRef<MapViewHandle, MapViewProps>((props, ref) => {
     const {translate} = useLocalize();
     const styles = useThemeStyles();
     const [errorResetKey, setErrorResetKey] = useState(0);
+    const [mapKey, setMapKey] = useState(0);
 
     // Retry the error when reconnecting.
     const wasOffline = usePrevious(isOffline);
@@ -21,7 +22,29 @@ const MapView = forwardRef<MapViewHandle, MapViewProps>((props, ref) => {
             return;
         }
         setErrorResetKey((key) => key + 1);
+        setMapKey((key) => key + 1); // Force complete remount of map component
     }, [isOffline, wasOffline]);
+
+    // Force map remount when waypoints change from invalid to valid
+    const waypointsKey = useMemo(() => {
+        if (!props.waypoints) {
+            return '';
+        }
+        return props.waypoints.map((wp) => `${wp.coordinate[0]},${wp.coordinate[1]}`).join('|');
+    }, [props.waypoints]);
+
+    const prevWaypointsKey = usePrevious(waypointsKey);
+
+    useEffect(() => {
+        if (isOffline || !waypointsKey || !prevWaypointsKey) {
+            return;
+        }
+
+        // If waypoints changed significantly, force a complete remount
+        if (waypointsKey !== prevWaypointsKey) {
+            setMapKey((key) => key + 1);
+        }
+    }, [waypointsKey, prevWaypointsKey, isOffline]);
 
     // The only way to retry loading the module is to call `React.lazy` again.
     const MapViewImpl = useMemo(
@@ -44,6 +67,7 @@ const MapView = forwardRef<MapViewHandle, MapViewProps>((props, ref) => {
             <Suspense fallback={<FullScreenLoadingIndicator />}>
                 <MapViewImpl
                     ref={ref}
+                    key={mapKey}
                     // eslint-disable-next-line react/jsx-props-no-spreading
                     {...props}
                 />
