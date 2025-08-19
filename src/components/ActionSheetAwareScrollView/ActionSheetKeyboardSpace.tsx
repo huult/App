@@ -1,5 +1,5 @@
 import React, {useContext, useEffect} from 'react';
-import type {ViewProps} from 'react-native';
+import type {ScrollViewProps, ViewProps} from 'react-native';
 import {useKeyboardHandler} from 'react-native-keyboard-controller';
 import Reanimated, {useAnimatedReaction, useAnimatedStyle, useDerivedValue, useSharedValue, withSequence, withSpring, withTiming} from 'react-native-reanimated';
 import type {SharedValue} from 'react-native-reanimated';
@@ -63,6 +63,10 @@ const useAnimatedKeyboard = () => {
 type ActionSheetKeyboardSpaceProps = ViewProps & {
     /** scroll offset of the parent ScrollView */
     position?: SharedValue<number>;
+    /** scroll view ref callback */
+    scrollViewRef?: (ref: Reanimated.ScrollView) => void;
+    /** scroll view props */
+    scrollViewProps?: ScrollViewProps;
 };
 
 function ActionSheetKeyboardSpace(props: ActionSheetKeyboardSpaceProps) {
@@ -71,7 +75,7 @@ function ActionSheetKeyboardSpace(props: ActionSheetKeyboardSpaceProps) {
         unmodifiedPaddings: {top: paddingTop = 0, bottom: paddingBottom = 0},
     } = useSafeAreaPaddings();
     const keyboard = useAnimatedKeyboard();
-    const {position} = props;
+    const {position, scrollViewRef, scrollViewProps, children} = props;
 
     // Similar to using `global` in worklet but it's just a local object
     const syncLocalWorkletState = useSharedValue(KeyboardState.UNKNOWN);
@@ -253,6 +257,22 @@ function ActionSheetKeyboardSpace(props: ActionSheetKeyboardSpaceProps) {
         paddingTop: translateY.get(),
     }));
 
+    // If we have scrollViewRef and scrollViewProps, render the ScrollView directly
+    // This prevents wrapping all children in a single View which breaks maintainVisibleContentPosition
+    if (scrollViewRef && scrollViewProps) {
+        return (
+            <Reanimated.ScrollView
+                ref={scrollViewRef}
+                style={[scrollViewProps.style, animatedStyle]}
+                // eslint-disable-next-line react/jsx-props-no-spreading
+                {...scrollViewProps}
+            >
+                {children}
+            </Reanimated.ScrollView>
+        );
+    }
+
+    // Fallback for backward compatibility
     return (
         <Reanimated.View
             style={[styles.flex1, animatedStyle]}

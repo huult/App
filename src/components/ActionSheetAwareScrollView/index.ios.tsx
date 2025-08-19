@@ -2,7 +2,8 @@ import type {PropsWithChildren} from 'react';
 import React, {forwardRef, useCallback} from 'react';
 // eslint-disable-next-line no-restricted-imports
 import type {ScrollView, ScrollViewProps} from 'react-native';
-import Reanimated, {useAnimatedRef, useScrollViewOffset} from 'react-native-reanimated';
+import {useAnimatedRef, useScrollViewOffset} from 'react-native-reanimated';
+import type Reanimated from 'react-native-reanimated';
 import {Actions, ActionSheetAwareScrollViewContext, ActionSheetAwareScrollViewProvider} from './ActionSheetAwareScrollViewContext';
 import ActionSheetKeyboardSpace from './ActionSheetKeyboardSpace';
 
@@ -25,13 +26,13 @@ const ActionSheetAwareScrollView = forwardRef<ScrollView, PropsWithChildren<Scro
     );
 
     return (
-        <Reanimated.ScrollView
-            ref={onRef}
-            // eslint-disable-next-line react/jsx-props-no-spreading
-            {...props}
+        <ActionSheetKeyboardSpace
+            position={position}
+            scrollViewRef={onRef}
+            scrollViewProps={props}
         >
-            <ActionSheetKeyboardSpace position={position}>{props.children}</ActionSheetKeyboardSpace>
-        </Reanimated.ScrollView>
+            {props.children}
+        </ActionSheetKeyboardSpace>
     );
 });
 
