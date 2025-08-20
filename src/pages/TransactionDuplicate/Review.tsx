@@ -61,7 +61,19 @@ function TransactionDuplicateReview() {
 
     const keepAll = () => {
         dismissDuplicateTransactionViolation(transactionIDs, currentPersonalDetails);
-        Navigation.goBack();
+        
+        // Use proper navigation back to the intended location
+        if (route.params.backTo) {
+            // Extract reportID from backTo route if it's a report route
+            const reportIDMatch = route.params.backTo.match(/\/r\/([^/?]+)/);
+            if (reportIDMatch?.[1]) {
+                Navigation.dismissModalWithReport({reportID: reportIDMatch[1]});
+                return;
+            }
+            Navigation.goBack(route.params.backTo);
+        } else {
+            Navigation.goBack();
+        }
     };
 
     const hasSettledOrApprovedTransaction = transactions?.some((transaction) => isSettled(transaction?.reportID) || isReportIDApproved(transaction?.reportID));

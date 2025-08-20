@@ -88,13 +88,33 @@ function Confirmation() {
             return;
         }
         IOU.mergeDuplicates(transactionsMergeParams);
+        
+        // Use dismissModalWithReport to properly navigate back to the report if backTo is provided
+        if (route.params.backTo) {
+            // Extract reportID from backTo route if it's a report route
+            const reportIDMatch = route.params.backTo.match(/\/r\/([^/?]+)/);
+            if (reportIDMatch?.[1]) {
+                Navigation.dismissModalWithReport({reportID: reportIDMatch[1]});
+                return;
+            }
+        }
         Navigation.dismissModal();
-    }, [reportAction?.childReportID, transactionsMergeParams]);
+    }, [reportAction?.childReportID, transactionsMergeParams, route.params.backTo]);
 
     const resolveDuplicates = useCallback(() => {
         IOU.resolveDuplicates(transactionsMergeParams);
+        
+        // Use dismissModalWithReport to properly navigate back to the report if backTo is provided
+        if (route.params.backTo) {
+            // Extract reportID from backTo route if it's a report route
+            const reportIDMatch = route.params.backTo.match(/\/r\/([^/?]+)/);
+            if (reportIDMatch?.[1]) {
+                Navigation.dismissModalWithReport({reportID: reportIDMatch[1]});
+                return;
+            }
+        }
         Navigation.dismissModal();
-    }, [transactionsMergeParams]);
+    }, [transactionsMergeParams, route.params.backTo]);
 
     const contextValue = useMemo(
         () => ({
