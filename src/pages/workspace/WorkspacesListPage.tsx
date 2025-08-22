@@ -1,4 +1,5 @@
 import {useIsFocused, useRoute} from '@react-navigation/native';
+import {Str} from 'expensify-common';
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {FlatList, InteractionManager, View} from 'react-native';
 import type {ValueOf} from 'type-fest';
@@ -51,7 +52,7 @@ import interceptAnonymousUser from '@libs/interceptAnonymousUser';
 import Navigation from '@libs/Navigation/Navigation';
 import type {PlatformStackRouteProp} from '@libs/Navigation/PlatformStackNavigation/types';
 import type {AuthScreensParamList} from '@libs/Navigation/types';
-import {getDefaultApprover, getPolicy, getPolicyBrickRoadIndicatorStatus, isPolicyAdmin, shouldShowPolicy} from '@libs/PolicyUtils';
+import {getDefaultApprover, getPolicy, getPolicyBrickRoadIndicatorStatus, getPolicyRole, isPolicyAdmin, isPolicyUser, shouldShowPolicy} from '@libs/PolicyUtils';
 import {getDefaultWorkspaceAvatar} from '@libs/ReportUtils';
 import {shouldCalculateBillNewDot as shouldCalculateBillNewDotFn} from '@libs/SubscriptionUtils';
 import type {AvatarSource} from '@libs/UserUtils';
@@ -115,6 +116,8 @@ function WorkspacesListPage() {
     const [activePolicyID] = useOnyx(ONYXKEYS.NVP_ACTIVE_POLICY_ID, {canBeMissing: true});
     const [isLoadingApp] = useOnyx(ONYXKEYS.IS_LOADING_APP, {canBeMissing: true});
     const [lastPaymentMethod] = useOnyx(ONYXKEYS.NVP_LAST_PAYMENT_METHOD, {canBeMissing: true});
+    const [myDomainSecurityGroups] = useOnyx(ONYXKEYS.MY_DOMAIN_SECURITY_GROUPS, {canBeMissing: true});
+    const [securityGroups] = useOnyx(ONYXKEYS.COLLECTION.SECURITY_GROUP, {canBeMissing: true});
     const shouldShowLoadingIndicator = isLoadingApp && !isOffline;
     const route = useRoute<PlatformStackRouteProp<AuthScreensParamList, typeof SCREENS.WORKSPACES_LIST>>();
     const [duplicateWorkspace] = useOnyx(ONYXKEYS.DUPLICATE_WORKSPACE, {canBeMissing: false});
@@ -171,14 +174,50 @@ function WorkspacesListPage() {
     }, []);
 
     /**
+     * Check if user can set a workspace as default based on domain restrictions.
+     * If the user's domain group has a preferred workspace setting, they should not be able to manually change it.
+     */
+    const canUserSetWorkspaceAsDefault = useCallback(
+        (policyID?: string, isUser?: boolean) => {
+            if (!isUser) {
+                return true;
+            }
+
+            const userEmail = session?.email;
+            if (!userEmail) {
+                return true;
+            }
+
+            const domainName = Str.extractEmailDomain(userEmail);
+            const primaryDomainSecurityGroupID = myDomainSecurityGroups?.[domainName];
+
+            if (!primaryDomainSecurityGroupID) {
+                return true;
+            }
+
+            const securityGroup = securityGroups?.[`${ONYXKEYS.COLLECTION.SECURITY_GROUP}${primaryDomainSecurityGroupID}`];
+
+            if (policyID !== securityGroup?.restrictedPrimaryPolicyID) {
+                return true;
+            }
+
+            return !securityGroup?.enableRestrictedPrimaryPolicy;
+        },
+        [session?.email, myDomainSecurityGroups, securityGroups],
+    );
+
+    /**
      * Gets the menu item for each workspace
      */
     const getMenuItem = useCallback(
         ({item, index}: GetMenuItem) => {
             const isAdmin = isPolicyAdmin(item as unknown as PolicyType, session?.email);
+            const isUser = isPolicyUser(item as unknown as PolicyType, session?.email);
             const isOwner = item.ownerAccountID === session?.accountID;
             const isDefault = activePolicyID === item.policyID;
             const shouldAnimateInHighlight = duplicateWorkspace?.policyID === item.policyID;
+            console.log('****** canUserSetWorkspaceAsDefault(item.policyID, isUser) ******', canUserSetWorkspaceAsDefault(item.policyID, isUser));
+            console.log('****** title ******', item.title);
 
             const threeDotsMenuItems: PopoverMenuItem[] = [
                 {
@@ -236,7 +275,7 @@ function WorkspacesListPage() {
                 });
             }
 
-            if (!isDefault && !item?.isJoinRequestPending) {
+            if (!isDefault && !item?.isJoinRequestPending && isUser && canUserSetWorkspaceAsDefault(item.policyID, isUser)) {
                 threeDotsMenuItems.push({
                     icon: Expensicons.Star,
                     text: translate('workspace.common.setAsDefault'),
@@ -303,6 +342,7 @@ function WorkspacesListPage() {
             loadingSpinnerIconIndex,
             resetLoadingSpinnerIconIndex,
             policies,
+            canUserSetWorkspaceAsDefault,
         ],
     );
 
