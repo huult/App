@@ -41,6 +41,7 @@ import {
     getGroupPaidPoliciesWithExpenseChatEnabled,
     isPaidGroupPolicy,
     isPolicyMember,
+    shouldRestrictExpenseCreationFromSecurityGroup,
     shouldShowPolicy,
 } from '@libs/PolicyUtils';
 import {getQuickActionIcon, getQuickActionTitle, isQuickActionAllowed} from '@libs/QuickActionUtils';
@@ -141,6 +142,8 @@ function FloatingActionButtonAndPopover({onHideCreateMenu, onShowCreateMenu, isT
         canBeMissing: true,
         selector: (policies) => Object.values(policies ?? {}).some((policy) => isPaidGroupPolicy(policy) && isPolicyMember(policy, currentUserPersonalDetails.login)),
     });
+    const [myDomainSecurityGroups] = useOnyx(ONYXKEYS.MY_DOMAIN_SECURITY_GROUPS, {canBeMissing: true});
+    const [securityGroups] = useOnyx(ONYXKEYS.COLLECTION.SECURITY_GROUP, {canBeMissing: true});
 
     const groupPoliciesWithChatEnabled = getGroupPaidPoliciesWithExpenseChatEnabled();
 
@@ -289,6 +292,11 @@ function FloatingActionButtonAndPopover({onHideCreateMenu, onShowCreateMenu, isT
     };
 
     const expenseMenuItems = useMemo((): PopoverMenuItem[] => {
+        // Check if user should be restricted from creating expenses based on domain security group settings
+        if (shouldRestrictExpenseCreationFromSecurityGroup(session?.email, myDomainSecurityGroups, securityGroups)) {
+            return [];
+        }
+
         return [
             {
                 icon: getIconForAction(CONST.IOU.TYPE.CREATE),
@@ -310,7 +318,7 @@ function FloatingActionButtonAndPopover({onHideCreateMenu, onShowCreateMenu, isT
                     }),
             },
         ];
-    }, [translate, shouldRedirectToExpensifyClassic, shouldUseNarrowLayout]);
+    }, [translate, shouldRedirectToExpensifyClassic, shouldUseNarrowLayout, session?.email, myDomainSecurityGroups, securityGroups]);
 
     const quickActionMenuItems = useMemo(() => {
         // Define common properties in baseQuickAction

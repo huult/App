@@ -34,7 +34,7 @@ import Log from '@libs/Log';
 import {validateAmount} from '@libs/MoneyRequestUtils';
 import Navigation from '@libs/Navigation/Navigation';
 import {getIOUConfirmationOptionsFromPayeePersonalDetail, hasEnabledOptions} from '@libs/OptionsListUtils';
-import {getDistanceRateCustomUnitRate, getTagLists, isTaxTrackingEnabled} from '@libs/PolicyUtils';
+import {getDistanceRateCustomUnitRate, getTagLists, hasPreferredPolicyFromSecurityGroup, isTaxTrackingEnabled} from '@libs/PolicyUtils';
 import {isSelectedManagerMcTest} from '@libs/ReportUtils';
 import type {OptionData} from '@libs/ReportUtils';
 import {
@@ -246,6 +246,9 @@ function MoneyRequestConfirmationList({
     const [policyCategoriesDraft] = useOnyx(`${ONYXKEYS.COLLECTION.POLICY_CATEGORIES_DRAFT}${policyID}`, {canBeMissing: true});
     const [lastSelectedDistanceRates] = useOnyx(ONYXKEYS.NVP_LAST_SELECTED_DISTANCE_RATES, {canBeMissing: true});
     const [currencyList] = useOnyx(ONYXKEYS.CURRENCY_LIST, {canBeMissing: false});
+    const [session] = useOnyx(ONYXKEYS.SESSION, {canBeMissing: true});
+    const [myDomainSecurityGroups] = useOnyx(ONYXKEYS.MY_DOMAIN_SECURITY_GROUPS, {canBeMissing: true});
+    const [securityGroups] = useOnyx(ONYXKEYS.COLLECTION.SECURITY_GROUP, {canBeMissing: true});
     const {isBetaEnabled} = usePermissions();
     const {isDelegateAccessRestricted, showDelegateNoAccessModal} = useContext(DelegateNoAccessContext);
 
@@ -797,11 +800,15 @@ function MoneyRequestConfirmationList({
             );
             options.push();
         } else {
+            // Check if user has preferred policy from domain security group
+            const hasPreferredPolicy = hasPreferredPolicyFromSecurityGroup(session?.email, myDomainSecurityGroups, securityGroups);
+            const shouldDisableParticipantSelection = hasPreferredPolicy && isCreateExpenseFlow;
+
             const formattedSelectedParticipants = selectedParticipants.map((participant) => ({
                 ...participant,
                 isSelected: false,
-                isInteractive: isCreateExpenseFlow && !isTestReceipt,
-                shouldShowRightIcon: isCreateExpenseFlow && !isTestReceipt,
+                isInteractive: isCreateExpenseFlow && !isTestReceipt && !shouldDisableParticipantSelection,
+                shouldShowRightIcon: isCreateExpenseFlow && !isTestReceipt && !shouldDisableParticipantSelection,
             }));
             options.push({
                 title: translate('common.to'),
@@ -811,7 +818,19 @@ function MoneyRequestConfirmationList({
         }
 
         return options;
-    }, [isTypeSplit, translate, payeePersonalDetails, getSplitSectionHeader, splitParticipants, selectedParticipants, isCreateExpenseFlow, isTestReceipt]);
+    }, [
+        isTypeSplit,
+        translate,
+        payeePersonalDetails,
+        getSplitSectionHeader,
+        splitParticipants,
+        session?.email,
+        myDomainSecurityGroups,
+        securityGroups,
+        isCreateExpenseFlow,
+        selectedParticipants,
+        isTestReceipt,
+    ]);
 
     useEffect(() => {
         if (!isDistanceRequest || (isMovingTransactionFromTrackExpense && !isPolicyExpenseChat) || !transactionID || isReadOnly) {
@@ -888,6 +907,13 @@ function MoneyRequestConfirmationList({
      */
     const navigateToParticipantPage = () => {
         if (!isCreateExpenseFlow) {
+            return;
+        }
+
+        // Check if user has preferred policy from domain security group - if so, skip participant selection
+        const hasPreferredPolicy = hasPreferredPolicyFromSecurityGroup(session?.email, myDomainSecurityGroups, securityGroups);
+        if (hasPreferredPolicy) {
+            // Skip participant selector since user has a preferred workspace from domain settings
             return;
         }
 

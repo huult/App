@@ -32,7 +32,13 @@ import {startTestDrive} from '@libs/actions/Tour';
 import interceptAnonymousUser from '@libs/interceptAnonymousUser';
 import Navigation from '@libs/Navigation/Navigation';
 import {hasSeenTourSelector, tryNewDotOnyxSelector} from '@libs/onboardingSelectors';
-import {areAllGroupPoliciesExpenseChatDisabled, getGroupPaidPoliciesWithExpenseChatEnabled, isPaidGroupPolicy, isPolicyMember} from '@libs/PolicyUtils';
+import {
+    areAllGroupPoliciesExpenseChatDisabled,
+    getGroupPaidPoliciesWithExpenseChatEnabled,
+    isPaidGroupPolicy,
+    isPolicyMember,
+    shouldRestrictExpenseCreationFromSecurityGroup,
+} from '@libs/PolicyUtils';
 import {generateReportID} from '@libs/ReportUtils';
 import {shouldRestrictUserBillableActions} from '@libs/SubscriptionUtils';
 import {showContextMenu} from '@pages/home/report/ContextMenu/ReportActionContextMenu';
@@ -95,6 +101,9 @@ function EmptySearchView({hash, type, groupBy, hasResults}: EmptySearchViewProps
         canBeMissing: true,
         selector: (policies) => Object.values(policies ?? {}).some((policy) => isPaidGroupPolicy(policy) && isPolicyMember(policy, currentUserPersonalDetails.login)),
     });
+    const [session] = useOnyx(ONYXKEYS.SESSION, {canBeMissing: true});
+    const [myDomainSecurityGroups] = useOnyx(ONYXKEYS.MY_DOMAIN_SECURITY_GROUPS, {canBeMissing: true});
+    const [securityGroups] = useOnyx(ONYXKEYS.COLLECTION.SECURITY_GROUP, {canBeMissing: true});
 
     const groupPoliciesWithChatEnabled = getGroupPaidPoliciesWithExpenseChatEnabled();
 
@@ -293,18 +302,23 @@ function EmptySearchView({hash, type, groupBy, hasResults}: EmptySearchViewProps
                                       },
                                   ]
                                 : []),
-                            {
-                                buttonText: translate('iou.createExpense'),
-                                buttonAction: () =>
-                                    interceptAnonymousUser(() => {
-                                        if (shouldRedirectToExpensifyClassic) {
-                                            setModalVisible(true);
-                                            return;
-                                        }
-                                        startMoneyRequest(CONST.IOU.TYPE.CREATE, generateReportID());
-                                    }),
-                                success: true,
-                            },
+                            // Don't show "Create expense" button if user is restricted by domain security group
+                            ...(shouldRestrictExpenseCreationFromSecurityGroup(session?.email, myDomainSecurityGroups, securityGroups)
+                                ? []
+                                : [
+                                      {
+                                          buttonText: translate('iou.createExpense'),
+                                          buttonAction: () =>
+                                              interceptAnonymousUser(() => {
+                                                  if (shouldRedirectToExpensifyClassic) {
+                                                      setModalVisible(true);
+                                                      return;
+                                                  }
+                                                  startMoneyRequest(CONST.IOU.TYPE.CREATE, generateReportID());
+                                              }),
+                                          success: true,
+                                      },
+                                  ]),
                         ],
                     };
                 }
@@ -375,6 +389,9 @@ function EmptySearchView({hash, type, groupBy, hasResults}: EmptySearchViewProps
         transactions,
         tryNewDot?.hasBeenAddedToNudgeMigration,
         isUserPaidPolicyMember,
+        session?.email,
+        myDomainSecurityGroups,
+        securityGroups,
     ]);
 
     return (

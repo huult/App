@@ -14,7 +14,7 @@ import {convertToBackendAmount, isValidCurrencyCode} from '@libs/CurrencyUtils';
 import {navigateToParticipantPage} from '@libs/IOUUtils';
 import Navigation from '@libs/Navigation/Navigation';
 import {getParticipantsOption, getReportOption} from '@libs/OptionsListUtils';
-import {isPaidGroupPolicy} from '@libs/PolicyUtils';
+import {getPreferredPolicyFromSecurityGroup, hasPreferredPolicyFromSecurityGroup, isPaidGroupPolicy} from '@libs/PolicyUtils';
 import {getPolicyExpenseChat, getTransactionDetails, isArchivedReport, isPolicyExpenseChat} from '@libs/ReportUtils';
 import {shouldRestrictUserBillableActions} from '@libs/SubscriptionUtils';
 import {calculateTaxAmount, getAmount, getCurrency, getDefaultTaxCode, getRequestType, getTaxValue} from '@libs/TransactionUtils';
@@ -87,6 +87,10 @@ function IOURequestStepAmount({
     const [activePolicyID] = useOnyx(ONYXKEYS.NVP_ACTIVE_POLICY_ID, {canBeMissing: true});
     const [activePolicy] = useOnyx(`${ONYXKEYS.COLLECTION.POLICY}${activePolicyID}`, {canBeMissing: true});
     const [account] = useOnyx(ONYXKEYS.ACCOUNT, {canBeMissing: true});
+    const [session] = useOnyx(ONYXKEYS.SESSION, {canBeMissing: true});
+    const [myDomainSecurityGroups] = useOnyx(ONYXKEYS.MY_DOMAIN_SECURITY_GROUPS, {canBeMissing: true});
+    const [securityGroups] = useOnyx(ONYXKEYS.COLLECTION.SECURITY_GROUP, {canBeMissing: true});
+    const [allPolicies] = useOnyx(ONYXKEYS.COLLECTION.POLICY, {canBeMissing: true});
     const {duplicateTransactions, duplicateTransactionViolations} = useDuplicateTransactionsAndViolations(transactionID ? [transactionID] : []);
     const [reportAttributesDerived] = useOnyx(ONYXKEYS.DERIVED.REPORT_ATTRIBUTES, {canBeMissing: true, selector: (val) => val?.reports});
     const isEditing = action === CONST.IOU.ACTION.EDIT;
@@ -251,21 +255,45 @@ function IOURequestStepAmount({
 
         // If there was no reportID, then that means the user started this flow from the global + menu
         // and an optimistic reportID was generated. In that case, the next step is to select the participants for this expense.
-        if (iouType === CONST.IOU.TYPE.CREATE && isPaidGroupPolicy(activePolicy) && activePolicy?.isPolicyExpenseChatEnabled && !shouldRestrictUserBillableActions(activePolicy.id)) {
-            const activePolicyExpenseChat = getPolicyExpenseChat(currentUserPersonalDetails.accountID, activePolicy?.id);
-            setMoneyRequestParticipantsFromReport(transactionID, activePolicyExpenseChat).then(() => {
-                Navigation.navigate(
-                    ROUTES.MONEY_REQUEST_STEP_CONFIRMATION.getRoute(
-                        CONST.IOU.ACTION.CREATE,
-                        iouType === CONST.IOU.TYPE.CREATE ? CONST.IOU.TYPE.SUBMIT : iouType,
-                        transactionID,
-                        activePolicyExpenseChat?.reportID,
-                    ),
-                );
-            });
-        } else {
-            navigateToParticipantPage(iouType, transactionID, reportID);
+
+        // Check if user has preferred policy from domain security group
+        const hasPreferredPolicy = hasPreferredPolicyFromSecurityGroup(session?.email, myDomainSecurityGroups, securityGroups);
+        const preferredPolicyID = getPreferredPolicyFromSecurityGroup(session?.email, myDomainSecurityGroups, securityGroups);
+
+        if (iouType === CONST.IOU.TYPE.CREATE) {
+            let targetPolicy = activePolicy;
+            let targetPolicyExpenseChat: ReturnType<typeof getPolicyExpenseChat> | null = null;
+
+            // If user has preferred policy, use that instead of active policy
+            if (hasPreferredPolicy && preferredPolicyID) {
+                // Find the preferred policy in onyx (we might need to fetch it)
+                // For now, let's try to get it from the policies collection
+                // This may need to be enhanced to handle cases where the policy isn't loaded yet
+                const foundPolicy = allPolicies ? Object.values(allPolicies).find((p) => p?.id === preferredPolicyID) : null;
+                if (foundPolicy) {
+                    targetPolicy = foundPolicy;
+                }
+            }
+
+            if (isPaidGroupPolicy(targetPolicy) && targetPolicy?.isPolicyExpenseChatEnabled && !shouldRestrictUserBillableActions(targetPolicy.id)) {
+                targetPolicyExpenseChat = getPolicyExpenseChat(currentUserPersonalDetails.accountID, targetPolicy?.id);
+
+                setMoneyRequestParticipantsFromReport(transactionID, targetPolicyExpenseChat).then(() => {
+                    Navigation.navigate(
+                        ROUTES.MONEY_REQUEST_STEP_CONFIRMATION.getRoute(
+                            CONST.IOU.ACTION.CREATE,
+                            iouType === CONST.IOU.TYPE.CREATE ? CONST.IOU.TYPE.SUBMIT : iouType,
+                            transactionID,
+                            targetPolicyExpenseChat?.reportID,
+                        ),
+                    );
+                });
+                return;
+            }
         }
+
+        // Fall back to participant selection if no preferred policy or it doesn't meet criteria
+        navigateToParticipantPage(iouType, transactionID, reportID);
     };
 
     const saveAmountAndCurrency = ({amount, paymentMethod}: AmountParams) => {

@@ -8,7 +8,7 @@ import CONST from '@src/CONST';
 import ONYXKEYS from '@src/ONYXKEYS';
 import ROUTES from '@src/ROUTES';
 import INPUT_IDS from '@src/types/form/NetSuiteCustomFieldForm';
-import type {OnyxInputOrEntry, Policy, PolicyCategories, PolicyEmployeeList, PolicyTagLists, PolicyTags, Report, TaxRate} from '@src/types/onyx';
+import type {OnyxInputOrEntry, Policy, PolicyCategories, PolicyEmployeeList, PolicyTagLists, PolicyTags, Report, SecurityGroup, TaxRate} from '@src/types/onyx';
 import type {ErrorFields, PendingAction, PendingFields} from '@src/types/onyx/OnyxCommon';
 import type {
     ConnectionLastSync,
@@ -1526,6 +1526,63 @@ function isUserInvitedToWorkspace(): boolean {
     );
 }
 
+/**
+ * Gets the security group for the user's domain
+ */
+function getUserDomainSecurityGroup(
+    userEmail: string | undefined,
+    myDomainSecurityGroups: OnyxEntry<Record<string, string>>,
+    securityGroups: OnyxCollection<SecurityGroup>,
+): SecurityGroup | null {
+    if (!userEmail) {
+        return null;
+    }
+
+    const domainName = Str.extractEmailDomain(userEmail);
+    const primaryDomainSecurityGroupID = myDomainSecurityGroups?.[domainName];
+
+    if (!primaryDomainSecurityGroupID) {
+        return null;
+    }
+
+    return securityGroups?.[`${ONYXKEYS.COLLECTION.SECURITY_GROUP}${primaryDomainSecurityGroupID}`] ?? null;
+}
+
+/**
+ * Checks if user has a preferred policy/workspace from domain security group settings
+ */
+function hasPreferredPolicyFromSecurityGroup(
+    userEmail: string | undefined,
+    myDomainSecurityGroups: OnyxEntry<Record<string, string>>,
+    securityGroups: OnyxCollection<SecurityGroup>,
+): boolean {
+    const securityGroup = getUserDomainSecurityGroup(userEmail, myDomainSecurityGroups, securityGroups);
+    return !!securityGroup?.hasPreferredPolicy;
+}
+
+/**
+ * Gets the preferred policy ID from domain security group settings
+ */
+function getPreferredPolicyFromSecurityGroup(
+    userEmail: string | undefined,
+    myDomainSecurityGroups: OnyxEntry<Record<string, string>>,
+    securityGroups: OnyxCollection<SecurityGroup>,
+): string | null {
+    const securityGroup = getUserDomainSecurityGroup(userEmail, myDomainSecurityGroups, securityGroups);
+    return securityGroup?.restrictedPrimaryPolicyID ?? null;
+}
+
+/**
+ * Checks if user should have restrictions based on domain security group settings
+ */
+function shouldRestrictExpenseCreationFromSecurityGroup(
+    userEmail: string | undefined,
+    myDomainSecurityGroups: OnyxEntry<Record<string, string>>,
+    securityGroups: OnyxCollection<SecurityGroup>,
+): boolean {
+    return hasPreferredPolicyFromSecurityGroup(userEmail, myDomainSecurityGroups, securityGroups);
+}
+
 export {
     canEditTaxRate,
     escapeTagName,
@@ -1673,6 +1730,10 @@ export {
     getCountOfRequiredTagLists,
     getActiveEmployeeWorkspaces,
     isUserInvitedToWorkspace,
+    getUserDomainSecurityGroup,
+    hasPreferredPolicyFromSecurityGroup,
+    getPreferredPolicyFromSecurityGroup,
+    shouldRestrictExpenseCreationFromSecurityGroup,
     getPolicyRole,
     hasIndependentTags,
     getLengthOfTag,
