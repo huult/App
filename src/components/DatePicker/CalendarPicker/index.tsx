@@ -61,7 +61,7 @@ function CalendarPicker({
     const {isSmallScreenWidth} = useResponsiveLayout();
     const styles = useThemeStyles();
     const themeStyles = useThemeStyles();
-    const {translate} = useLocalize();
+    const {translate, preferredLocale} = useLocalize();
     const pressableRef = useRef<View>(null);
     const [currentDateView, setCurrentDateView] = useState(() => getInitialCurrentDateView(value, minDate, maxDate));
     const [isYearPickerVisible, setIsYearPickerVisible] = useState(false);
@@ -69,7 +69,7 @@ function CalendarPicker({
 
     const currentMonthView = currentDateView.getMonth();
     const currentYearView = currentDateView.getFullYear();
-    const calendarDaysMatrix = generateMonthMatrix(currentYearView, currentMonthView);
+    const calendarDaysMatrix = generateMonthMatrix(currentYearView, currentMonthView, preferredLocale);
     const initialHeight = (calendarDaysMatrix?.length || CONST.MAX_CALENDAR_PICKER_ROWS) * CONST.CALENDAR_PICKER_DAY_HEIGHT;
     const heightValue = useSharedValue(initialHeight);
 

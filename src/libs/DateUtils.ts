@@ -106,17 +106,30 @@ function isDate(arg: unknown): arg is Date {
 }
 
 /**
- * Get the day of the week that the week starts on
+ * Get the day of the week that the week starts on based on the locale
  */
-function getWeekStartsOn(): WeekDay {
+function getWeekStartsOn(locale?: Locale): WeekDay {
+    if (locale) {
+        try {
+            const intlLocale = new Intl.Locale(locale);
+            if ('getWeekInfo' in intlLocale) {
+                const weekInfo = intlLocale.getWeekInfo() as {firstDay: number};
+                // firstDay: 1 = Monday, 7 = Sunday
+                // Convert to date-fns: 0 = Sunday, 1 = Monday
+                return (weekInfo.firstDay === 7 ? 0 : weekInfo.firstDay) as WeekDay;
+            }
+        } catch {
+            // Fallback if not supported
+        }
+    }
     return CONST.WEEK_STARTS_ON;
 }
 
 /**
  * Get the day of the week that the week ends on
  */
-function getWeekEndsOn(): WeekDay {
-    const weekStartsOn = getWeekStartsOn();
+function getWeekEndsOn(locale?: Locale): WeekDay {
+    const weekStartsOn = getWeekStartsOn(locale);
 
     return weekStartsOn === 0 ? 6 : ((weekStartsOn - 1) as WeekDay);
 }
@@ -229,7 +242,7 @@ function datetimeToCalendarTime(
     let tomorrowAt = translate(locale, 'common.tomorrowAt');
     let yesterdayAt = translate(locale, 'common.yesterdayAt');
     const at = translate(locale, 'common.conjunctionAt');
-    const weekStartsOn = getWeekStartsOn();
+    const weekStartsOn = getWeekStartsOn(locale);
 
     const startOfCurrentWeek = startOfWeek(new Date(), {weekStartsOn});
     const endOfCurrentWeek = endOfWeek(new Date(), {weekStartsOn});
@@ -241,18 +254,18 @@ function datetimeToCalendarTime(
     }
 
     if (isToday(date, currentSelectedTimezone)) {
-        return `${todayAt} ${format(date, CONST.DATE.LOCAL_TIME_FORMAT)}${tz}`;
+        return `${todayAt} ${new Intl.DateTimeFormat(locale, {timeStyle: 'short'}).format(date)}${tz}`;
     }
     if (isTomorrow(date, currentSelectedTimezone)) {
-        return `${tomorrowAt} ${format(date, CONST.DATE.LOCAL_TIME_FORMAT)}${tz}`;
+        return `${tomorrowAt} ${new Intl.DateTimeFormat(locale, {timeStyle: 'short'}).format(date)}${tz}`;
     }
     if (isYesterday(date, currentSelectedTimezone)) {
-        return `${yesterdayAt} ${format(date, CONST.DATE.LOCAL_TIME_FORMAT)}${tz}`;
+        return `${yesterdayAt} ${new Intl.DateTimeFormat(locale, {timeStyle: 'short'}).format(date)}${tz}`;
     }
     if (date >= startOfCurrentWeek && date <= endOfCurrentWeek) {
-        return `${format(date, CONST.DATE.MONTH_DAY_ABBR_FORMAT)} ${at} ${format(date, CONST.DATE.LOCAL_TIME_FORMAT)}${tz}`;
+        return `${new Intl.DateTimeFormat(locale, {month: 'short', day: 'numeric'}).format(date)} ${at} ${new Intl.DateTimeFormat(locale, {timeStyle: 'short'}).format(date)}${tz}`;
     }
-    return `${format(date, CONST.DATE.MONTH_DAY_YEAR_ABBR_FORMAT)} ${at} ${format(date, CONST.DATE.LOCAL_TIME_FORMAT)}${tz}`;
+    return `${new Intl.DateTimeFormat(locale, {dateStyle: 'medium'}).format(date)} ${at} ${new Intl.DateTimeFormat(locale, {timeStyle: 'short'}).format(date)}${tz}`;
 }
 
 /**
@@ -296,8 +309,8 @@ function getZoneAbbreviation(datetime: string | Date, selectedTimezone: Selected
  *
  * @returns Sunday, July 9, 2023
  */
-function formatToLongDateWithWeekday(datetime: string | Date): string {
-    return format(new Date(datetime), CONST.DATE.LONG_DATE_FORMAT_WITH_WEEKDAY);
+function formatToLongDateWithWeekday(datetime: string | Date, locale?: Locale): string {
+    return new Intl.DateTimeFormat(locale, {dateStyle: 'full'}).format(new Date(datetime));
 }
 
 /**
@@ -305,8 +318,8 @@ function formatToLongDateWithWeekday(datetime: string | Date): string {
  *
  * @returns Sunday
  */
-function formatToDayOfWeek(datetime: Date): string {
-    return format(datetime, CONST.DATE.WEEKDAY_TIME_FORMAT);
+function formatToDayOfWeek(datetime: Date, locale?: Locale): string {
+    return new Intl.DateTimeFormat(locale, {weekday: 'long'}).format(datetime);
 }
 
 /**
@@ -314,8 +327,8 @@ function formatToDayOfWeek(datetime: Date): string {
  *
  * @returns 2:30 PM
  */
-function formatToLocalTime(datetime: string | Date): string {
-    return format(new Date(datetime), CONST.DATE.LOCAL_TIME_FORMAT);
+function formatToLocalTime(datetime: string | Date, locale?: Locale): string {
+    return new Intl.DateTimeFormat(locale, {timeStyle: 'short'}).format(new Date(datetime));
 }
 
 const THREE_HOURS = 1000 * 60 * 60 * 3;
@@ -349,26 +362,26 @@ function getCurrentTimezone(): Required<Timezone> {
 /**
  * @returns [January, February, March, April, May, June, July, August, ...]
  */
-function getMonthNames(): string[] {
+function getMonthNames(locale?: Locale): string[] {
     const fullYear = new Date().getFullYear();
     const monthsArray = eachMonthOfInterval({
         start: new Date(fullYear, 0, 1), // January 1st of the current year
         end: new Date(fullYear, 11, 31), // December 31st of the current year
     });
 
-    return monthsArray.map((monthDate) => format(monthDate, CONST.DATE.MONTH_FORMAT));
+    return monthsArray.map((monthDate) => new Intl.DateTimeFormat(locale, {month: 'long'}).format(monthDate));
 }
 
 /**
  * @returns [Monday, Tuesday, Wednesday, ...]
  */
-function getDaysOfWeek(): string[] {
-    const weekStartsOn = getWeekStartsOn();
+function getDaysOfWeek(locale?: Locale): string[] {
+    const weekStartsOn = getWeekStartsOn(locale);
     const startOfCurrentWeek = startOfWeek(new Date(), {weekStartsOn});
     const endOfCurrentWeek = endOfWeek(new Date(), {weekStartsOn});
     const daysOfWeek = eachDayOfInterval({start: startOfCurrentWeek, end: endOfCurrentWeek});
 
-    return daysOfWeek.map((date) => format(date, 'eeee'));
+    return daysOfWeek.map((date) => new Intl.DateTimeFormat(locale, {weekday: 'long'}).format(date));
 }
 
 // Used to throttle updates to the timezone when necessary. Initialize outside the throttle window so it's updated the first time.
@@ -550,7 +563,7 @@ function getLocalizedTimePeriodDescription(data: string): string {
 /**
  * receive date like 2020-05-16 05:34:14 and format it to show in string like "Until 05:34 PM"
  */
-function getStatusUntilDate(inputDate: string): string {
+function getStatusUntilDate(inputDate: string, locale?: Locale): string {
     if (!inputDate) {
         return '';
     }
@@ -566,16 +579,20 @@ function getStatusUntilDate(inputDate: string): string {
 
     // If it's a time on the same date
     if (isSameDay(input, now)) {
-        return translateLocal('statusPage.untilTime', {time: format(input, CONST.DATE.LOCAL_TIME_FORMAT)});
+        return translateLocal('statusPage.untilTime', {time: new Intl.DateTimeFormat(locale, {timeStyle: 'short'}).format(input)});
     }
 
     // If it's further in the future than tomorrow but within the same year
     if (isAfter(input, now) && isSameYear(input, now)) {
-        return translateLocal('statusPage.untilTime', {time: format(input, `${CONST.DATE.SHORT_DATE_FORMAT} ${CONST.DATE.LOCAL_TIME_FORMAT}`)});
+        const dateStr = new Intl.DateTimeFormat(locale, {month: '2-digit', day: '2-digit'}).format(input);
+        const timeStr = new Intl.DateTimeFormat(locale, {timeStyle: 'short'}).format(input);
+        return translateLocal('statusPage.untilTime', {time: `${dateStr} ${timeStr}`});
     }
 
     // If it's in another year
-    return translateLocal('statusPage.untilTime', {time: format(input, `${CONST.DATE.FNS_FORMAT_STRING} ${CONST.DATE.LOCAL_TIME_FORMAT}`)});
+    const dateStr = new Intl.DateTimeFormat(locale, {dateStyle: 'medium'}).format(input);
+    const timeStr = new Intl.DateTimeFormat(locale, {timeStyle: 'short'}).format(input);
+    return translateLocal('statusPage.untilTime', {time: `${dateStr} ${timeStr}`});
 }
 
 /**

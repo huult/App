@@ -1,22 +1,21 @@
-import {addMonths, format, startOfMonth} from 'date-fns';
-import CONST from '@src/CONST';
+import {addMonths, startOfMonth} from 'date-fns';
 
 function appendMidnightTime(date: string): string {
     return `${date}T00:00:00`;
 }
 
-function formatSubscriptionEndDate(date: string | undefined): string {
+function formatSubscriptionEndDate(date: string | undefined, locale?: string): string {
     if (!date) {
         return '';
     }
 
     const dateWithMidnightTime = appendMidnightTime(date);
 
-    return format(new Date(dateWithMidnightTime), CONST.DATE.MONTH_DAY_YEAR_ABBR_FORMAT);
+    return new Intl.DateTimeFormat(locale, {dateStyle: 'medium'}).format(new Date(dateWithMidnightTime));
 }
 
-function getNewSubscriptionRenewalDate(): string {
-    return format(startOfMonth(addMonths(new Date(), 12)), CONST.DATE.MONTH_DAY_YEAR_ABBR_FORMAT);
+function getNewSubscriptionRenewalDate(locale?: string): string {
+    return new Intl.DateTimeFormat(locale, {dateStyle: 'medium'}).format(startOfMonth(addMonths(new Date(), 12)));
 }
 
 export {getNewSubscriptionRenewalDate, formatSubscriptionEndDate};
