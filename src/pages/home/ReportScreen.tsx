@@ -18,6 +18,7 @@ import ScreenWrapper from '@components/ScreenWrapper';
 import useAppFocusEvent from '@hooks/useAppFocusEvent';
 import useCurrentReportID from '@hooks/useCurrentReportID';
 import useDeepCompareRef from '@hooks/useDeepCompareRef';
+import useFindLastAccessedReport from '@hooks/useFindLastAccessedReport';
 import useIsReportReadyToDisplay from '@hooks/useIsReportReadyToDisplay';
 import useLocalize from '@hooks/useLocalize';
 import useNetwork from '@hooks/useNetwork';
@@ -54,7 +55,6 @@ import {
 import {
     canEditReportAction,
     canUserPerformWriteAction,
-    findLastAccessedReport,
     getParticipantsAccountIDsForDisplay,
     getReportOfflinePendingActionAndErrors,
     getReportTransactions,
@@ -168,6 +168,10 @@ function ReportScreen({route, navigation}: ReportScreenProps) {
     const deletedParentAction = isDeletedParentAction(parentReportAction);
     const prevDeletedParentAction = usePrevious(deletedParentAction);
 
+    // Use the new hook for finding last accessed report with fresh data
+    const lastAccessedReportForParams = useFindLastAccessedReport(!isBetaEnabled(CONST.BETAS.DEFAULT_ROOMS), !!route.params.openOnAdminRoom);
+    const lastAccessedReportForRedirect = useFindLastAccessedReport(false, !!route.params?.openOnAdminRoom, undefined, reportIDFromRoute);
+
     const permissions = useDeepCompareRef(reportOnyx?.permissions);
 
     useEffect(() => {
@@ -181,7 +185,7 @@ function ReportScreen({route, navigation}: ReportScreenProps) {
             return;
         }
 
-        const lastAccessedReportID = findLastAccessedReport(!isBetaEnabled(CONST.BETAS.DEFAULT_ROOMS), !!route.params.openOnAdminRoom)?.reportID;
+        const lastAccessedReportID = lastAccessedReportForParams?.reportID;
 
         // It's possible that reports aren't fully loaded yet
         // in that case the reportID is undefined
@@ -191,7 +195,7 @@ function ReportScreen({route, navigation}: ReportScreenProps) {
 
         Log.info(`[ReportScreen] no reportID found in params, setting it to lastAccessedReportID: ${lastAccessedReportID}`);
         navigation.setParams({reportID: lastAccessedReportID});
-    }, [isBetaEnabled, navigation, route]);
+    }, [lastAccessedReportForParams?.reportID, navigation, route]);
 
     // This hook redirects to the correct report ID when the current report is not found. This happens, for example, after deleting an expense from the Reports tab and returning to Inbox.
     useFocusEffect(
@@ -201,7 +205,7 @@ function ReportScreen({route, navigation}: ReportScreenProps) {
             }
 
             if (reportIDFromRoute && (!reportOnyx?.reportID || reportOnyx.errorFields?.notFound)) {
-                const lastAccessedReportID = findLastAccessedReport(false, !!route.params?.openOnAdminRoom, undefined, reportIDFromRoute)?.reportID;
+                const lastAccessedReportID = lastAccessedReportForRedirect?.reportID;
                 if (lastAccessedReportID) {
                     const lastAccessedReportRoute = ROUTES.REPORT_WITH_ID.getRoute(lastAccessedReportID);
                     Navigation.navigate(lastAccessedReportRoute, {forceReplace: true});
@@ -209,7 +213,7 @@ function ReportScreen({route, navigation}: ReportScreenProps) {
                 }
                 navigateToConciergeChat(false, () => true, {forceReplace: true});
             }
-        }, [isInNarrowPaneModal, reportIDFromRoute, reportOnyx?.errorFields?.notFound, reportOnyx?.reportID, route.params?.openOnAdminRoom]),
+        }, [isInNarrowPaneModal, reportIDFromRoute, reportOnyx?.errorFields?.notFound, reportOnyx?.reportID, lastAccessedReportForRedirect?.reportID]),
     );
 
     const [personalDetails] = useOnyx(ONYXKEYS.PERSONAL_DETAILS_LIST, {canBeMissing: true});
