@@ -1,4 +1,5 @@
 import {useIsFocused, useNavigation} from '@react-navigation/native';
+import {set} from 'lodash';
 import lodashDebounce from 'lodash/debounce';
 import type {ForwardedRef, RefObject} from 'react';
 import React, {forwardRef, memo, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState} from 'react';
@@ -15,7 +16,7 @@ import type {
 import {DeviceEventEmitter, InteractionManager, NativeModules, StyleSheet, View} from 'react-native';
 import {useFocusedInputHandler} from 'react-native-keyboard-controller';
 import type {OnyxEntry} from 'react-native-onyx';
-import {useAnimatedRef, useSharedValue} from 'react-native-reanimated';
+import {runOnJS, useAnimatedRef, useSharedValue} from 'react-native-reanimated';
 import type {Emoji} from '@assets/emojis/types';
 import type {MeasureParentContainerAndCursorCallback} from '@components/AutoCompleteSuggestions/types';
 import Composer from '@components/Composer';
@@ -61,6 +62,8 @@ import type * as OnyxTypes from '@src/types/onyx';
 import type ChildrenProps from '@src/types/utils/ChildrenProps';
 // eslint-disable-next-line no-restricted-imports
 import findNodeHandle from '@src/utils/findNodeHandle';
+
+const DEFAULT_COMPOSER_HEIGHT = 40;
 
 type SyncSelection = {
     position: number;
@@ -276,6 +279,7 @@ function ComposerWithSuggestions(
     const [selection, setSelection] = useState<TextSelection>(() => ({start: value.length, end: value.length, positionX: 0, positionY: 0}));
 
     const [composerHeight, setComposerHeight] = useState(0);
+    const [shouldResetToDefaultHeight, setShouldResetToDefaultHeight] = useState(false);
 
     const textInputRef = useRef<TextInput | null>(null);
 
@@ -621,6 +625,7 @@ function ComposerWithSuggestions(
     const clear = useCallback(() => {
         'worklet';
 
+        runOnJS(setShouldResetToDefaultHeight)(true);
         forceClearInput(animatedRef);
     }, [animatedRef]);
 
@@ -710,13 +715,16 @@ function ComposerWithSuggestions(
     const onLayout = useCallback(
         (e: LayoutChangeEvent) => {
             onLayoutProps?.(e);
+            if (shouldResetToDefaultHeight) {
+                setShouldResetToDefaultHeight(false);
+            }
             const composerLayoutHeight = e.nativeEvent.layout.height;
             if (composerHeight === composerLayoutHeight) {
                 return;
             }
             setComposerHeight(composerLayoutHeight);
         },
-        [composerHeight, onLayoutProps],
+        [composerHeight, onLayoutProps, shouldResetToDefaultHeight],
     );
 
     const onClear = useCallback(
@@ -799,7 +807,11 @@ function ComposerWithSuggestions(
                     onChangeText={onChangeText}
                     onKeyPress={handleKeyPress}
                     textAlignVertical="top"
-                    style={[styles.textInputCompose, isComposerFullSize ? styles.textInputFullCompose : styles.textInputCollapseCompose]}
+                    style={[
+                        styles.textInputCompose,
+                        isComposerFullSize ? styles.textInputFullCompose : styles.textInputCollapseCompose,
+                        shouldResetToDefaultHeight && {height: DEFAULT_COMPOSER_HEIGHT},
+                    ]}
                     maxLines={maxComposerLines}
                     onFocus={() => {
                         // The last composer that had focus should re-gain focus
