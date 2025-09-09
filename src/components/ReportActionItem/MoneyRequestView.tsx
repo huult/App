@@ -356,7 +356,7 @@ function MoneyRequestView({
             // NOTE: receipt field can return multiple violations, so we need to handle it separately
             const fieldChecks: Partial<Record<ViolationField, {isError: boolean; translationPath: TranslationPaths}>> = {
                 amount: {
-                    isError: transactionAmount === 0,
+                    isError: false, // Don't treat $0 as an error since it's a valid amount
                     translationPath: canEditAmount ? 'common.error.enterAmount' : 'common.error.missingAmount',
                 },
                 merchant: {

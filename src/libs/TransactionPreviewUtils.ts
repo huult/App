@@ -226,9 +226,11 @@ function getTransactionPreviewTextAndTranslationPaths({
     if (hasFieldErrors && RBRMessage === undefined) {
         const merchantMissing = isMerchantMissing(transaction);
         const amountMissing = isAmountMissing(transaction);
-        if (amountMissing && merchantMissing) {
+        // Don't show missing amount message if the amount is 0, as 0 is a valid amount
+        const shouldShowAmountMissing = amountMissing && (transaction?.amount !== 0 && (!transaction?.modifiedAmount || transaction.modifiedAmount !== 0));
+        if (shouldShowAmountMissing && merchantMissing) {
             RBRMessage = {translationPath: 'violations.reviewRequired'};
-        } else if (amountMissing) {
+        } else if (shouldShowAmountMissing) {
             RBRMessage = {translationPath: 'iou.missingAmount'};
         } else if (merchantMissing) {
             RBRMessage = {translationPath: 'iou.missingMerchant'};

@@ -173,11 +173,13 @@ function TransactionItemRow({
         if (hasFieldErrors) {
             const amountMissing = isAmountMissing(transactionItem);
             const merchantMissing = isMerchantMissing(transactionItem);
+            // Don't show missing amount message if the amount is 0, as 0 is a valid amount
+            const shouldShowAmountMissing = amountMissing && (transactionItem?.amount !== 0 && (!transactionItem?.modifiedAmount || transactionItem.modifiedAmount !== 0));
             let error = '';
 
-            if (amountMissing && merchantMissing) {
+            if (shouldShowAmountMissing && merchantMissing) {
                 error = translate('violations.reviewRequired');
-            } else if (amountMissing) {
+            } else if (shouldShowAmountMissing) {
                 error = translate('iou.missingAmount');
             } else if (merchantMissing) {
                 error = translate('iou.missingMerchant');

@@ -103,7 +103,7 @@ function WorkspaceEditCardLimitPage({route}: WorkspaceEditCardLimitPageProps) {
             const errors = getFieldRequiredErrors(values, [INPUT_IDS.LIMIT]);
 
             // We only want integers to be sent as the limit
-            if (!Number(values.limit)) {
+            if (values.limit === undefined || values.limit === null || values.limit === '' || Number.isNaN(Number(values.limit))) {
                 errors.limit = translate('iou.error.invalidAmount');
             } else if (!Number.isInteger(Number(values.limit))) {
                 errors.limit = translate('iou.error.invalidIntegerAmount');
