@@ -20,6 +20,7 @@ import {
     getMerchant,
     getCreated as getTransactionCreated,
     hasMissingSmartscanFields,
+    isAmountEmpty,
     isAmountMissing,
     isMerchantMissing,
     isScanning,
@@ -173,7 +174,7 @@ function TransactionItemRow({
         const isCustomUnitOutOfPolicy = isUnreportedAndHasInvalidDistanceRateTransaction(transactionItem);
         const hasFieldErrors = hasMissingSmartscanFields(transactionItem) || isCustomUnitOutOfPolicy;
         if (hasFieldErrors) {
-            const amountMissing = isAmountMissing(transactionItem);
+            const amountMissing = isAmountEmpty(transactionItem); // Use isAmountEmpty to allow $0 amounts
             const merchantMissing = isMerchantMissing(transactionItem);
             let error = '';
 

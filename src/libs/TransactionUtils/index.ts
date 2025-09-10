@@ -407,7 +407,15 @@ function isPartialMerchant(merchant: string): boolean {
     return merchant === CONST.TRANSACTION.PARTIAL_TRANSACTION_MERCHANT;
 }
 
-function isAmountMissing(transaction: OnyxEntry<Transaction>) {
+function isAmountEmpty(transaction: OnyxEntry<Transaction>) {
+    const amount = transaction?.modifiedAmount ?? transaction?.amount;
+    return amount === undefined || amount === null;
+}
+
+function isAmountMissing(transaction: OnyxEntry<Transaction>, allowZero = false) {
+    if (allowZero) {
+        return isAmountEmpty(transaction);
+    }
     return transaction?.amount === 0 && (!transaction.modifiedAmount || transaction.modifiedAmount === 0);
 }
 
@@ -1965,6 +1973,7 @@ export {
     isOnHold,
     isOnHoldByTransactionID,
     getWaypoints,
+    isAmountEmpty,
     isAmountMissing,
     isMerchantMissing,
     isPartialMerchant,

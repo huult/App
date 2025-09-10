@@ -44,8 +44,8 @@ function addLeadingZero(amount: string, shouldAllowNegative = false): string {
 function validateAmount(amount: string, decimals: number, amountMaxLength: number = CONST.IOU.AMOUNT_MAX_LENGTH, shouldAllowNegative = false): boolean {
     const regexString =
         decimals === 0
-            ? `^${shouldAllowNegative ? '-?' : ''}\\d{1,${amountMaxLength}}$` // Don't allow decimal point if decimals === 0
-            : `^${shouldAllowNegative ? '-?' : ''}\\d{1,${amountMaxLength}}(\\.\\d{0,${decimals}})?$`; // Allow the decimal point and the desired number of digits after the point
+            ? `^${shouldAllowNegative ? '-?' : ''}\\d{0,${amountMaxLength}}$` // Allow 0 to max digits, no decimal point if decimals === 0
+            : `^${shouldAllowNegative ? '-?' : ''}\\d{0,${amountMaxLength}}(\\.\\d{0,${decimals}})?$`; // Allow 0 to max digits and the decimal point with desired number of digits after the point
     const decimalNumberRegex = new RegExp(regexString, 'i');
     if (shouldAllowNegative) {
         return amount === '' || amount === '-' || decimalNumberRegex.test(amount);

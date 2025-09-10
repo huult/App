@@ -35,6 +35,7 @@ import {
     hasPendingRTERViolation,
     hasViolation,
     hasWarningTypeViolation,
+    isAmountEmpty,
     isAmountMissing,
     isCardTransaction,
     isCreatedMissing,
@@ -225,7 +226,7 @@ function getTransactionPreviewTextAndTranslationPaths({
 
     if (hasFieldErrors && RBRMessage === undefined) {
         const merchantMissing = isMerchantMissing(transaction);
-        const amountMissing = isAmountMissing(transaction);
+        const amountMissing = isAmountEmpty(transaction); // Use isAmountEmpty to allow $0 amounts
         if (amountMissing && merchantMissing) {
             RBRMessage = {translationPath: 'violations.reviewRequired'};
         } else if (amountMissing) {
