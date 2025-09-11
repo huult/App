@@ -6473,7 +6473,7 @@ const translations = {
         updateEmail: 'Update email address',
         schoolMailAsDefault: ({contactMethodsRoute}: ContactMethodsRouteParams) =>
             `Before you move forward, please make sure to set your school email as your default contact method. You can do so in Settings > Profile > <a href="${contactMethodsRoute}">Contact methods</a>.`,
-        referredTeacher: ({firstName, lastName}: {firstName: string; lastName: string}) => `referred a teacher: ${firstName} ${lastName}`,
+        referredTeacher: ({name}: {name: string}) => `referred a teacher: ${name}`,
         error: {
             enterPhoneEmail: 'Enter a valid email or phone number',
             enterEmail: 'Enter an email',

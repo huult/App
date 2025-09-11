@@ -33,7 +33,7 @@ function referTeachersUniteVolunteer(partnerUserID: string, firstName: string, l
     });
 
     // Create a whisper message to indicate the teacher referral
-    const whisperMessage = Localize.translateLocal('teachersUnitePage.referredTeacher', {firstName, lastName});
+    const whisperMessage = Localize.translateLocal('teachersUnitePage.referredTeacher', {name: `${firstName} ${lastName}`});
 
     const optimisticWhisperReportAction = buildOptimisticAddCommentReportAction(whisperMessage, undefined, undefined, undefined, undefined, publicRoomReportID);
 
