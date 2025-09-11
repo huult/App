@@ -6960,6 +6960,7 @@ const translations = {
         updateEmail: 'Actualización de la dirección de correo electrónico',
         schoolMailAsDefault: ({contactMethodsRoute}: ContactMethodsRouteParams) =>
             `Antes de seguir adelante, asegúrate de establecer el correo electrónico de tu colegio como método de contacto predeterminado. Puede hacerlo en Configuración > Perfil > <a href="${contactMethodsRoute}">Métodos de contacto</a>.`,
+        referredTeacher: ({firstName, lastName}: {firstName: string; lastName: string}) => `recomendó a un profesor: ${firstName} ${lastName}`,
         error: {
             enterPhoneEmail: 'Ingrese un correo electrónico o número de teléfono válido',
             enterEmail: 'Introduce un correo electrónico',

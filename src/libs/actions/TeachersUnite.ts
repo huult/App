@@ -3,10 +3,11 @@ import type {OnyxUpdate} from 'react-native-onyx';
 import * as API from '@libs/API';
 import type {AddSchoolPrincipalParams, ReferTeachersUniteVolunteerParams} from '@libs/API/parameters';
 import {WRITE_COMMANDS} from '@libs/API/types';
+import * as Localize from '@libs/Localize';
 import Navigation from '@libs/Navigation/Navigation';
 import {addSMSDomainIfPhoneNumber} from '@libs/PhoneNumber';
 import {getPolicy} from '@libs/PolicyUtils';
-import {buildOptimisticChatReport, buildOptimisticCreatedReportAction} from '@libs/ReportUtils';
+import {buildOptimisticAddCommentReportAction, buildOptimisticChatReport, buildOptimisticCreatedReportAction} from '@libs/ReportUtils';
 import type {OptimisticCreatedReportAction} from '@libs/ReportUtils';
 import CONST from '@src/CONST';
 import ONYXKEYS from '@src/ONYXKEYS';
@@ -30,6 +31,17 @@ function referTeachersUniteVolunteer(partnerUserID: string, firstName: string, l
         chatType: CONST.REPORT.CHAT_TYPE.POLICY_ROOM,
         policyID,
     });
+
+    // Create a whisper message to indicate the teacher referral
+    const whisperMessage = Localize.translateLocal('teachersUnitePage.referredTeacher', {firstName, lastName});
+
+    const optimisticWhisperReportAction = buildOptimisticAddCommentReportAction(whisperMessage, undefined, undefined, undefined, undefined, publicRoomReportID);
+
+    // Add whisperedTo property to make it a whisper message targeted to the current user
+    if (optimisticWhisperReportAction.reportAction.originalMessage && optimisticWhisperReportAction.reportAction.actorAccountID) {
+        optimisticWhisperReportAction.reportAction.originalMessage.whisperedTo = [optimisticWhisperReportAction.reportAction.actorAccountID];
+    }
+
     const optimisticData: OnyxUpdate[] = [
         {
             onyxMethod: Onyx.METHOD.SET,
@@ -38,6 +50,9 @@ function referTeachersUniteVolunteer(partnerUserID: string, firstName: string, l
                 ...optimisticPublicRoom,
                 reportID: publicRoomReportID,
                 policyName: CONST.TEACHERS_UNITE.POLICY_NAME,
+                lastMessageText: whisperMessage,
+                lastVisibleActionCreated: optimisticWhisperReportAction.reportAction.created,
+                lastActorAccountID: optimisticWhisperReportAction.reportAction.actorAccountID,
             },
         },
         {
@@ -45,6 +60,13 @@ function referTeachersUniteVolunteer(partnerUserID: string, firstName: string, l
             key: `${ONYXKEYS.COLLECTION.REPORT_METADATA}${publicRoomReportID}`,
             value: {
                 isOptimisticReport: false,
+            },
+        },
+        {
+            onyxMethod: Onyx.METHOD.MERGE,
+            key: `${ONYXKEYS.COLLECTION.REPORT_ACTIONS}${publicRoomReportID}`,
+            value: {
+                [optimisticWhisperReportAction.reportAction.reportActionID]: optimisticWhisperReportAction.reportAction,
             },
         },
     ];
