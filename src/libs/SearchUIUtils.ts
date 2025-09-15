@@ -937,6 +937,19 @@ function getTransactionsSections(
                 } else {
                     shouldShow = isValidExpenseStatus(status) ? expenseStatusActionMapping[status](report) : false;
                 }
+
+                // Fix for imported contacts: If we have a transaction but no report, ensure it's still shown
+                // when filtering by "ALL" or "UNREPORTED" status to prevent imported contact expenses from being hidden
+                if (
+                    !shouldShow &&
+                    transactionItem &&
+                    !report &&
+                    (status === CONST.SEARCH.STATUS.EXPENSE.ALL ||
+                        status === CONST.SEARCH.STATUS.EXPENSE.UNREPORTED ||
+                        (Array.isArray(status) && (status.includes(CONST.SEARCH.STATUS.EXPENSE.ALL) || status.includes(CONST.SEARCH.STATUS.EXPENSE.UNREPORTED))))
+                ) {
+                    shouldShow = true;
+                }
             }
         }
 
