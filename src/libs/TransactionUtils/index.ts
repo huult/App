@@ -1220,6 +1220,79 @@ function getValidWaypoints(waypoints: WaypointCollection | undefined, reArrangeI
     }, {});
 }
 
+type DistanceExpenseValidationResult = {
+    /** Whether the expense can be created */
+    canCreate: boolean;
+
+    /** Critical errors that prevent expense creation */
+    errors: string[];
+
+    /** Warnings that don't prevent creation but should be shown to user */
+    warnings: string[];
+};
+
+/**
+ * Validates if a distance request transaction is ready for expense creation
+ * This function checks for various conditions that could make the expense invalid:
+ * - Insufficient waypoints
+ * - Duplicate waypoints
+ * - Waypoints missing coordinates (offline scenario)
+ * - Route calculation failures
+ */
+function canCreateDistanceExpense(transaction: OnyxEntry<Transaction>, waypoints: WaypointCollection | undefined, isOffline = false): DistanceExpenseValidationResult {
+    const errors: string[] = [];
+    const warnings: string[] = [];
+
+    // Check minimum waypoint requirements
+    const validWaypoints = getValidWaypoints(waypoints);
+    const validWaypointCount = Object.keys(validWaypoints).length;
+
+    if (validWaypointCount < 2) {
+        errors.push(translateLocal('distance.error.insufficientWaypoints'));
+        return {canCreate: false, errors, warnings};
+    }
+
+    // Check for waypoints with missing coordinates (common in offline scenarios)
+    const waypointsWithoutCoords = Object.values(validWaypoints).filter((waypoint) => !waypoint?.lat || !waypoint?.lng);
+
+    if (waypointsWithoutCoords.length > 0) {
+        if (isOffline) {
+            errors.push(translateLocal('distance.error.offlineWaypointsInvalid'));
+        } else {
+            errors.push(translateLocal('distance.error.waypointsMissingCoordinates'));
+        }
+    }
+
+    // Check for route calculation errors or missing route
+    const hasValidRoute = hasRoute(transaction, isDistanceRequest(transaction));
+    const hasRouteCalculationError = !!transaction?.errorFields?.route;
+
+    if (hasRouteCalculationError) {
+        errors.push(translateLocal('distance.error.routeCalculationFailed'));
+    } else if (!hasValidRoute && waypointsWithoutCoords.length === 0) {
+        // Only flag missing route as error if waypoints have coordinates
+        // (route calculation should have been possible)
+        errors.push(translateLocal('distance.error.routeNotCalculated'));
+    }
+
+    // Check for loading states that indicate incomplete processing
+    const isCalculatingRoute = !!transaction?.comment?.isLoading;
+    if (isCalculatingRoute) {
+        errors.push(translateLocal('distance.error.routeCalculationInProgress'));
+    }
+
+    // Add warnings for offline scenarios where waypoints might be saved locally
+    if (isOffline && waypointsWithoutCoords.length === 0) {
+        warnings.push('Expense will be validated when you go back online');
+    }
+
+    return {
+        canCreate: errors.length === 0,
+        errors,
+        warnings,
+    };
+}
+
 /**
  * Returns the most recent transactions in an object
  */
@@ -2072,6 +2145,7 @@ export {
     getTransactionViolationsOfTransaction,
     isExpenseSplit,
     isExpenseUnreported,
+    canCreateDistanceExpense,
 };
 
-export type {TransactionChanges};
+export type {TransactionChanges, DistanceExpenseValidationResult};

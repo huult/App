@@ -6525,6 +6525,13 @@ const translations = {
         },
         error: {
             selectSuggestedAddress: 'Please select a suggested address or use current location',
+            insufficientWaypoints: 'At least two different waypoints are required',
+            waypointsMissingCoordinates: 'Some waypoints lack valid coordinates and need to be re-entered',
+            offlineWaypointsInvalid: 'Cannot create expense while offline with unvalidated waypoints',
+            routeCalculationFailed: 'Route calculation failed',
+            routeNotCalculated: 'Route could not be calculated',
+            routeCalculationInProgress: 'Route calculation is still in progress',
+            validationFailedGeneric: 'Please fix the waypoint issues before creating the expense',
         },
     },
     reportCardLostOrDamaged: {

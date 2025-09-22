@@ -50,7 +50,7 @@ import {getParticipantsOption, getReportOption} from '@libs/OptionsListUtils';
 import {getPersonalPolicy, getPolicy, isPaidGroupPolicy} from '@libs/PolicyUtils';
 import {getPolicyExpenseChat, isArchivedReport, isPolicyExpenseChat as isPolicyExpenseChatUtil} from '@libs/ReportUtils';
 import {shouldRestrictUserBillableActions} from '@libs/SubscriptionUtils';
-import {getDistanceInMeters, getRateID, getRequestType, getValidWaypoints, hasRoute, isCustomUnitRateIDForP2P} from '@libs/TransactionUtils';
+import {canCreateDistanceExpense, getDistanceInMeters, getRateID, getRequestType, getValidWaypoints, hasRoute, isCustomUnitRateIDForP2P} from '@libs/TransactionUtils';
 import CONST from '@src/CONST';
 import ONYXKEYS from '@src/ONYXKEYS';
 import ROUTES from '@src/ROUTES';
@@ -432,6 +432,15 @@ function IOURequestStepDistanceMap({
     ]);
 
     const getError = () => {
+        // Use comprehensive validation to get detailed error messages
+        const validation = canCreateDistanceExpense(transaction, waypoints, isOffline);
+        if (!validation.canCreate && validation.errors.length > 0) {
+            // Return the first validation error as the primary message
+            return {validationError: validation.errors[0]} as Errors;
+        }
+
+        // Fallback to legacy error handling for backward compatibility
+
         // Get route error if available else show the invalid number of waypoints error.
         if (hasRouteError) {
             return getLatestErrorField(transaction, 'route');
@@ -477,11 +486,21 @@ function IOURequestStepDistanceMap({
     );
 
     const submitWaypoints = useCallback(() => {
-        // If there is any error or loading state, don't let user go to next page.
+        // Use comprehensive validation to prevent expense creation with invalid waypoints
+        const validation = canCreateDistanceExpense(transaction, waypoints, isOffline);
+
+        // If validation fails, show error and prevent submission
+        if (!validation.canCreate) {
+            setShouldShowAtLeastTwoDifferentWaypointsError(true);
+            return;
+        }
+
+        // Legacy validation for backwards compatibility
         if (duplicateWaypointsError || atLeastTwoDifferentWaypointsError || hasRouteError || isLoadingRoute || (!isEditing && isLoading)) {
             setShouldShowAtLeastTwoDifferentWaypointsError(true);
             return;
         }
+
         if (!isCreatingNewRequest && !isEditing) {
             transactionWasSaved.current = true;
         }
@@ -524,10 +543,10 @@ function IOURequestStepDistanceMap({
         navigateToNextStep,
         transactionBackup,
         waypoints,
-        transaction?.transactionID,
-        transaction?.routes,
+        transaction,
         report?.reportID,
         policy,
+        isOffline,
     ]);
 
     const renderItem = useCallback(
@@ -572,8 +591,14 @@ function IOURequestStepDistanceMap({
                     />
                 </View>
                 <View style={[styles.w100, styles.pt2]}>
-                    {/* Show error message if there is route error or there are less than 2 routes and user has tried submitting, */}
-                    {((shouldShowAtLeastTwoDifferentWaypointsError && atLeastTwoDifferentWaypointsError) || duplicateWaypointsError || hasRouteError) && (
+                    {/* Show error message if there is route error, validation error, or legacy waypoint errors and user has tried submitting */}
+                    {(() => {
+                        const validation = canCreateDistanceExpense(transaction, waypoints, isOffline);
+                        const hasValidationErrors = !validation.canCreate;
+                        const hasLegacyErrors = (shouldShowAtLeastTwoDifferentWaypointsError && atLeastTwoDifferentWaypointsError) || duplicateWaypointsError || hasRouteError;
+
+                        return (hasValidationErrors && shouldShowAtLeastTwoDifferentWaypointsError) || hasLegacyErrors;
+                    })() && (
                         <DotIndicatorMessage
                             style={[styles.mh4, styles.mv3]}
                             messages={getError()}
