@@ -10,7 +10,7 @@ import type {PersonalDetails} from '@src/types/onyx';
 import useDebouncedState from './useDebouncedState';
 import useOnyx from './useOnyx';
 
-type SearchSelectorContext = (typeof CONST.SEARCH_SELECTOR)[keyof Pick<typeof CONST.SEARCH_SELECTOR, 'SEARCH_CONTEXT_GENERAL' | 'SEARCH_CONTEXT_SEARCH' | 'SEARCH_CONTEXT_MEMBER_INVITE'>];
+type SearchSelectorContext = (typeof CONST.SEARCH_SELECTOR)[keyof Pick<typeof CONST.SEARCH_SELECTOR, 'SEARCH_CONTEXT_GENERAL' | 'SEARCH_CONTEXT_SEARCH' | 'SEARCH_CONTEXT_MEMBER_INVITE' | 'SEARCH_CONTEXT_SHARE_DESTINATION'>];
 type SearchSelectorSelectionMode = (typeof CONST.SEARCH_SELECTOR)[keyof Pick<typeof CONST.SEARCH_SELECTOR, 'SELECTION_MODE_SINGLE' | 'SELECTION_MODE_MULTI'>];
 
 type UseSearchSelectorConfig = {
@@ -172,6 +172,22 @@ function useSearchSelectorBase({
                     includeRecentReports,
                     maxElements: maxResults,
                     searchString: computedSearchTerm,
+                    includeUserToInvite,
+                });
+            case CONST.SEARCH_SELECTOR.SEARCH_CONTEXT_SHARE_DESTINATION:
+                return getValidOptions(optionsWithContacts, {
+                    betas: betas ?? [],
+                    includeMultipleParticipantReports: true,
+                    showChatPreviewLine: true,
+                    forcePolicyNamePreview: true,
+                    includeThreads: true,
+                    includeMoneyRequests: true,
+                    includeTasks: true,
+                    excludeLogins,
+                    includeOwnedWorkspaceChats: true,
+                    includeSelfDM: true,
+                    searchString: computedSearchTerm,
+                    maxElements: maxResults,
                     includeUserToInvite,
                 });
             case CONST.SEARCH_SELECTOR.SEARCH_CONTEXT_GENERAL:

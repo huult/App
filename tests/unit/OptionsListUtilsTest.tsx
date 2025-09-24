@@ -20,7 +20,6 @@ import {
     getMemberInviteOptions,
     getSearchOptions,
     getSearchValueForPhoneOrEmail,
-    getShareDestinationOptions,
     getShareLogOptions,
     getValidOptions,
     optionsOrderBy,
@@ -1100,8 +1099,24 @@ describe('OptionsListUtils', () => {
                 return filtered;
             }, []);
 
-            // When we call getShareDestinationOptions with an empty search value
-            const results = getShareDestinationOptions(filteredReports, OPTIONS.personalDetails, []);
+            // When we call getValidOptions with share destination configuration
+            const results = getValidOptions(
+                {reports: filteredReports, personalDetails: OPTIONS.personalDetails},
+                {
+                    betas: [],
+                    includeMultipleParticipantReports: true,
+                    showChatPreviewLine: true,
+                    forcePolicyNamePreview: true,
+                    includeThreads: true,
+                    includeMoneyRequests: true,
+                    includeTasks: true,
+                    excludeLogins: {},
+                    includeOwnedWorkspaceChats: true,
+                    includeSelfDM: true,
+                    searchString: '',
+                    includeUserToInvite: false,
+                }
+            );
 
             // Then all the recent reports should be returned except the archived rooms and the hidden thread
             expect(results.recentReports.length).toBe(Object.values(OPTIONS.reports).length - 2);
@@ -1118,8 +1133,24 @@ describe('OptionsListUtils', () => {
                 return filtered;
             }, []);
 
-            // When we call getShareDestinationOptions with an empty search value
-            const results = getShareDestinationOptions(filteredReportsWithWorkspaceRooms, OPTIONS.personalDetails, []);
+            // When we call getValidOptions with share destination configuration
+            const results = getValidOptions(
+                {reports: filteredReportsWithWorkspaceRooms, personalDetails: OPTIONS.personalDetails},
+                {
+                    betas: [],
+                    includeMultipleParticipantReports: true,
+                    showChatPreviewLine: true,
+                    forcePolicyNamePreview: true,
+                    includeThreads: true,
+                    includeMoneyRequests: true,
+                    includeTasks: true,
+                    excludeLogins: {},
+                    includeOwnedWorkspaceChats: true,
+                    includeSelfDM: true,
+                    searchString: '',
+                    includeUserToInvite: false,
+                }
+            );
 
             // Then all recent reports should be returned except the archived rooms and the hidden thread
             expect(results.recentReports.length).toBe(Object.values(OPTIONS_WITH_WORKSPACE_ROOM.reports).length - 2);
@@ -1414,8 +1445,24 @@ describe('OptionsListUtils', () => {
                 }
                 return filtered;
             }, []);
-            // When we call getShareDestinationOptions with the filteredReports
-            const options = getShareDestinationOptions(filteredReports, OPTIONS.personalDetails, []);
+            // When we call getValidOptions with share destination configuration
+            const options = getValidOptions(
+                {reports: filteredReports, personalDetails: OPTIONS.personalDetails},
+                {
+                    betas: [],
+                    includeMultipleParticipantReports: true,
+                    showChatPreviewLine: true,
+                    forcePolicyNamePreview: true,
+                    includeThreads: true,
+                    includeMoneyRequests: true,
+                    includeTasks: true,
+                    excludeLogins: {},
+                    includeOwnedWorkspaceChats: true,
+                    includeSelfDM: true,
+                    searchString: '',
+                    includeUserToInvite: false,
+                }
+            );
             // When we pass the returned options to filterAndOrderOptions with a search value that does not match the group chat name
             const filteredOptions = filterAndOrderOptions(options, 'mutants', COUNTRY_CODE);
 
@@ -1434,8 +1481,24 @@ describe('OptionsListUtils', () => {
                 return filtered;
             }, []);
 
-            // When we call getShareDestinationOptions with the filteredReports
-            const options = getShareDestinationOptions(filteredReportsWithWorkspaceRooms, OPTIONS.personalDetails, []);
+            // When we call getValidOptions with share destination configuration
+            const options = getValidOptions(
+                {reports: filteredReportsWithWorkspaceRooms, personalDetails: OPTIONS.personalDetails},
+                {
+                    betas: [],
+                    includeMultipleParticipantReports: true,
+                    showChatPreviewLine: true,
+                    forcePolicyNamePreview: true,
+                    includeThreads: true,
+                    includeMoneyRequests: true,
+                    includeTasks: true,
+                    excludeLogins: {},
+                    includeOwnedWorkspaceChats: true,
+                    includeSelfDM: true,
+                    searchString: '',
+                    includeUserToInvite: false,
+                }
+            );
             // When we pass the returned options to filterAndOrderOptions with a search value that matches the group chat name
             const filteredOptions = filterAndOrderOptions(options, 'Avengers Room', COUNTRY_CODE);
 
@@ -1454,8 +1517,24 @@ describe('OptionsListUtils', () => {
                 return filtered;
             }, []);
 
-            // When we call getShareDestinationOptions with the filteredReports
-            const options = getShareDestinationOptions(filteredReportsWithWorkspaceRooms, OPTIONS.personalDetails, []);
+            // When we call getValidOptions with share destination configuration
+            const options = getValidOptions(
+                {reports: filteredReportsWithWorkspaceRooms, personalDetails: OPTIONS.personalDetails},
+                {
+                    betas: [],
+                    includeMultipleParticipantReports: true,
+                    showChatPreviewLine: true,
+                    forcePolicyNamePreview: true,
+                    includeThreads: true,
+                    includeMoneyRequests: true,
+                    includeTasks: true,
+                    excludeLogins: {},
+                    includeOwnedWorkspaceChats: true,
+                    includeSelfDM: true,
+                    searchString: '',
+                    includeUserToInvite: false,
+                }
+            );
             // When we pass the returned options to filterAndOrderOptions with a search value that does not match the group chat name
             const filteredOptions = filterAndOrderOptions(options, 'Mutants Lair', COUNTRY_CODE);
 
