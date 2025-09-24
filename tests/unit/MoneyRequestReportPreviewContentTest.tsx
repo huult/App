@@ -2,12 +2,12 @@
  * @jest-environment jsdom
  */
 import {render} from '@testing-library/react-native';
+import * as TestHelper from '@tests/utils/TestHelper';
 import React from 'react';
 import Onyx from 'react-native-onyx';
 import MoneyRequestReportPreviewContent from '@components/ReportActionItem/MoneyRequestReportPreview/MoneyRequestReportPreviewContent';
-import * as TestHelper from '@tests/utils/TestHelper';
-import ONYXKEYS from '@src/ONYXKEYS';
 import type {MoneyRequestReportPreviewContentProps} from '@components/ReportActionItem/MoneyRequestReportPreview/types';
+import ONYXKEYS from '@src/ONYXKEYS';
 
 const mockProps: MoneyRequestReportPreviewContentProps = {
     iouReportID: '123',
@@ -164,7 +164,7 @@ describe('MoneyRequestReportPreviewContent', () => {
         // when transactions.length === 0 && !shouldShowLoading
     });
 
-    // Note: When metadata is missing after cache clear, the component now triggers 
-    // openReport() to fetch IOU report data. This prevents the issue where 
+    // Note: When metadata is missing after cache clear, the component now triggers
+    // openReport() to fetch IOU report data. This prevents the issue where
     // expense previews show empty instead of loading the actual expense data.
 });
