@@ -31,7 +31,7 @@ import useResponsiveLayout from '@hooks/useResponsiveLayout';
 import useStyleUtils from '@hooks/useStyleUtils';
 import useTheme from '@hooks/useTheme';
 import useThemeStyles from '@hooks/useThemeStyles';
-import {openUnreportedExpense} from '@libs/actions/Report';
+import {openUnreportedExpense, openReport} from '@libs/actions/Report';
 import ControlSelection from '@libs/ControlSelection';
 import {convertToDisplayString} from '@libs/CurrencyUtils';
 import {canUseTouchScreen} from '@libs/DeviceCapabilities';
@@ -114,7 +114,19 @@ function MoneyRequestReportPreviewContent({
 }: MoneyRequestReportPreviewContentProps) {
     const [chatReportMetadata] = useOnyx(`${ONYXKEYS.COLLECTION.REPORT_METADATA}${chatReportID}`, {canBeMissing: true, allowStaleData: true});
     const [activePolicyID] = useOnyx(ONYXKEYS.NVP_ACTIVE_POLICY_ID, {canBeMissing: true});
-    const shouldShowLoading = !chatReportMetadata?.hasOnceLoadedReportActions && transactions.length === 0 && !chatReportMetadata?.isOptimisticReport;
+    
+    // Fix for infinite loading after cache clearing: 
+    // Only show loading if we're explicitly loading and metadata exists, or if it's a clearly new optimistic report
+    const isExplicitlyLoading = chatReportMetadata?.isLoadingInitialReportActions === true;
+    const hasMetadata = !!chatReportMetadata;
+    const hasLoadedBefore = chatReportMetadata?.hasOnceLoadedReportActions === true;
+    const isOptimistic = chatReportMetadata?.isOptimisticReport === true;
+    
+    // Show loading only in these specific cases:
+    // 1. We have metadata and are explicitly loading initial actions, OR
+    // 2. We have metadata, haven't loaded before, no transactions, and it's not optimistic (but not when metadata is completely missing after cache clear)
+    const shouldShowLoading = isExplicitlyLoading || (hasMetadata && !hasLoadedBefore && transactions.length === 0 && !isOptimistic);
+    
     // `hasOnceLoadedReportActions` becomes true before transactions populate fully,
     // so we defer the loading state update to ensure transactions are loaded
     const shouldShowLoadingDeferred = useDeferredValue(shouldShowLoading);
@@ -128,6 +140,21 @@ function MoneyRequestReportPreviewContent({
     const {translate} = useLocalize();
     const {isOffline} = useNetwork();
     const {shouldUseNarrowLayout} = useResponsiveLayout();
+
+    // Trigger data fetching for IOU report when metadata is missing after cache clearing
+    useEffect(() => {
+        // Early return if conditions are not met
+        if (hasMetadata || !iouReportID || transactions.length > 0 || isOffline) {
+            return;
+        }
+        
+        // Trigger openReport to fetch IOU report data when:
+        // 1. We don't have chat metadata (indicating cache was cleared)
+        // 2. We have an IOU report ID to fetch
+        // 3. We have no transactions (so data is missing)
+        // 4. We're not offline
+        openReport(iouReportID);
+    }, [hasMetadata, iouReportID, transactions.length, isOffline]);
 
     const {areAllRequestsBeingSmartScanned, hasNonReimbursableTransactions} = useMemo(
         () => ({
