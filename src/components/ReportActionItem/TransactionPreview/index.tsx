@@ -95,8 +95,7 @@ function TransactionPreview(props: TransactionPreviewProps) {
     const iouAction = action;
 
     // See description of `transactionRawAmount` prop for more context
-    // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
-    const transactionRawAmount = (transaction?.modifiedAmount || transaction?.amount) ?? 0;
+    const transactionRawAmount = (transaction?.modifiedAmount ?? transaction?.amount) ?? 0;
 
     const shouldDisableOnPress = isBillSplit && isEmptyObject(transaction);
     const isTransactionMadeWithCard = isCardTransaction(transaction);
