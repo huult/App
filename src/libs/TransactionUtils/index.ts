@@ -666,14 +666,25 @@ function getAmount(transaction: OnyxInputOrEntry<Transaction>, isFromExpenseRepo
     // IOU requests cannot have negative values, but they can be stored as negative values, let's return absolute value
     if (!isFromExpenseReport && !isFromTrackedExpense) {
         const amount = transaction?.modifiedAmount ?? transaction?.amount ?? 0;
+        console.log('****** 3 ******', 3);
+
         return Math.abs(amount);
     }
 
     // Expense report case:
     // The amounts are stored using an opposite sign and negative values can be set,
     // we need to return an opposite sign than is saved in the transaction object
-    const amount = transaction?.modifiedAmount ?? transaction?.amount ?? 0;
-    return -amount;
+    // const amount = transaction?.modifiedAmount ?? transaction?.amount ?? 0;
+    console.log('****** 4 ******', 4);
+
+    let amount = transaction?.modifiedAmount ?? 0;
+    if (amount) {
+        return -amount;
+    }
+
+    // To avoid -0 being shown, lets only change the sign if the value is other than 0.
+    amount = transaction?.amount ?? 0;
+    return amount ? -amount : 0;
 }
 
 /**
