@@ -684,7 +684,7 @@ function MoneyRequestConfirmationList({
                     isInteractive: false,
                     rightElement: (
                         <View style={[styles.flexWrap, styles.pl2]}>
-                            <Text style={[styles.textLabel]}>{amount ? convertToDisplayString(amount, iouCurrencyCode) : ''}</Text>
+                            <Text style={[styles.textLabel]}>{amount != null ? convertToDisplayString(amount, iouCurrencyCode) : ''}</Text>
                         </View>
                     ),
                 };

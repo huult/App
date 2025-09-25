@@ -422,8 +422,7 @@ function isPartialMerchant(merchant: string): boolean {
 }
 
 function isAmountMissing(transaction: OnyxEntry<Transaction>) {
-    return (transaction?.amount === null || transaction?.amount === undefined) && 
-           (transaction?.modifiedAmount === null || transaction?.modifiedAmount === undefined);
+    return (transaction?.amount === null || transaction?.amount === undefined) && (transaction?.modifiedAmount === null || transaction?.modifiedAmount === undefined);
 }
 
 function isPartial(transaction: OnyxEntry<Transaction>): boolean {
