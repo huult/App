@@ -9,6 +9,7 @@ import Text from '@components/Text';
 import useLocalize from '@hooks/useLocalize';
 import useThemeStyles from '@hooks/useThemeStyles';
 import {updateQuickbooksOnlineNonReimbursableExpensesAccount} from '@libs/actions/connections/QuickbooksOnline';
+import {applyMiddleTruncationToCardName} from '@libs/CardUtils';
 import {getQBONonReimbursableExportAccountType} from '@libs/ConnectionUtils';
 import {getLatestErrorField} from '@libs/ErrorUtils';
 import type {PlatformStackRouteProp} from '@libs/Navigation/PlatformStackNavigation/types';
@@ -55,7 +56,7 @@ function QuickbooksCompanyCardExpenseAccountSelectPage({policy}: WithPolicyConne
 
         return accounts.map((card) => ({
             value: card,
-            text: card.name,
+            text: applyMiddleTruncationToCardName(card.name),
             keyForList: card.name,
             isSelected: card.name === qboConfig?.nonReimbursableExpensesAccount?.name,
         }));

@@ -1,6 +1,7 @@
 import type {ValueOf} from 'type-fest';
 import type {LocaleContextProps} from '@components/LocaleContextProvider';
 import type {SelectorType} from '@components/SelectionScreen';
+import {applyMiddleTruncationToCardName} from '@libs/CardUtils';
 import {findSelectedBankAccountWithDefaultSelect, findSelectedVendorWithDefaultSelect, getCurrentConnectionName, getSageIntacctNonReimbursableActiveDefaultVendor} from '@libs/PolicyUtils';
 import CONST from '@src/CONST';
 import ROUTES from '@src/ROUTES';
@@ -107,7 +108,7 @@ function getExportMenuItem(
                 exportPageLink: ROUTES.POLICY_ACCOUNTING_QUICKBOOKS_ONLINE_EXPORT.getRoute(policyID, backTo),
                 data: resultData.map((card) => ({
                     value: card.id,
-                    text: card.name,
+                    text: applyMiddleTruncationToCardName(card.name),
                     keyForList: card.name,
                     isSelected: isDefaultTitle ? card.name === defaultCard : card.id === selectedAccount?.id,
                 })),
@@ -135,7 +136,7 @@ function getExportMenuItem(
                 data: (resultData ?? []).map((card) => {
                     return {
                         value: card.id,
-                        text: card.name,
+                        text: applyMiddleTruncationToCardName(card.name),
                         keyForList: card.id,
                         isSelected: isDefaultTitle ? card.name === defaultCard : selectedAccount?.id === card.id,
                     };
@@ -345,7 +346,7 @@ function getExportMenuItem(
                 exportPageLink: ROUTES.POLICY_ACCOUNTING_QUICKBOOKS_DESKTOP_EXPORT.getRoute(policyID, backTo),
                 data: resultData.map((card) => ({
                     value: card.name,
-                    text: card.name,
+                    text: applyMiddleTruncationToCardName(card.name),
                     keyForList: card.name,
                     isSelected: isDefaultTitle ? card.name === defaultCard : card.name === selectedAccount,
                 })),

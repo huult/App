@@ -5,6 +5,7 @@ import type * as Illustrations from '@src/components/Icon/Illustrations';
 import CONST from '@src/CONST';
 import IntlStore from '@src/languages/IntlStore';
 import {
+    applyMiddleTruncationToCardName,
     checkIfFeedConnectionIsBroken,
     filterInactiveCards,
     flatAllCardsList,
@@ -1251,6 +1252,60 @@ describe('CardUtils', () => {
 
             const sorted = lodashSortBy(Object.values(cardList), getAssignedCardSortKey);
             expect(sorted.map((r: Card) => r.cardID)).toEqual([11, 10, 99]);
+        });
+    });
+
+    describe('applyMiddleTruncationToCardName', () => {
+        it('should not truncate short names', () => {
+            const shortName = 'Chase Visa';
+            expect(applyMiddleTruncationToCardName(shortName)).toBe(shortName);
+        });
+
+        it('should not truncate names equal to max length', () => {
+            const name = 'American Express Card 5678'; // exactly 28 chars
+            expect(applyMiddleTruncationToCardName(name, 28)).toBe(name);
+        });
+
+        it('should apply middle truncation for long card names with last 4 digits', () => {
+            const longName = 'American Express Platinum Corporate Card ending in 5678';
+            const result = applyMiddleTruncationToCardName(longName, 30);
+            
+            expect(result).toContain('...');
+            expect(result).toContain('5678');
+            expect(result.startsWith('American Express')).toBe(true);
+            expect(result.length).toBeLessThanOrEqual(30);
+        });
+
+        it('should apply middle truncation for long card names without specific pattern', () => {
+            const longName = 'Very Long Credit Card Account Name Without Numbers';
+            const result = applyMiddleTruncationToCardName(longName, 30);
+            
+            expect(result).toContain('...');
+            expect(result.length).toBeLessThanOrEqual(30);
+            expect(result.startsWith('Very Long')).toBe(true);
+            expect(result.endsWith('Numbers')).toBe(true);
+        });
+
+        it('should handle empty strings', () => {
+            expect(applyMiddleTruncationToCardName('')).toBe('');
+        });
+
+        it('should handle card names with "ending in" pattern', () => {
+            const cardName = 'American Express Business Gold Card ending in 1234';
+            const result = applyMiddleTruncationToCardName(cardName, 30);
+            
+            expect(result).toContain('...');
+            expect(result.endsWith('1234')).toBe(true);
+            expect(result.startsWith('American Express')).toBe(true);
+        });
+
+        it('should handle card names with just last 4 digits at the end', () => {
+            const cardName = 'Corporate Credit Card Account 9876';
+            const result = applyMiddleTruncationToCardName(cardName, 25);
+            
+            expect(result).toContain('...');
+            expect(result.endsWith('9876')).toBe(true);
+            expect(result.startsWith('Corporate')).toBe(true);
         });
     });
 });

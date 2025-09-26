@@ -4,6 +4,7 @@ import Onyx from 'react-native-onyx';
 import type {ValueOf} from 'type-fest';
 import type {LocaleContextProps} from '@components/LocaleContextProvider';
 import type {SelectorType} from '@components/SelectionScreen';
+import {applyMiddleTruncationToCardName} from '@libs/CardUtils';
 import CONST from '@src/CONST';
 import ONYXKEYS from '@src/ONYXKEYS';
 import ROUTES from '@src/ROUTES';
@@ -1212,7 +1213,7 @@ function getSageIntacctCreditCards(policy?: Policy, selectedAccount?: string): S
     const creditCards = policy?.connections?.intacct?.data?.creditCards ?? [];
     return creditCards.map(({name}) => ({
         value: name,
-        text: name,
+        text: applyMiddleTruncationToCardName(name ?? ''),
         keyForList: name,
         isSelected: name === selectedAccount,
     }));

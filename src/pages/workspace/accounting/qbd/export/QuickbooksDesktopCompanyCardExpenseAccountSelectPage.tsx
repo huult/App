@@ -9,6 +9,7 @@ import Text from '@components/Text';
 import useLocalize from '@hooks/useLocalize';
 import useThemeStyles from '@hooks/useThemeStyles';
 import {updateQuickbooksDesktopNonReimbursableExpensesAccount} from '@libs/actions/connections/QuickbooksDesktop';
+import {applyMiddleTruncationToCardName} from '@libs/CardUtils';
 import {getQBDNonReimbursableExportAccountType} from '@libs/ConnectionUtils';
 import {getLatestErrorField} from '@libs/ErrorUtils';
 import {settingsPendingAction} from '@libs/PolicyUtils';
@@ -43,7 +44,7 @@ function QuickbooksDesktopCompanyCardExpenseAccountSelectPage({policy}: WithPoli
         const accounts = getQBDReimbursableAccounts(policy?.connections?.quickbooksDesktop, nonReimbursable);
         return accounts.map((card) => ({
             value: card,
-            text: card.name,
+            text: applyMiddleTruncationToCardName(card.name),
             keyForList: card.name,
             // We use the logical OR (||) here instead of ?? because `nonReimbursableAccount` can be an empty string
             // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
