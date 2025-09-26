@@ -719,7 +719,7 @@ function getFeedConnectionBrokenCard(feedCards: Record<string, Card> | undefined
 /**
  * Apply middle truncation to credit card account names to improve readability
  * Example: "American Express Platinum Corporate Card ending in 5678" -> "American Express Pla...5678"
- * 
+ *
  * @param cardName - The full credit card account name
  * @param maxLength - Maximum length before truncation (default: 30)
  * @returns Truncated card name with ellipsis in the middle
@@ -732,14 +732,14 @@ function applyMiddleTruncationToCardName(cardName: string, maxLength = 30): stri
     // Extract the last 4 digits from the card name (common pattern: "ending in XXXX" or just "XXXX")
     const lastFourMatch = cardName.match(/(\d{4})(?:\s*$|$)/);
     const lastFour = lastFourMatch ? lastFourMatch[1] : '';
-    
+
     if (lastFour) {
         // If we have last 4 digits, preserve them
         const prefixLength = Math.floor((maxLength - 3 - lastFour.length) * 0.7); // 70% for prefix
         const prefix = cardName.substring(0, prefixLength).trim();
         return `${prefix}...${lastFour}`;
     }
-    
+
     // Standard middle truncation without specific pattern
     const prefixLength = Math.floor((maxLength - 3) / 2);
     const suffixLength = maxLength - 3 - prefixLength;

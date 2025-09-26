@@ -1269,7 +1269,7 @@ describe('CardUtils', () => {
         it('should apply middle truncation for long card names with last 4 digits', () => {
             const longName = 'American Express Platinum Corporate Card ending in 5678';
             const result = applyMiddleTruncationToCardName(longName, 30);
-            
+
             expect(result).toContain('...');
             expect(result).toContain('5678');
             expect(result.startsWith('American Express')).toBe(true);
@@ -1279,7 +1279,7 @@ describe('CardUtils', () => {
         it('should apply middle truncation for long card names without specific pattern', () => {
             const longName = 'Very Long Credit Card Account Name Without Numbers';
             const result = applyMiddleTruncationToCardName(longName, 30);
-            
+
             expect(result).toContain('...');
             expect(result.length).toBeLessThanOrEqual(30);
             expect(result.startsWith('Very Long')).toBe(true);
@@ -1293,7 +1293,7 @@ describe('CardUtils', () => {
         it('should handle card names with "ending in" pattern', () => {
             const cardName = 'American Express Business Gold Card ending in 1234';
             const result = applyMiddleTruncationToCardName(cardName, 30);
-            
+
             expect(result).toContain('...');
             expect(result.endsWith('1234')).toBe(true);
             expect(result.startsWith('American Express')).toBe(true);
@@ -1302,7 +1302,7 @@ describe('CardUtils', () => {
         it('should handle card names with just last 4 digits at the end', () => {
             const cardName = 'Corporate Credit Card Account 9876';
             const result = applyMiddleTruncationToCardName(cardName, 25);
-            
+
             expect(result).toContain('...');
             expect(result.endsWith('9876')).toBe(true);
             expect(result.startsWith('Corporate')).toBe(true);
