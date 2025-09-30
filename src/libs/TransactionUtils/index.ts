@@ -1,4 +1,5 @@
 import {format, isValid, parse} from 'date-fns';
+import {Str} from 'expensify-common';
 import {deepEqual} from 'fast-equals';
 import lodashDeepClone from 'lodash/cloneDeep';
 import lodashHas from 'lodash/has';
@@ -42,6 +43,7 @@ import {
     isSettled,
     isThread,
 } from '@libs/ReportUtils';
+import StringUtils from '@libs/StringUtils';
 import type {IOURequestType} from '@userActions/IOU';
 import CONST from '@src/CONST';
 import type {IOUType} from '@src/CONST';
@@ -676,15 +678,16 @@ function getAmount(transaction: OnyxInputOrEntry<Transaction>, isFromExpenseRepo
     // The amounts are stored using an opposite sign and negative values can be set,
     // we need to return an opposite sign than is saved in the transaction object
     // const amount = transaction?.modifiedAmount ?? transaction?.amount ?? 0;
-    console.log('****** 4 ******', 4);
 
-    let amount = transaction?.modifiedAmount ?? 0;
-    if (amount) {
+    let amount = transaction?.modifiedAmount;
+
+    if ((typeof amount === 'string' && !StringUtils.isEmptyString(amount)) || (typeof amount === 'number' && !Number.isNaN(amount))) {
         return -amount;
     }
 
     // To avoid -0 being shown, lets only change the sign if the value is other than 0.
     amount = transaction?.amount ?? 0;
+
     return amount ? -amount : 0;
 }
 
