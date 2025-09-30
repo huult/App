@@ -4,9 +4,9 @@ import type {OnyxCollection, OnyxEntry} from 'react-native-onyx';
 import * as Expensicons from '@components/Icon/Expensicons';
 import MenuItem from '@components/MenuItem';
 import {useOptionsList} from '@components/OptionListContextProvider';
-import SelectionList from '@components/SelectionList';
-import InviteMemberListItem from '@components/SelectionList/InviteMemberListItem';
-import type {ListItem} from '@components/SelectionList/types';
+import SelectionList from '@components/SelectionListWithSections';
+import InviteMemberListItem from '@components/SelectionListWithSections/InviteMemberListItem';
+import type {ListItem} from '@components/SelectionListWithSections/types';
 import useCurrentUserPersonalDetails from '@hooks/useCurrentUserPersonalDetails';
 import useDebouncedState from '@hooks/useDebouncedState';
 import useLocalize from '@hooks/useLocalize';
@@ -153,7 +153,7 @@ function IOURequestEditReportCommon({
     const headerMessage = useMemo(() => (searchValue && !reportOptions.length ? translate('common.noResultsFound') : ''), [searchValue, reportOptions, translate]);
 
     const createReportOption = useMemo(() => {
-        if (!createReport || !isUnreported) {
+        if (!createReport || isUnreported === false) {
             return undefined;
         }
 
