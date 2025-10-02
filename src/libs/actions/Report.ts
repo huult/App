@@ -107,6 +107,7 @@ import {
     buildOptimisticChatReport,
     buildOptimisticCreatedReportAction,
     buildOptimisticEmptyReport,
+    buildOptimisticExportCSVAction,
     buildOptimisticExportIntegrationAction,
     buildOptimisticGroupChatReport,
     buildOptimisticIOUReportAction,
@@ -4820,12 +4821,53 @@ function markAsManuallyExported(reportID: string, connectionName: ConnectionName
 }
 
 function exportReportToCSV({reportID, transactionIDList}: ExportReportCSVParams, onDownloadFailed: () => void) {
+    const action = buildOptimisticExportCSVAction();
+    const optimisticReportActionID = action.reportActionID;
+
     let reportIDParam = reportID;
     const allReportTransactions = getReportTransactions(reportID).filter((transaction) => transaction.pendingAction !== CONST.RED_BRICK_ROAD_PENDING_ACTION.DELETE);
     const allTransactionIDs = allReportTransactions.map((transaction) => transaction.transactionID);
     if (allTransactionIDs.length !== transactionIDList.length) {
         reportIDParam = '-1';
     }
+
+    const optimisticData: OnyxUpdate[] = [
+        {
+            onyxMethod: Onyx.METHOD.MERGE,
+            key: `${ONYXKEYS.COLLECTION.REPORT_ACTIONS}${reportID}`,
+            value: {
+                [optimisticReportActionID]: action,
+            },
+        },
+    ];
+
+    const successData: OnyxUpdate[] = [
+        {
+            onyxMethod: Onyx.METHOD.MERGE,
+            key: `${ONYXKEYS.COLLECTION.REPORT_ACTIONS}${reportID}`,
+            value: {
+                [optimisticReportActionID]: {
+                    pendingAction: null,
+                },
+            },
+        },
+    ];
+
+    const failureData: OnyxUpdate[] = [
+        {
+            onyxMethod: Onyx.METHOD.MERGE,
+            key: `${ONYXKEYS.COLLECTION.REPORT_ACTIONS}${reportID}`,
+            value: {
+                [optimisticReportActionID]: {
+                    errors: getMicroSecondOnyxErrorWithTranslationKey('common.genericErrorMessage'),
+                },
+            },
+        },
+    ];
+
+    // Update Onyx with optimistic data before starting the file download
+    Onyx.update(optimisticData);
+
     const finalParameters = enhanceParameters(WRITE_COMMANDS.EXPORT_REPORT_TO_CSV, {
         reportID: reportIDParam,
         transactionIDList,
@@ -4840,7 +4882,22 @@ function exportReportToCSV({reportID, transactionIDList}: ExportReportCSVParams,
         }
     });
 
-    fileDownload(ApiUtils.getCommandURL({command: WRITE_COMMANDS.EXPORT_REPORT_TO_CSV}), 'Expensify.csv', '', false, formData, CONST.NETWORK.METHOD.POST, onDownloadFailed);
+    const onError = () => {
+        // Update Onyx with failure data when download fails
+        Onyx.update(failureData);
+        onDownloadFailed();
+    };
+
+    // Start the file download and handle success/failure
+    fileDownload(ApiUtils.getCommandURL({command: WRITE_COMMANDS.EXPORT_REPORT_TO_CSV}), 'Expensify.csv', '', false, formData, CONST.NETWORK.METHOD.POST, onError)
+        .then(() => {
+            // Update Onyx with success data when download completes successfully
+            Onyx.update(successData);
+        })
+        .catch(() => {
+            // This catch is for any unexpected errors not handled by onError callback
+            Onyx.update(failureData);
+        });
 }
 
 function exportReportToPDF({reportID}: ExportReportPDFParams) {

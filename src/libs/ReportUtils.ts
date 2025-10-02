@@ -57,7 +57,7 @@ import type {
 } from '@src/types/onyx';
 import type {Attendee, Participant} from '@src/types/onyx/IOU';
 import type {SelectedParticipant} from '@src/types/onyx/NewGroupChatDraft';
-import type {OriginalMessageExportedToIntegration} from '@src/types/onyx/OldDotAction';
+import type {OriginalMessageExportedToCSV, OriginalMessageExportedToIntegration} from '@src/types/onyx/OldDotAction';
 import type Onboarding from '@src/types/onyx/Onboarding';
 import type {ErrorFields, Errors, Icon, PendingAction} from '@src/types/onyx/OnyxCommon';
 import type {OriginalMessageChangeLog, PaymentMethodType} from '@src/types/onyx/OriginalMessage';
@@ -597,6 +597,12 @@ type OptimisticChatReport = Pick<
 type OptimisticExportIntegrationAction = OriginalMessageExportedToIntegration &
     Pick<
         ReportAction<typeof CONST.REPORT.ACTIONS.TYPE.EXPORTED_TO_INTEGRATION>,
+        'reportActionID' | 'actorAccountID' | 'avatar' | 'created' | 'lastModified' | 'message' | 'person' | 'shouldShow' | 'pendingAction' | 'errors' | 'automatic'
+    >;
+
+type OptimisticExportCSVAction = OriginalMessageExportedToCSV &
+    Pick<
+        ReportAction<typeof CONST.REPORT.ACTIONS.TYPE.EXPORTED_TO_CSV>,
         'reportActionID' | 'actorAccountID' | 'avatar' | 'created' | 'lastModified' | 'message' | 'person' | 'shouldShow' | 'pendingAction' | 'errors' | 'automatic'
     >;
 
@@ -8051,6 +8057,31 @@ function buildOptimisticExportIntegrationAction(integration: ConnectionName, mar
 }
 
 /**
+ * Builds an optimistic EXPORTED_TO_CSV report action
+ */
+function buildOptimisticExportCSVAction(): OptimisticExportCSVAction {
+    return {
+        reportActionID: rand64(),
+        actionName: CONST.REPORT.ACTIONS.TYPE.EXPORTED_TO_CSV,
+        pendingAction: CONST.RED_BRICK_ROAD_PENDING_ACTION.ADD,
+        actorAccountID: currentUserAccountID,
+        message: [],
+        person: [
+            {
+                type: CONST.REPORT.MESSAGE.TYPE.TEXT,
+                style: 'strong',
+                text: getCurrentUserDisplayNameOrEmail(),
+            },
+        ],
+        automatic: false,
+        avatar: getCurrentUserAvatar(),
+        created: DateUtils.getDBTime(),
+        shouldShow: true,
+        originalMessage: {},
+    };
+}
+
+/**
  * A helper method to create transaction thread
  *
  * @param reportAction - the parent IOU report action from which to create the thread
@@ -12118,6 +12149,7 @@ export {
     createDraftWorkspaceAndNavigateToConfirmationScreen,
     isChatUsedForOnboarding,
     buildOptimisticExportIntegrationAction,
+    buildOptimisticExportCSVAction,
     getChatUsedForOnboarding,
     getFieldViolationTranslation,
     getFieldViolation,
@@ -12206,6 +12238,7 @@ export type {
     OptimisticConciergeCategoryOptionsAction,
     OptimisticCreatedReportAction,
     OptimisticExportIntegrationAction,
+    OptimisticExportCSVAction,
     OptimisticIOUReportAction,
     OptimisticTaskReportAction,
     OptionData,

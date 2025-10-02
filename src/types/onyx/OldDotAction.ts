@@ -374,4 +374,4 @@ type OldDotLegacyAction = {
 type OldDotAction = ValueOf<OldDotOriginalMessageMap>;
 
 export default OldDotAction;
-export type {OldDotLegacyAction, OldDotOriginalMessageMap, OriginalMessageExportedToIntegration};
+export type {OldDotLegacyAction, OldDotOriginalMessageMap, OriginalMessageExportedToIntegration, OriginalMessageExportedToCSV};
