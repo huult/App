@@ -104,6 +104,7 @@ import {
     unapproveExpenseReport,
 } from '@userActions/IOU';
 import {markAsCash as markAsCashAction} from '@userActions/Transaction';
+import {updateReportLayoutGrouping} from '@userActions/User';
 import CONST from '@src/CONST';
 import ONYXKEYS from '@src/ONYXKEYS';
 import type {Route} from '@src/ROUTES';
@@ -199,6 +200,7 @@ function MoneyReportHeader({
     const [integrationsExportTemplates] = useOnyx(ONYXKEYS.NVP_INTEGRATION_SERVER_EXPORT_TEMPLATES, {canBeMissing: true});
     const [csvExportLayouts] = useOnyx(ONYXKEYS.NVP_CSV_EXPORT_LAYOUTS, {canBeMissing: true});
     const [lastDistanceExpenseType] = useOnyx(ONYXKEYS.NVP_LAST_DISTANCE_EXPENSE_TYPE, {canBeMissing: true});
+    const [reportLayoutGrouping = CONST.REPORT.LAYOUT_GROUPING.NONE] = useOnyx(ONYXKEYS.NVP_REPORT_LAYOUT_GROUPING, {canBeMissing: true});
     const exportTemplates = useMemo(() => getExportTemplates(integrationsExportTemplates ?? [], csvExportLayouts ?? {}, policy), [integrationsExportTemplates, csvExportLayouts, policy]);
     const {isBetaEnabled} = usePermissions();
 
@@ -732,6 +734,36 @@ function MoneyReportHeader({
         return options;
     }, [translate, connectedIntegrationFallback, connectedIntegration, moneyRequestReport, isOffline, transactionIDs, isExported, beginExportWithTemplate, exportTemplates]);
 
+    const layoutSubmenuOptions: Array<DropdownOption<ValueOf<typeof CONST.REPORT.LAYOUT_GROUPING>>> = useMemo(
+        () => [
+            {
+                value: CONST.REPORT.LAYOUT_GROUPING.NONE,
+                text: translate('reportLayout.none'),
+                icon: Expensicons.Ungrounded,
+                onSelected: () => {
+                    updateReportLayoutGrouping(CONST.REPORT.LAYOUT_GROUPING.NONE);
+                },
+            },
+            {
+                value: CONST.REPORT.LAYOUT_GROUPING.CATEGORY,
+                text: translate('reportLayout.category'),
+                icon: Expensicons.FolderOpen,
+                onSelected: () => {
+                    updateReportLayoutGrouping(CONST.REPORT.LAYOUT_GROUPING.CATEGORY);
+                },
+            },
+            {
+                value: CONST.REPORT.LAYOUT_GROUPING.TAG,
+                text: translate('reportLayout.tag'),
+                icon: Expensicons.Tag,
+                onSelected: () => {
+                    updateReportLayoutGrouping(CONST.REPORT.LAYOUT_GROUPING.TAG);
+                },
+            },
+        ],
+        [translate],
+    );
+
     const primaryActionsImplementation = {
         [CONST.REPORT.PRIMARY_ACTIONS.SUBMIT]: (
             <AnimatedSubmitButton
@@ -1112,6 +1144,14 @@ function MoneyReportHeader({
                 }
                 startMoneyRequest(CONST.IOU.TYPE.SUBMIT, moneyRequestReport?.reportID);
             },
+        },
+        [CONST.REPORT.SECONDARY_ACTIONS.LAYOUT]: {
+            text: translate('common.layout'),
+            backButtonText: translate('common.layout'),
+            icon: Expensicons.Table,
+            rightIcon: Expensicons.ArrowRight,
+            value: CONST.REPORT.SECONDARY_ACTIONS.LAYOUT,
+            subMenuItems: layoutSubmenuOptions,
         },
         [CONST.REPORT.SECONDARY_ACTIONS.PAY]: {
             text: translate('iou.settlePayment', {formattedAmount: totalAmount}),

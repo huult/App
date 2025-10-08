@@ -1128,6 +1128,7 @@ const CONST = {
             EXPORT: 'export',
             PAY: 'pay',
             MERGE: 'merge',
+            LAYOUT: 'layout',
         },
         PRIMARY_ACTIONS: {
             SUBMIT: 'submit',
@@ -1167,6 +1168,15 @@ const CONST = {
             CREATE_NEW_EXPENSE: 'createNewExpense',
             ADD_UNREPORTED_EXPENSE: 'addUnreportedExpense',
             TRACK_DISTANCE_EXPENSE: 'trackDistanceExpense',
+        },
+        LAYOUT_GROUPING: {
+            NONE: 'none',
+            CATEGORY: 'category',
+            TAG: 'tag',
+        },
+        SPLIT_BY: {
+            NONE: 'none',
+            REIMBURSABLE: 'reimbursable',
         },
         ACTIONS: {
             LIMIT: 50,

@@ -1286,6 +1286,19 @@ function updateTheme(theme: ValueOf<typeof CONST.THEME>) {
     Navigation.goBack();
 }
 
+function updateReportLayoutGrouping(layoutGrouping: ValueOf<typeof CONST.REPORT.LAYOUT_GROUPING>) {
+    const optimisticData: OnyxUpdate[] = [
+        {
+            onyxMethod: Onyx.METHOD.SET,
+            key: ONYXKEYS.NVP_REPORT_LAYOUT_GROUPING,
+            value: layoutGrouping,
+        },
+    ];
+
+    // For now, we'll just store this locally since it's a client-side preference
+    Onyx.set(ONYXKEYS.NVP_REPORT_LAYOUT_GROUPING, layoutGrouping);
+}
+
 /**
  * Sets a custom status
  */
@@ -1490,6 +1503,7 @@ export {
     updateChatPriorityMode,
     setContactMethodAsDefault,
     updateTheme,
+    updateReportLayoutGrouping,
     resetContactMethodValidateCodeSentState,
     updateCustomStatus,
     clearCustomStatus,

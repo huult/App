@@ -648,6 +648,7 @@ const translations = {
         trip: 'Trip',
         apply: 'Apply',
         status: 'Status',
+        layout: 'Layout',
         on: 'On',
         before: 'Before',
         after: 'After',
@@ -7210,6 +7211,14 @@ const translations = {
         expenseLevelExport: 'All Data - expense level',
         exportInProgress: 'Export in progress',
         conciergeWillSend: 'Concierge will send you the file shortly.',
+    },
+    reportLayout: {
+        none: 'None',
+        category: 'Category',
+        tag: 'Tag',
+        splitBy: 'Split by',
+        reimbursable: 'Reimbursable',
+        nonReimbursable: 'Non-reimbursable',
     },
 };
 

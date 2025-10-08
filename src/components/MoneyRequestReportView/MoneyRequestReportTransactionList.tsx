@@ -18,6 +18,7 @@ import useMobileSelectionMode from '@hooks/useMobileSelectionMode';
 import useResponsiveLayout from '@hooks/useResponsiveLayout';
 import useStyleUtils from '@hooks/useStyleUtils';
 import useThemeStyles from '@hooks/useThemeStyles';
+import useOnyx from '@hooks/useOnyx';
 import {turnOnMobileSelectionMode} from '@libs/actions/MobileSelectionMode';
 import {setActiveTransactionThreadIDs} from '@libs/actions/TransactionThreadNavigation';
 import {convertToDisplayString} from '@libs/CurrencyUtils';
@@ -150,6 +151,7 @@ function MoneyRequestReportTransactionList({
     const shouldShowBreakdown = !!nonReimbursableSpend && !!reimbursableSpend;
     const transactionsWithoutPendingDelete = useMemo(() => transactions.filter((t) => !isTransactionPendingDelete(t)), [transactions]);
     const session = useSession();
+    const [reportLayoutGrouping = CONST.REPORT.LAYOUT_GROUPING.NONE] = useOnyx(ONYXKEYS.NVP_REPORT_LAYOUT_GROUPING, {canBeMissing: true});
 
     const hasPendingAction = useMemo(() => {
         return hasPendingDeletionTransaction || transactions.some(getTransactionPendingAction);
@@ -200,6 +202,48 @@ function MoneyRequestReportTransactionList({
                 shouldBeHighlighted: newTransactions?.includes(transaction),
             }));
     }, [newTransactions, sortBy, sortOrder, transactions, localeCompare, report]);
+
+    // Group transactions by category or tag if layout grouping is enabled
+    const groupedTransactions = useMemo(() => {
+        if (reportLayoutGrouping === CONST.REPORT.LAYOUT_GROUPING.NONE) {
+            return [{transactions: sortedTransactions, groupKey: null, total: null}];
+        }
+
+        const groups: Record<string, TransactionWithOptionalHighlight[]> = {};
+        const groupTotals: Record<string, number> = {};
+
+        sortedTransactions.forEach((transaction) => {
+            let groupKey = '';
+            
+            if (reportLayoutGrouping === CONST.REPORT.LAYOUT_GROUPING.CATEGORY) {
+                groupKey = getCategory(transaction) || translate('common.none');
+            } else if (reportLayoutGrouping === CONST.REPORT.LAYOUT_GROUPING.TAG) {
+                groupKey = getTag(transaction) || translate('common.none');
+            }
+
+            // Future: Split by reimbursable/non-reimbursable could be implemented here
+            // by adding a secondary grouping level:
+            // const isReimbursable = transaction.reimbursable;
+            // const splitKey = isReimbursable ? 'Reimbursable' : 'Non-reimbursable';
+            // const fullGroupKey = `${groupKey}|${splitKey}`;
+
+            if (!groups[groupKey]) {
+                groups[groupKey] = [];
+                groupTotals[groupKey] = 0;
+            }
+
+            groups[groupKey].push(transaction);
+            groupTotals[groupKey] += getAmount(transaction, isExpenseReport(report), transaction.reportID === CONST.REPORT.UNREPORTED_REPORT_ID);
+        });
+
+        return Object.keys(groups)
+            .sort()
+            .map((groupKey) => ({
+                transactions: groups[groupKey],
+                groupKey,
+                total: groupTotals[groupKey],
+            }));
+    }, [sortedTransactions, reportLayoutGrouping, translate, report]);
 
     const columnsToShow = useMemo(() => {
         const columns = getColumnsToShow(session?.accountID, transactions, true);
@@ -343,28 +387,43 @@ function MoneyRequestReportTransactionList({
                 </View>
             )}
             <View style={[listHorizontalPadding, styles.gap2, styles.pb4]}>
-                {sortedTransactions.map((transaction) => {
-                    return (
-                        <MoneyRequestReportTransactionItem
-                            key={transaction.transactionID}
-                            transaction={transaction}
-                            violations={violations?.[`${ONYXKEYS.COLLECTION.TRANSACTION_VIOLATIONS}${transaction.transactionID}`]}
-                            columns={columnsToShow}
-                            report={report}
-                            isSelectionModeEnabled={isMobileSelectionModeEnabled}
-                            toggleTransaction={toggleTransaction}
-                            isSelected={isTransactionSelected(transaction.transactionID)}
-                            handleOnPress={handleOnPress}
-                            handleLongPress={handleLongPress}
-                            dateColumnSize={dateColumnSize}
-                            amountColumnSize={amountColumnSize}
-                            taxAmountColumnSize={taxAmountColumnSize}
-                            // if we add few new transactions, then we need to scroll to the first one
-                            scrollToNewTransaction={transaction.transactionID === newTransactions?.at(0)?.transactionID ? scrollToNewTransaction : undefined}
-                            forwardedFSClass={transactionItemFSClass}
-                        />
-                    );
-                })}
+                {groupedTransactions.map((group, groupIndex) => (
+                    <React.Fragment key={group.groupKey || 'none'}>
+                        {/* Render group header if grouping is enabled */}
+                        {reportLayoutGrouping !== CONST.REPORT.LAYOUT_GROUPING.NONE && group.groupKey && (
+                            <View style={[styles.flexRow, styles.alignItemsCenter, styles.justifyContentBetween, styles.pv3, styles.ph4, styles.mt3, styles.mb1, styles.border, styles.borderColorNeutral]}>
+                                <Text style={[styles.textStrong, styles.textLabelLarge]}>
+                                    {group.groupKey}
+                                </Text>
+                                <Text style={[styles.textStrong, styles.textLabelLarge]}>
+                                    {convertToDisplayString(group.total || 0, report?.currency)}
+                                </Text>
+                            </View>
+                        )}
+                        
+                        {/* Render transactions in this group */}
+                        {group.transactions.map((transaction) => (
+                            <MoneyRequestReportTransactionItem
+                                key={transaction.transactionID}
+                                transaction={transaction}
+                                violations={violations?.[`${ONYXKEYS.COLLECTION.TRANSACTION_VIOLATIONS}${transaction.transactionID}`]}
+                                columns={columnsToShow}
+                                report={report}
+                                isSelectionModeEnabled={isMobileSelectionModeEnabled}
+                                toggleTransaction={toggleTransaction}
+                                isSelected={isTransactionSelected(transaction.transactionID)}
+                                handleOnPress={handleOnPress}
+                                handleLongPress={handleLongPress}
+                                dateColumnSize={dateColumnSize}
+                                amountColumnSize={amountColumnSize}
+                                taxAmountColumnSize={taxAmountColumnSize}
+                                // if we add few new transactions, then we need to scroll to the first one
+                                scrollToNewTransaction={transaction.transactionID === newTransactions?.at(0)?.transactionID ? scrollToNewTransaction : undefined}
+                                forwardedFSClass={transactionItemFSClass}
+                            />
+                        ))}
+                    </React.Fragment>
+                ))}
             </View>
             {shouldShowBreakdown && (
                 <View style={[styles.dFlex, styles.alignItemsEnd, listHorizontalPadding, styles.gap2, styles.mb2]}>

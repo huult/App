@@ -665,6 +665,11 @@ function getSecondaryReportActions({
         options.push(CONST.REPORT.SECONDARY_ACTIONS.CHANGE_APPROVER);
     }
 
+    // Add layout option for expense reports
+    if (isExpenseReportUtils(report)) {
+        options.push(CONST.REPORT.SECONDARY_ACTIONS.LAYOUT);
+    }
+
     options.push(CONST.REPORT.SECONDARY_ACTIONS.VIEW_DETAILS);
 
     if (isDeleteAction(report, reportTransactions, reportActions ?? [], policy)) {
