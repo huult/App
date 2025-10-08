@@ -672,10 +672,14 @@ function getDescription(transaction: OnyxInputOrEntry<Transaction>): string {
 function getAmount(transaction: OnyxInputOrEntry<Transaction>, isFromExpenseReport = false, isFromTrackedExpense = false): number {
     // IOU requests cannot have negative values, but they can be stored as negative values, let's return absolute value
     if (!isFromExpenseReport && !isFromTrackedExpense) {
-        const amount = transaction?.modifiedAmount ?? transaction?.amount ?? 0;
-        console.log('****** 3 ******', 3);
+        if (transaction?.modifiedAmount === 0 || !!transaction?.modifiedAmount) {
+            return Math.abs(transaction?.modifiedAmount);
+        }
+        if (transaction?.amount === 0 || !!transaction?.amount) {
+            return Math.abs(transaction?.amount);
+        }
 
-        return Math.abs(amount);
+        return Math.abs(0);
     }
 
     // Expense report case:
