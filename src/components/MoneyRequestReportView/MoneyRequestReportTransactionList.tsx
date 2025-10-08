@@ -15,10 +15,10 @@ import {WideRHPContext} from '@components/WideRHPContextProvider';
 import useCopySelectionHelper from '@hooks/useCopySelectionHelper';
 import useLocalize from '@hooks/useLocalize';
 import useMobileSelectionMode from '@hooks/useMobileSelectionMode';
+import useOnyx from '@hooks/useOnyx';
 import useResponsiveLayout from '@hooks/useResponsiveLayout';
 import useStyleUtils from '@hooks/useStyleUtils';
 import useThemeStyles from '@hooks/useThemeStyles';
-import useOnyx from '@hooks/useOnyx';
 import {turnOnMobileSelectionMode} from '@libs/actions/MobileSelectionMode';
 import {setActiveTransactionThreadIDs} from '@libs/actions/TransactionThreadNavigation';
 import {convertToDisplayString} from '@libs/CurrencyUtils';
@@ -214,7 +214,7 @@ function MoneyRequestReportTransactionList({
 
         sortedTransactions.forEach((transaction) => {
             let groupKey = '';
-            
+
             if (reportLayoutGrouping === CONST.REPORT.LAYOUT_GROUPING.CATEGORY) {
                 groupKey = getCategory(transaction) || translate('common.none');
             } else if (reportLayoutGrouping === CONST.REPORT.LAYOUT_GROUPING.TAG) {
@@ -391,16 +391,24 @@ function MoneyRequestReportTransactionList({
                     <React.Fragment key={group.groupKey || 'none'}>
                         {/* Render group header if grouping is enabled */}
                         {reportLayoutGrouping !== CONST.REPORT.LAYOUT_GROUPING.NONE && group.groupKey && (
-                            <View style={[styles.flexRow, styles.alignItemsCenter, styles.justifyContentBetween, styles.pv3, styles.ph4, styles.mt3, styles.mb1, styles.border, styles.borderColorNeutral]}>
-                                <Text style={[styles.textStrong, styles.textLabelLarge]}>
-                                    {group.groupKey}
-                                </Text>
-                                <Text style={[styles.textStrong, styles.textLabelLarge]}>
-                                    {convertToDisplayString(group.total || 0, report?.currency)}
-                                </Text>
+                            <View
+                                style={[
+                                    styles.flexRow,
+                                    styles.alignItemsCenter,
+                                    styles.justifyContentBetween,
+                                    styles.pv3,
+                                    styles.ph4,
+                                    styles.mt3,
+                                    styles.mb1,
+                                    styles.border,
+                                    styles.borderColorNeutral,
+                                ]}
+                            >
+                                <Text style={[styles.textStrong, styles.textLabelLarge]}>{group.groupKey}</Text>
+                                <Text style={[styles.textStrong, styles.textLabelLarge]}>{convertToDisplayString(group.total || 0, report?.currency)}</Text>
                             </View>
                         )}
-                        
+
                         {/* Render transactions in this group */}
                         {group.transactions.map((transaction) => (
                             <MoneyRequestReportTransactionItem
