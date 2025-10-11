@@ -31,6 +31,7 @@ import useOnyx from '@hooks/useOnyx';
 import usePayAndDowngrade from '@hooks/usePayAndDowngrade';
 import usePreferredPolicy from '@hooks/usePreferredPolicy';
 import useResponsiveLayout from '@hooks/useResponsiveLayout';
+import useRestrictedPolicyCreation from '@hooks/useRestrictedPolicyCreation';
 import useSearchResults from '@hooks/useSearchResults';
 import useStyleUtils from '@hooks/useStyleUtils';
 import useTheme from '@hooks/useTheme';
@@ -118,6 +119,7 @@ function WorkspacesListPage() {
     const [fundList] = useOnyx(ONYXKEYS.FUND_LIST, {canBeMissing: true});
     const [duplicateWorkspace] = useOnyx(ONYXKEYS.DUPLICATE_WORKSPACE, {canBeMissing: true});
     const {isRestrictedToPreferredPolicy} = usePreferredPolicy();
+    const isRestrictedPolicyCreation = useRestrictedPolicyCreation();
     const [reimbursementAccountError] = useOnyx(ONYXKEYS.REIMBURSEMENT_ACCOUNT, {canBeMissing: true, selector: reimbursementAccountErrorSelector});
 
     // This hook preloads the screens of adjacent tabs to make changing tabs faster.
@@ -480,15 +482,21 @@ function WorkspacesListPage() {
         </>
     );
 
-    const getHeaderButton = () => (
-        <Button
-            accessibilityLabel={translate('workspace.new.newWorkspace')}
-            text={translate('workspace.new.newWorkspace')}
-            onPress={() => interceptAnonymousUser(() => Navigation.navigate(ROUTES.WORKSPACE_CONFIRMATION.getRoute(ROUTES.WORKSPACES_LIST.route)))}
-            icon={Expensicons.Plus}
-            style={[shouldUseNarrowLayout && [styles.flexGrow1, styles.mb3]]}
-        />
-    );
+    const getHeaderButton = () => {
+        if (isRestrictedPolicyCreation) {
+            return null;
+        }
+        
+        return (
+            <Button
+                accessibilityLabel={translate('workspace.new.newWorkspace')}
+                text={translate('workspace.new.newWorkspace')}
+                onPress={() => interceptAnonymousUser(() => Navigation.navigate(ROUTES.WORKSPACE_CONFIRMATION.getRoute(ROUTES.WORKSPACES_LIST.route)))}
+                icon={Expensicons.Plus}
+                style={[shouldUseNarrowLayout && [styles.flexGrow1, styles.mb3]]}
+            />
+        );
+    };
 
     const onBackButtonPress = () => {
         Navigation.goBack(route.params?.backTo);
@@ -526,7 +534,7 @@ function WorkspacesListPage() {
                             headerStyles={[styles.overflowHidden, StyleUtils.getBackgroundColorStyle(colors.pink800), StyleUtils.getHeight(variables.sectionIllustrationHeight)]}
                             lottieWebViewStyles={styles.emptyWorkspaceListIllustrationStyle}
                             headerContentStyles={styles.emptyWorkspaceListIllustrationStyle}
-                            buttons={[
+                            buttons={isRestrictedPolicyCreation ? [] : [
                                 {
                                     success: true,
                                     buttonAction: () => interceptAnonymousUser(() => Navigation.navigate(ROUTES.WORKSPACE_CONFIRMATION.getRoute(ROUTES.WORKSPACES_LIST.route))),

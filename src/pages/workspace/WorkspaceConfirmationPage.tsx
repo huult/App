@@ -4,6 +4,7 @@ import WorkspaceConfirmationForm from '@components/WorkspaceConfirmationForm';
 import type {WorkspaceConfirmationSubmitFunctionParams} from '@components/WorkspaceConfirmationForm';
 import useOnyx from '@hooks/useOnyx';
 import useResponsiveLayout from '@hooks/useResponsiveLayout';
+import useRestrictedPolicyCreation from '@hooks/useRestrictedPolicyCreation';
 import {createWorkspaceWithPolicyDraftAndNavigateToIt} from '@libs/actions/App';
 import {generatePolicyID} from '@libs/actions/Policy/Policy';
 import getCurrentUrl from '@libs/Navigation/currentUrl';
@@ -17,6 +18,12 @@ function WorkspaceConfirmationPage() {
     // eslint-disable-next-line rulesdir/prefer-shouldUseNarrowLayout-instead-of-isSmallScreenWidth
     const {isSmallScreenWidth} = useResponsiveLayout();
     const [lastPaymentMethod] = useOnyx(ONYXKEYS.NVP_LAST_PAYMENT_METHOD, {canBeMissing: true});
+    const isRestrictedPolicyCreation = useRestrictedPolicyCreation();
+
+    // If policy creation is restricted, redirect to workspaces list
+    if (isRestrictedPolicyCreation) {
+        return null;
+    }
     const onSubmit = (params: WorkspaceConfirmationSubmitFunctionParams) => {
         const policyID = params.policyID || generatePolicyID();
         const routeToNavigate = isSmallScreenWidth ? ROUTES.WORKSPACE_INITIAL.getRoute(policyID) : ROUTES.WORKSPACE_OVERVIEW.getRoute(policyID);

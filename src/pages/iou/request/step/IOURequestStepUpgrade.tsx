@@ -9,6 +9,7 @@ import useCurrentUserPersonalDetails from '@hooks/useCurrentUserPersonalDetails'
 import useLocalize from '@hooks/useLocalize';
 import useNetwork from '@hooks/useNetwork';
 import useOnyx from '@hooks/useOnyx';
+import useRestrictedPolicyCreation from '@hooks/useRestrictedPolicyCreation';
 import useThemeStyles from '@hooks/useThemeStyles';
 import {setTransactionReport} from '@libs/actions/Transaction';
 import type CreateWorkspaceParams from '@libs/API/parameters/CreateWorkspaceParams';
@@ -38,6 +39,7 @@ function IOURequestStepUpgrade({
     const {isOffline} = useNetwork();
     const currentUserPersonalDetails = useCurrentUserPersonalDetails();
     const personalDetails = usePersonalDetails();
+    const isRestrictedPolicyCreation = useRestrictedPolicyCreation();
 
     const [transaction] = useOnyx(`${ONYXKEYS.COLLECTION.TRANSACTION_DRAFT}${transactionID}`, {canBeMissing: true});
 
@@ -140,6 +142,11 @@ function IOURequestStepUpgrade({
         setShowConfirmationForm(false);
         setIsUpgraded(true);
     };
+
+    // Block access if policy creation is restricted
+    if (isRestrictedPolicyCreation) {
+        return null;
+    }
 
     return (
         <ScreenWrapper

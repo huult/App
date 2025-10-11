@@ -13,6 +13,7 @@ import useOnboardingMessages from '@hooks/useOnboardingMessages';
 import useOnyx from '@hooks/useOnyx';
 import usePermissions from '@hooks/usePermissions';
 import useResponsiveLayout from '@hooks/useResponsiveLayout';
+import useRestrictedPolicyCreation from '@hooks/useRestrictedPolicyCreation';
 import useThemeStyles from '@hooks/useThemeStyles';
 import {navigateAfterOnboardingWithMicrotaskQueue} from '@libs/navigateAfterOnboarding';
 import Navigation from '@libs/Navigation/Navigation';
@@ -47,6 +48,7 @@ function BaseOnboardingWorkspaceOptional({shouldUseNativeStyles}: BaseOnboarding
     const {onboardingIsMediumOrLargerScreenWidth, isSmallScreenWidth} = useResponsiveLayout();
     const currentUserPersonalDetails = useCurrentUserPersonalDetails();
     const {isBetaEnabled} = usePermissions();
+    const isRestrictedPolicyCreation = useRestrictedPolicyCreation();
     const ICON_SIZE = 48;
     const illustrations = useMemoizedLazyIllustrations(['MoneyReceipts', 'Tag', 'ReportReceipt'] as const);
 
@@ -150,17 +152,19 @@ function BaseOnboardingWorkspaceOptional({shouldUseNativeStyles}: BaseOnboarding
                         onPress={() => completeOnboarding()}
                     />
                 </View>
-                <View>
-                    <Button
-                        success
-                        large
-                        text={translate('onboarding.workspace.createWorkspace')}
-                        onPress={() => {
-                            setOnboardingErrorMessage('');
-                            Navigation.navigate(ROUTES.ONBOARDING_WORKSPACE_CONFIRMATION.getRoute());
-                        }}
-                    />
-                </View>
+                {!isRestrictedPolicyCreation && (
+                    <View>
+                        <Button
+                            success
+                            large
+                            text={translate('onboarding.workspace.createWorkspace')}
+                            onPress={() => {
+                                setOnboardingErrorMessage('');
+                                Navigation.navigate(ROUTES.ONBOARDING_WORKSPACE_CONFIRMATION.getRoute());
+                            }}
+                        />
+                    </View>
+                )}
             </View>
         </ScreenWrapper>
     );

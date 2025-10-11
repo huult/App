@@ -21,6 +21,7 @@ import usePreferredPolicy from '@hooks/usePreferredPolicy';
 import usePrevious from '@hooks/usePrevious';
 import useReportIsArchived from '@hooks/useReportIsArchived';
 import useResponsiveLayout from '@hooks/useResponsiveLayout';
+import useRestrictedPolicyCreation from '@hooks/useRestrictedPolicyCreation';
 import useTheme from '@hooks/useTheme';
 import useThemeStyles from '@hooks/useThemeStyles';
 import useWindowDimensions from '@hooks/useWindowDimensions';
@@ -177,8 +178,9 @@ function FloatingActionButtonAndPopover({onHideCreateMenu, onShowCreateMenu, ref
         return areAllGroupPoliciesExpenseChatDisabled((allPolicies as OnyxCollection<OnyxTypes.Policy>) ?? {});
     }, [allPolicies]);
     const shouldShowCreateReportOption = shouldRedirectToExpensifyClassic || groupPoliciesWithChatEnabled.length > 0;
+    const isRestrictedPolicyCreation = useRestrictedPolicyCreation();
 
-    const shouldShowNewWorkspaceButton = Object.values(allPolicies ?? {}).every((policy) => !shouldShowPolicy(policy as OnyxEntry<OnyxTypes.Policy>, !!isOffline, session?.email));
+    const shouldShowNewWorkspaceButton = !isRestrictedPolicyCreation && Object.values(allPolicies ?? {}).every((policy) => !shouldShowPolicy(policy as OnyxEntry<OnyxTypes.Policy>, !!isOffline, session?.email));
 
     const quickActionAvatars = useMemo(() => {
         if (isValidReport) {
