@@ -2,6 +2,7 @@ import {deepEqual} from 'fast-equals';
 import {useEffect} from 'react';
 import type {OnyxEntry} from 'react-native-onyx';
 import {getRoute} from '@libs/actions/Transaction';
+import isSearchTopmostFullScreenRoute from '@libs/Navigation/helpers/isSearchTopmostFullScreenRoute';
 import {getValidWaypoints, hasRoute as hasRouteTransactionUtils, isDistanceRequest, isManualDistanceRequest} from '@libs/TransactionUtils';
 import type {IOUAction} from '@src/CONST';
 import CONST from '@src/CONST';
@@ -16,6 +17,7 @@ export default function useFetchRoute(
     waypoints: WaypointCollection | undefined,
     action: IOUAction,
     transactionState: TransactionState = CONST.TRANSACTION.STATE.CURRENT,
+    isIOURequestStepDistance = false,
 ) {
     const {isOffline} = useNetwork();
     const hasRouteError = !!transaction?.errorFields?.route;
@@ -33,8 +35,8 @@ export default function useFetchRoute(
             return;
         }
 
-        getRoute(transaction.transactionID, validatedWaypoints, transactionState);
-    }, [shouldFetchRoute, transaction?.transactionID, validatedWaypoints, isOffline, action, transactionState]);
+        getRoute(transaction.transactionID, validatedWaypoints, transactionState, isIOURequestStepDistance ? isIOURequestStepDistance && isSearchTopmostFullScreenRoute() : false);
+    }, [shouldFetchRoute, transaction?.transactionID, validatedWaypoints, isOffline, action, transactionState, isIOURequestStepDistance]);
 
     return {shouldFetchRoute, validatedWaypoints};
 }

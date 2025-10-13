@@ -233,7 +233,7 @@ function removeWaypoint(transaction: OnyxEntry<Transaction>, currentIndex: strin
     return Onyx.set(`${ONYXKEYS.COLLECTION.TRANSACTION}${transaction?.transactionID}`, newTransaction);
 }
 
-function getOnyxDataForRouteRequest(transactionID: string, transactionState: TransactionState = CONST.TRANSACTION.STATE.CURRENT): OnyxData {
+function getOnyxDataForRouteRequest(transactionID: string, transactionState: TransactionState = CONST.TRANSACTION.STATE.CURRENT, skipResetRouteError = false): OnyxData {
     let keyPrefix;
     switch (transactionState) {
         case CONST.TRANSACTION.STATE.DRAFT:
@@ -258,9 +258,11 @@ function getOnyxDataForRouteRequest(transactionID: string, transactionState: Tra
                     comment: {
                         isLoading: true,
                     },
-                    errorFields: {
-                        route: null,
-                    },
+                    errorFields: !skipResetRouteError
+                        ? {
+                              route: null,
+                          }
+                        : {},
                 },
             },
         ],
@@ -321,7 +323,7 @@ function sanitizeRecentWaypoints(waypoints: WaypointCollection): WaypointCollect
  * Used so we can generate a map view of the provided waypoints
  */
 
-function getRoute(transactionID: string, waypoints: WaypointCollection, routeType: TransactionState = CONST.TRANSACTION.STATE.CURRENT) {
+function getRoute(transactionID: string, waypoints: WaypointCollection, routeType: TransactionState = CONST.TRANSACTION.STATE.CURRENT, skipResetRouteError = false) {
     const parameters: GetRouteParams = {
         transactionID,
         waypoints: JSON.stringify(sanitizeRecentWaypoints(waypoints)),
@@ -342,7 +344,7 @@ function getRoute(transactionID: string, waypoints: WaypointCollection, routeTyp
             throw new Error('Invalid route type');
     }
 
-    API.read(command, parameters, getOnyxDataForRouteRequest(transactionID, routeType));
+    API.read(command, parameters, getOnyxDataForRouteRequest(transactionID, routeType, skipResetRouteError));
 }
 /**
  * Updates all waypoints stored in the transaction specified by the provided transactionID.

@@ -107,7 +107,9 @@ function IOURequestStepDistance({
     // When online, fetch the backup route to ensure the map is populated even if the user does not save the transaction.
     // Fetch the backup route first to ensure the backup transaction map is updated before the main transaction map.
     // This prevents a scenario where the main map loads, the user dismisses the map editor, and the backup map has not yet loaded due to delay.
-    useFetchRoute(transactionBackup, backupWaypoints, action, CONST.TRANSACTION.STATE.BACKUP);
+    console.log('****** 333444 ******', 333444);
+
+    useFetchRoute(transactionBackup, backupWaypoints, action, CONST.TRANSACTION.STATE.BACKUP, true);
     const {shouldFetchRoute, validatedWaypoints} = useFetchRoute(
         transaction,
         waypoints,
