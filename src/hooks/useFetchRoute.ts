@@ -35,7 +35,7 @@ export default function useFetchRoute(
             return;
         }
 
-        getRoute(transaction.transactionID, validatedWaypoints, transactionState, isIOURequestStepDistance ? isIOURequestStepDistance && isSearchTopmostFullScreenRoute() : false);
+        getRoute(transaction.transactionID, validatedWaypoints, transactionState, isSearchTopmostFullScreenRoute());
     }, [shouldFetchRoute, transaction?.transactionID, validatedWaypoints, isOffline, action, transactionState, isIOURequestStepDistance]);
 
     return {shouldFetchRoute, validatedWaypoints};
