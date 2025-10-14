@@ -98,10 +98,14 @@ function DraggableList<T>({
         };
 
         document.addEventListener('mousemove', handleMouseMove);
-        document.addEventListener('mouseup', () => {
-            document.removeEventListener('mousemove', handleMouseMove);
-            stopAutoScroll();
-        }, {once: true});
+        document.addEventListener(
+            'mouseup',
+            () => {
+                document.removeEventListener('mousemove', handleMouseMove);
+                stopAutoScroll();
+            },
+            {once: true},
+        );
     }, [handleAutoScroll, stopAutoScroll]);
 
     /**
@@ -109,20 +113,23 @@ function DraggableList<T>({
      * It will reorder the list and call the callback function
      * to notify the parent component about the change
      */
-    const onDragEnd = useCallback((event: DragEndEvent) => {
-        // Stop auto-scroll when drag ends
-        stopAutoScroll();
+    const onDragEnd = useCallback(
+        (event: DragEndEvent) => {
+            // Stop auto-scroll when drag ends
+            stopAutoScroll();
 
-        const {active, over} = event;
+            const {active, over} = event;
 
-        if (over !== null && active.id !== over.id) {
-            const oldIndex = items.indexOf(active.id.toString());
-            const newIndex = items.indexOf(over.id.toString());
+            if (over !== null && active.id !== over.id) {
+                const oldIndex = items.indexOf(active.id.toString());
+                const newIndex = items.indexOf(over.id.toString());
 
-            const reorderedItems = arrayMove(data, oldIndex, newIndex);
-            onDragEndCallback?.({data: reorderedItems});
-        }
-    }, [items, data, onDragEndCallback, stopAutoScroll]);
+                const reorderedItems = arrayMove(data, oldIndex, newIndex);
+                onDragEndCallback?.({data: reorderedItems});
+            }
+        },
+        [items, data, onDragEndCallback, stopAutoScroll],
+    );
 
     const sortableItems = data.map((item, index) => {
         const key = keyExtractor(item, index);
