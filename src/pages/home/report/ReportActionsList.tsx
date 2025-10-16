@@ -71,6 +71,7 @@ import type * as OnyxTypes from '@src/types/onyx';
 import FloatingMessageCounter from './FloatingMessageCounter';
 import getInitialNumToRender from './getInitialNumReportActionsToRender';
 import ListBoundaryLoader from './ListBoundaryLoader';
+import {ReportActionsListContext} from './ReportActionsListContext';
 import ReportActionsListItemRenderer from './ReportActionsListItemRenderer';
 import shouldDisplayNewMarkerOnReportAction from './shouldDisplayNewMarkerOnReportAction';
 import useReportUnreadMessageScrollTracking from './useReportUnreadMessageScrollTracking';
@@ -215,6 +216,84 @@ function ReportActionsList({
     const readActionSkipped = useRef(false);
     const hasHeaderRendered = useRef(false);
     const linkedReportActionID = route?.params?.reportActionID;
+
+    // Store item layouts for offset calculation
+    const itemLayouts = useRef<{[key: number]: {offset: number; length: number}}>({});
+
+    /**
+     * Get the scroll offset for a specific item index
+     * @param index The index of the item in the FlatList
+     * @returns The calculated offset for the item, or null if not available
+     */
+    const getOffsetByIndex = useCallback(
+        (index: number): number | null => {
+            const layout = itemLayouts.current[index];
+            if (layout) {
+                return layout.offset;
+            }
+
+            // If we don't have the exact layout, estimate based on average item height
+            const avgItemHeight = styles.chatItem.paddingTop + styles.chatItem.paddingBottom + variables.fontSizeNormalHeight;
+
+            // For inverted FlatList, calculate from the bottom
+            const totalItems = sortedVisibleReportActions.length;
+            const estimatedOffset = (totalItems - index - 1) * avgItemHeight;
+
+            console.log('getOffsetByIndex - index:', index, 'estimatedOffset:', estimatedOffset, 'currentScrollOffset:', scrollingVerticalOffset.current);
+
+            return estimatedOffset;
+        },
+        [sortedVisibleReportActions.length, styles.chatItem.paddingTop, styles.chatItem.paddingBottom],
+    );
+
+    /**
+     * Scroll to a specific index with optional offset
+     * @param index The index to scroll to
+     * @param additionalOffset Additional offset to apply
+     */
+    const scrollToIndex = useCallback(
+        (index: number, additionalOffset: number = 0) => {
+            const offset = getOffsetByIndex(index);
+            if (offset !== null) {
+                console.log('scrollToIndex - scrolling to index:', index, 'offset:', offset + additionalOffset);
+                reportScrollManager.ref.current?.scrollToOffset({
+                    offset: offset + additionalOffset,
+                    animated: true,
+                });
+            }
+        },
+        [getOffsetByIndex, reportScrollManager],
+    );
+
+    /**
+     * Get current scroll information including position relative to items
+     */
+    const getCurrentScrollInfo = useCallback(() => {
+        const currentOffset = scrollingVerticalOffset.current;
+        const totalItems = sortedVisibleReportActions.length;
+
+        // Find which item index we're currently near
+        let nearestIndex = 0;
+        let minDistance = Infinity;
+
+        for (let i = 0; i < totalItems; i++) {
+            const itemOffset = getOffsetByIndex(i);
+            if (itemOffset !== null) {
+                const distance = Math.abs(currentOffset - itemOffset);
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    nearestIndex = i;
+                }
+            }
+        }
+
+        return {
+            currentOffset,
+            nearestIndex,
+            totalItems,
+            layouts: itemLayouts.current,
+        };
+    }, [sortedVisibleReportActions.length, getOffsetByIndex]);
 
     const lastAction = sortedVisibleReportActions.at(0);
     const sortedVisibleReportActionsObjects: OnyxTypes.ReportActions = useMemo(
@@ -659,41 +738,51 @@ function ReportActionsList({
             const transaction = transactionID ? transactions?.[`${ONYXKEYS.COLLECTION.TRANSACTION}${transactionID}`] : undefined;
             const actionLinkedTransactionRouteError = transaction?.errorFields?.route ?? undefined;
 
+            const handleItemLayout = (event: any) => {
+                const {height, y} = event.nativeEvent.layout;
+                itemLayouts.current[index] = {
+                    offset: y,
+                    length: height,
+                };
+            };
+
             return (
-                <ReportActionsListItemRenderer
-                    allReports={allReports}
-                    policies={policies}
-                    reportAction={reportAction}
-                    reportActions={sortedReportActions}
-                    parentReportAction={parentReportAction}
-                    parentReportActionForTransactionThread={parentReportActionForTransactionThread}
-                    index={index}
-                    report={report}
-                    transactionThreadReport={transactionThreadReport}
-                    linkedReportActionID={linkedReportActionID}
-                    displayAsGroup={
-                        !isConsecutiveChronosAutomaticTimerAction(sortedVisibleReportActions, index, chatIncludesChronosWithID(reportAction?.reportID)) &&
-                        isConsecutiveActionMadeByPreviousActor(sortedVisibleReportActions, index)
-                    }
-                    mostRecentIOUReportActionID={mostRecentIOUReportActionID}
-                    shouldHideThreadDividerLine={shouldHideThreadDividerLine}
-                    shouldDisplayNewMarker={reportAction.reportActionID === unreadMarkerReportActionID}
-                    shouldDisplayReplyDivider={sortedVisibleReportActions.length > 1}
-                    isFirstVisibleReportAction={firstVisibleReportActionID === reportAction.reportActionID}
-                    shouldUseThreadDividerLine={shouldUseThreadDividerLine}
-                    transactions={Object.values(transactions ?? {})}
-                    userWalletTierName={userWalletTierName}
-                    isUserValidated={isUserValidated}
-                    personalDetails={personalDetailsList}
-                    draftMessage={matchingDraftMessageString}
-                    emojiReactions={actionEmojiReactions}
-                    allDraftMessages={draftMessage}
-                    allEmojiReactions={emojiReactions}
-                    isReportArchived={isReportArchived}
-                    linkedTransactionRouteError={actionLinkedTransactionRouteError}
-                    userBillingFundID={userBillingFundID}
-                    isTryNewDotNVPDismissed={isTryNewDotNVPDismissed}
-                />
+                <View onLayout={handleItemLayout}>
+                    <ReportActionsListItemRenderer
+                        allReports={allReports}
+                        policies={policies}
+                        reportAction={reportAction}
+                        reportActions={sortedReportActions}
+                        parentReportAction={parentReportAction}
+                        parentReportActionForTransactionThread={parentReportActionForTransactionThread}
+                        index={index}
+                        report={report}
+                        transactionThreadReport={transactionThreadReport}
+                        linkedReportActionID={linkedReportActionID}
+                        displayAsGroup={
+                            !isConsecutiveChronosAutomaticTimerAction(sortedVisibleReportActions, index, chatIncludesChronosWithID(reportAction?.reportID)) &&
+                            isConsecutiveActionMadeByPreviousActor(sortedVisibleReportActions, index)
+                        }
+                        mostRecentIOUReportActionID={mostRecentIOUReportActionID}
+                        shouldHideThreadDividerLine={shouldHideThreadDividerLine}
+                        shouldDisplayNewMarker={reportAction.reportActionID === unreadMarkerReportActionID}
+                        shouldDisplayReplyDivider={sortedVisibleReportActions.length > 1}
+                        isFirstVisibleReportAction={firstVisibleReportActionID === reportAction.reportActionID}
+                        shouldUseThreadDividerLine={shouldUseThreadDividerLine}
+                        transactions={Object.values(transactions ?? {})}
+                        userWalletTierName={userWalletTierName}
+                        isUserValidated={isUserValidated}
+                        personalDetails={personalDetailsList}
+                        draftMessage={matchingDraftMessageString}
+                        emojiReactions={actionEmojiReactions}
+                        allDraftMessages={draftMessage}
+                        allEmojiReactions={emojiReactions}
+                        isReportArchived={isReportArchived}
+                        linkedTransactionRouteError={actionLinkedTransactionRouteError}
+                        userBillingFundID={userBillingFundID}
+                        isTryNewDotNVPDismissed={isTryNewDotNVPDismissed}
+                    />
+                </View>
             );
         },
         [
@@ -807,8 +896,21 @@ function ReportActionsList({
         loadOlderChats(false);
     }, [loadOlderChats]);
 
+    // Create the helpers object for context
+    const reportActionsListHelpers = useMemo(
+        () => ({
+            getOffsetByIndex,
+            scrollToIndex,
+            getCurrentScrollInfo,
+            getCurrentOffset: () => scrollingVerticalOffset.current,
+            getItemLayouts: () => itemLayouts.current,
+            getTotalItems: () => sortedVisibleReportActions.length,
+        }),
+        [getOffsetByIndex, scrollToIndex, getCurrentScrollInfo, sortedVisibleReportActions.length],
+    );
+
     return (
-        <>
+        <ReportActionsListContext.Provider value={reportActionsListHelpers}>
             <FloatingMessageCounter
                 hasNewMessages={!!unreadMarkerReportActionID}
                 isActive={isFloatingMessageCounterVisible}
@@ -855,7 +957,7 @@ function ReportActionsList({
                     }}
                 />
             </View>
-        </>
+        </ReportActionsListContext.Provider>
     );
 }
 

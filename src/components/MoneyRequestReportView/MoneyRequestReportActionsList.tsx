@@ -57,6 +57,7 @@ import {isTransactionPendingDelete} from '@libs/TransactionUtils';
 import Visibility from '@libs/Visibility';
 import isSearchTopmostFullScreenRoute from '@navigation/helpers/isSearchTopmostFullScreenRoute';
 import FloatingMessageCounter from '@pages/home/report/FloatingMessageCounter';
+import {ReportActionsListContext} from '@pages/home/report/ReportActionsListContext';
 import ReportActionsListItemRenderer from '@pages/home/report/ReportActionsListItemRenderer';
 import shouldDisplayNewMarkerOnReportAction from '@pages/home/report/shouldDisplayNewMarkerOnReportAction';
 import useReportUnreadMessageScrollTracking from '@pages/home/report/useReportUnreadMessageScrollTracking';
@@ -241,6 +242,9 @@ function MoneyRequestReportActionsList({
     const hasNewestReportActionRef = useRef(hasNewestReportAction);
     const userActiveSince = useRef<string>(DateUtils.getDBTime());
 
+    // Add offset tracking functionality for edit mode positioning
+    const itemLayouts = useRef<{[key: number]: {offset: number; length: number}}>({});
+
     const reportActionIDs = useMemo(() => {
         return reportActions?.map((action) => action.reportActionID) ?? [];
     }, [reportActions]);
@@ -406,6 +410,35 @@ function MoneyRequestReportActionsList({
     }, [currentUserAccountID, earliestReceivedOfflineMessageIndex, prevVisibleActionsMap, visibleReportActions, unreadMarkerTime]);
     prevUnreadMarkerReportActionID.current = unreadMarkerReportActionID;
 
+    // Add offset tracking helper functions
+    const getOffsetByIndex = useCallback((index: number): number | null => {
+        const layout = itemLayouts.current[index];
+        if (layout) {
+            return layout.offset;
+        }
+
+        // Return null if layout not available yet
+        return null;
+    }, []);
+
+    const getCurrentScrollInfo = useCallback(() => {
+        return {
+            currentOffset: scrollingVerticalTopOffset.current,
+            nearestIndex: -1, // Would need more complex logic to determine nearest index
+            totalItems: visibleReportActions.length,
+            layouts: itemLayouts.current,
+        };
+    }, [visibleReportActions.length]);
+
+    // Create the helpers object for context
+    const reportActionsListHelpers = useMemo(
+        () => ({
+            getOffsetByIndex,
+            getCurrentScrollInfo,
+        }),
+        [getOffsetByIndex, getCurrentScrollInfo, visibleReportActions.length],
+    );
+
     const {isFloatingMessageCounterVisible, setIsFloatingMessageCounterVisible, trackVerticalScrolling, onViewableItemsChanged} = useReportUnreadMessageScrollTracking({
         reportID: report.reportID,
         currentVerticalScrollingOffsetRef: scrollingVerticalBottomOffset,
@@ -544,33 +577,43 @@ function MoneyRequestReportActionsList({
             const matchingDraftMessage = reportDraftMessages?.[reportAction.reportActionID];
             const matchingDraftMessageString = typeof matchingDraftMessage === 'string' ? matchingDraftMessage : matchingDraftMessage?.message;
 
+            const handleItemLayout = (event: any) => {
+                const {height, y} = event.nativeEvent.layout;
+                itemLayouts.current[index] = {
+                    offset: y,
+                    length: height,
+                };
+            };
+
             return (
-                <ReportActionsListItemRenderer
-                    allReports={allReports}
-                    policies={policies}
-                    reportAction={reportAction}
-                    reportActions={reportActions}
-                    parentReportAction={parentReportAction}
-                    parentReportActionForTransactionThread={EmptyParentReportActionForTransactionThread}
-                    index={index}
-                    report={report}
-                    transactionThreadReport={transactionThreadReport}
-                    displayAsGroup={displayAsGroup}
-                    mostRecentIOUReportActionID={mostRecentIOUReportActionID}
-                    shouldDisplayNewMarker={reportAction.reportActionID === unreadMarkerReportActionID}
-                    shouldDisplayReplyDivider={visibleReportActions.length > 1}
-                    isFirstVisibleReportAction={firstVisibleReportActionID === reportAction.reportActionID}
-                    shouldHideThreadDividerLine
-                    linkedReportActionID={linkedReportActionID}
-                    userWalletTierName={userWalletTierName}
-                    isUserValidated={isUserValidated}
-                    personalDetails={personalDetails}
-                    userBillingFundID={userBillingFundID}
-                    emojiReactions={actionEmojiReactions}
-                    isReportArchived={isReportArchived}
-                    draftMessage={matchingDraftMessageString}
-                    isTryNewDotNVPDismissed={isTryNewDotNVPDismissed}
-                />
+                <View onLayout={handleItemLayout}>
+                    <ReportActionsListItemRenderer
+                        allReports={allReports}
+                        policies={policies}
+                        reportAction={reportAction}
+                        reportActions={reportActions}
+                        parentReportAction={parentReportAction}
+                        parentReportActionForTransactionThread={EmptyParentReportActionForTransactionThread}
+                        index={index}
+                        report={report}
+                        transactionThreadReport={transactionThreadReport}
+                        displayAsGroup={displayAsGroup}
+                        mostRecentIOUReportActionID={mostRecentIOUReportActionID}
+                        shouldDisplayNewMarker={reportAction.reportActionID === unreadMarkerReportActionID}
+                        shouldDisplayReplyDivider={visibleReportActions.length > 1}
+                        isFirstVisibleReportAction={firstVisibleReportActionID === reportAction.reportActionID}
+                        shouldHideThreadDividerLine
+                        linkedReportActionID={linkedReportActionID}
+                        userWalletTierName={userWalletTierName}
+                        isUserValidated={isUserValidated}
+                        personalDetails={personalDetails}
+                        userBillingFundID={userBillingFundID}
+                        emojiReactions={actionEmojiReactions}
+                        isReportArchived={isReportArchived}
+                        draftMessage={matchingDraftMessageString}
+                        isTryNewDotNVPDismissed={isTryNewDotNVPDismissed}
+                    />
+                </View>
             );
         },
         [
@@ -642,162 +685,164 @@ function MoneyRequestReportActionsList({
     // Wrapped into useCallback to stabilize children re-renders
     const keyExtractor = useCallback((item: OnyxTypes.ReportAction) => item.reportActionID, []);
     return (
-        <View
-            style={[styles.flex1]}
-            ref={wrapperViewRef}
-        >
-            {shouldUseNarrowLayout && isMobileSelectionModeEnabled && (
-                <>
-                    <ButtonWithDropdownMenu
-                        onPress={() => null}
-                        options={selectedTransactionsOptions}
-                        customText={translate('workspace.common.selected', {count: selectedTransactionIDs.length})}
-                        isSplitButton={false}
-                        shouldAlwaysShowDropdownMenu
-                        wrapperStyle={[styles.w100, styles.ph5]}
-                    />
-                    <View style={[styles.alignItemsCenter, styles.userSelectNone, styles.flexRow, styles.pt6, styles.ph8, styles.pb3]}>
-                        <Checkbox
-                            accessibilityLabel={translate('workspace.people.selectAll')}
-                            isChecked={isSelectAllChecked}
-                            isIndeterminate={selectedTransactionIDs.length > 0 && selectedTransactionIDs.length !== transactionsWithoutPendingDelete.length}
-                            onPress={() => {
-                                if (selectedTransactionIDs.length !== 0) {
-                                    clearSelectedTransactions(true);
-                                } else {
-                                    setSelectedTransactions(transactionsWithoutPendingDelete.map((t) => t.transactionID));
+        <ReportActionsListContext.Provider value={reportActionsListHelpers}>
+            <View
+                style={[styles.flex1]}
+                ref={wrapperViewRef}
+            >
+                {shouldUseNarrowLayout && isMobileSelectionModeEnabled && (
+                    <>
+                        <ButtonWithDropdownMenu
+                            onPress={() => null}
+                            options={selectedTransactionsOptions}
+                            customText={translate('workspace.common.selected', {count: selectedTransactionIDs.length})}
+                            isSplitButton={false}
+                            shouldAlwaysShowDropdownMenu
+                            wrapperStyle={[styles.w100, styles.ph5]}
+                        />
+                        <View style={[styles.alignItemsCenter, styles.userSelectNone, styles.flexRow, styles.pt6, styles.ph8, styles.pb3]}>
+                            <Checkbox
+                                accessibilityLabel={translate('workspace.people.selectAll')}
+                                isChecked={isSelectAllChecked}
+                                isIndeterminate={selectedTransactionIDs.length > 0 && selectedTransactionIDs.length !== transactionsWithoutPendingDelete.length}
+                                onPress={() => {
+                                    if (selectedTransactionIDs.length !== 0) {
+                                        clearSelectedTransactions(true);
+                                    } else {
+                                        setSelectedTransactions(transactionsWithoutPendingDelete.map((t) => t.transactionID));
+                                    }
+                                }}
+                            />
+                            <PressableWithFeedback
+                                style={[styles.userSelectNone, styles.alignItemsCenter]}
+                                onPress={() => {
+                                    if (isSelectAllChecked) {
+                                        clearSelectedTransactions(true);
+                                    } else {
+                                        setSelectedTransactions(transactionsWithoutPendingDelete.map((t) => t.transactionID));
+                                    }
+                                }}
+                                accessibilityLabel={translate('workspace.people.selectAll')}
+                                role="button"
+                                accessibilityState={{checked: isSelectAllChecked}}
+                                dataSet={{[CONST.SELECTION_SCRAPER_HIDDEN_ELEMENT]: true}}
+                            >
+                                <Text style={[styles.textStrong, styles.ph3]}>{translate('workspace.people.selectAll')}</Text>
+                            </PressableWithFeedback>
+                        </View>
+                        <ConfirmModal
+                            title={translate('iou.deleteExpense', {count: selectedTransactionIDs.length})}
+                            isVisible={isDeleteModalVisible}
+                            onConfirm={() => {
+                                const shouldNavigateBack =
+                                    transactions.filter((trans) => trans.pendingAction !== CONST.RED_BRICK_ROAD_PENDING_ACTION.DELETE).length === selectedTransactionIDs.length;
+                                handleDeleteTransactions();
+                                if (shouldNavigateBack) {
+                                    Navigation.goBack(route.params?.backTo);
                                 }
                             }}
+                            onCancel={hideDeleteModal}
+                            prompt={translate('iou.deleteConfirmation', {count: selectedTransactionIDs.length})}
+                            confirmText={translate('common.delete')}
+                            cancelText={translate('common.cancel')}
+                            danger
+                            shouldEnableNewFocusManagement
                         />
-                        <PressableWithFeedback
-                            style={[styles.userSelectNone, styles.alignItemsCenter]}
-                            onPress={() => {
-                                if (isSelectAllChecked) {
-                                    clearSelectedTransactions(true);
-                                } else {
-                                    setSelectedTransactions(transactionsWithoutPendingDelete.map((t) => t.transactionID));
-                                }
-                            }}
-                            accessibilityLabel={translate('workspace.people.selectAll')}
-                            role="button"
-                            accessibilityState={{checked: isSelectAllChecked}}
-                            dataSet={{[CONST.SELECTION_SCRAPER_HIDDEN_ELEMENT]: true}}
-                        >
-                            <Text style={[styles.textStrong, styles.ph3]}>{translate('workspace.people.selectAll')}</Text>
-                        </PressableWithFeedback>
-                    </View>
-                    <ConfirmModal
-                        title={translate('iou.deleteExpense', {count: selectedTransactionIDs.length})}
-                        isVisible={isDeleteModalVisible}
-                        onConfirm={() => {
-                            const shouldNavigateBack =
-                                transactions.filter((trans) => trans.pendingAction !== CONST.RED_BRICK_ROAD_PENDING_ACTION.DELETE).length === selectedTransactionIDs.length;
-                            handleDeleteTransactions();
-                            if (shouldNavigateBack) {
-                                Navigation.goBack(route.params?.backTo);
-                            }
-                        }}
-                        onCancel={hideDeleteModal}
-                        prompt={translate('iou.deleteConfirmation', {count: selectedTransactionIDs.length})}
-                        confirmText={translate('common.delete')}
-                        cancelText={translate('common.cancel')}
-                        danger
-                        shouldEnableNewFocusManagement
-                    />
-                </>
-            )}
-            <View style={[styles.flex1, styles.justifyContentEnd, styles.overflowHidden]}>
-                <FloatingMessageCounter
-                    hasNewMessages={!!unreadMarkerReportActionID}
-                    isActive={isFloatingMessageCounterVisible}
-                    onClick={scrollToBottomAndMarkReportAsRead}
-                />
-                {isEmpty(visibleReportActions) && isEmpty(transactions) && !showReportActionsLoadingState ? (
-                    <ScrollView contentContainerStyle={styles.flexGrow1}>
-                        <MoneyRequestViewReportFields
-                            report={report}
-                            policy={policy}
-                        />
-                        <SearchMoneyRequestReportEmptyState
-                            report={report}
-                            policy={policy}
-                        />
-                    </ScrollView>
-                ) : (
-                    <FlatList
-                        initialNumToRender={INITIAL_NUM_TO_RENDER}
-                        accessibilityLabel={translate('sidebarScreen.listOfChatMessages')}
-                        testID="money-request-report-actions-list"
-                        style={styles.overscrollBehaviorContain}
-                        data={visibleReportActions}
-                        renderItem={renderItem}
-                        onViewableItemsChanged={onViewableItemsChanged}
-                        keyExtractor={keyExtractor}
-                        onLayout={recordTimeToMeasureItemLayout}
-                        onEndReached={onEndReached}
-                        onEndReachedThreshold={0.75}
-                        onStartReached={onStartReached}
-                        onStartReachedThreshold={0.75}
-                        ListHeaderComponent={
-                            <>
-                                <MoneyRequestViewReportFields
-                                    report={report}
-                                    policy={policy}
-                                />
-                                <MoneyRequestReportTransactionList
-                                    report={report}
-                                    transactions={transactions}
-                                    newTransactions={newTransactions}
-                                    hasPendingDeletionTransaction={hasPendingDeletionTransaction}
-                                    reportActions={reportActions}
-                                    violations={violations}
-                                    hasComments={reportHasComments}
-                                    isLoadingInitialReportActions={showReportActionsLoadingState}
-                                    scrollToNewTransaction={scrollToNewTransaction}
-                                    policy={policy}
-                                />
-                            </>
-                        }
-                        keyboardShouldPersistTaps="handled"
-                        onScroll={trackVerticalScrolling}
-                        contentContainerStyle={[shouldUseNarrowLayout ? styles.pt4 : styles.pt2]}
-                        ref={reportScrollManager.ref}
-                        ListEmptyComponent={!isOffline && showReportActionsLoadingState ? <ReportActionsListLoadingSkeleton /> : undefined} // This skeleton component is only used for loading state, the empty state is handled by SearchMoneyRequestReportEmptyState
-                        removeClippedSubviews={false}
-                    />
+                    </>
                 )}
+                <View style={[styles.flex1, styles.justifyContentEnd, styles.overflowHidden]}>
+                    <FloatingMessageCounter
+                        hasNewMessages={!!unreadMarkerReportActionID}
+                        isActive={isFloatingMessageCounterVisible}
+                        onClick={scrollToBottomAndMarkReportAsRead}
+                    />
+                    {isEmpty(visibleReportActions) && isEmpty(transactions) && !showReportActionsLoadingState ? (
+                        <ScrollView contentContainerStyle={styles.flexGrow1}>
+                            <MoneyRequestViewReportFields
+                                report={report}
+                                policy={policy}
+                            />
+                            <SearchMoneyRequestReportEmptyState
+                                report={report}
+                                policy={policy}
+                            />
+                        </ScrollView>
+                    ) : (
+                        <FlatList
+                            initialNumToRender={INITIAL_NUM_TO_RENDER}
+                            accessibilityLabel={translate('sidebarScreen.listOfChatMessages')}
+                            testID="money-request-report-actions-list"
+                            style={styles.overscrollBehaviorContain}
+                            data={visibleReportActions}
+                            renderItem={renderItem}
+                            onViewableItemsChanged={onViewableItemsChanged}
+                            keyExtractor={keyExtractor}
+                            onLayout={recordTimeToMeasureItemLayout}
+                            onEndReached={onEndReached}
+                            onEndReachedThreshold={0.75}
+                            onStartReached={onStartReached}
+                            onStartReachedThreshold={0.75}
+                            ListHeaderComponent={
+                                <>
+                                    <MoneyRequestViewReportFields
+                                        report={report}
+                                        policy={policy}
+                                    />
+                                    <MoneyRequestReportTransactionList
+                                        report={report}
+                                        transactions={transactions}
+                                        newTransactions={newTransactions}
+                                        hasPendingDeletionTransaction={hasPendingDeletionTransaction}
+                                        reportActions={reportActions}
+                                        violations={violations}
+                                        hasComments={reportHasComments}
+                                        isLoadingInitialReportActions={showReportActionsLoadingState}
+                                        scrollToNewTransaction={scrollToNewTransaction}
+                                        policy={policy}
+                                    />
+                                </>
+                            }
+                            keyboardShouldPersistTaps="handled"
+                            onScroll={trackVerticalScrolling}
+                            contentContainerStyle={[shouldUseNarrowLayout ? styles.pt4 : styles.pt2]}
+                            ref={reportScrollManager.ref}
+                            ListEmptyComponent={!isOffline && showReportActionsLoadingState ? <ReportActionsListLoadingSkeleton /> : undefined} // This skeleton component is only used for loading state, the empty state is handled by SearchMoneyRequestReportEmptyState
+                            removeClippedSubviews={false}
+                        />
+                    )}
+                </View>
+                <DecisionModal
+                    title={translate('common.downloadFailedTitle')}
+                    prompt={translate('common.downloadFailedDescription')}
+                    isSmallScreenWidth={shouldUseNarrowLayout}
+                    onSecondOptionSubmit={() => setIsDownloadErrorModalVisible(false)}
+                    secondOptionText={translate('common.buttonConfirm')}
+                    isVisible={isDownloadErrorModalVisible}
+                    onClose={() => setIsDownloadErrorModalVisible(false)}
+                />
+                <DecisionModal
+                    title={translate('common.youAppearToBeOffline')}
+                    prompt={translate('common.offlinePrompt')}
+                    isSmallScreenWidth={shouldUseNarrowLayout}
+                    onSecondOptionSubmit={() => setOfflineModalVisible(false)}
+                    secondOptionText={translate('common.buttonConfirm')}
+                    isVisible={offlineModalVisible}
+                    onClose={() => setOfflineModalVisible(false)}
+                />
+                <ConfirmModal
+                    onConfirm={() => {
+                        setIsExportWithTemplateModalVisible(false);
+                        clearSelectedTransactions(undefined, true);
+                    }}
+                    onCancel={() => setIsExportWithTemplateModalVisible(false)}
+                    isVisible={isExportWithTemplateModalVisible}
+                    title={translate('export.exportInProgress')}
+                    prompt={translate('export.conciergeWillSend')}
+                    confirmText={translate('common.buttonConfirm')}
+                    shouldShowCancelButton={false}
+                />
             </View>
-            <DecisionModal
-                title={translate('common.downloadFailedTitle')}
-                prompt={translate('common.downloadFailedDescription')}
-                isSmallScreenWidth={shouldUseNarrowLayout}
-                onSecondOptionSubmit={() => setIsDownloadErrorModalVisible(false)}
-                secondOptionText={translate('common.buttonConfirm')}
-                isVisible={isDownloadErrorModalVisible}
-                onClose={() => setIsDownloadErrorModalVisible(false)}
-            />
-            <DecisionModal
-                title={translate('common.youAppearToBeOffline')}
-                prompt={translate('common.offlinePrompt')}
-                isSmallScreenWidth={shouldUseNarrowLayout}
-                onSecondOptionSubmit={() => setOfflineModalVisible(false)}
-                secondOptionText={translate('common.buttonConfirm')}
-                isVisible={offlineModalVisible}
-                onClose={() => setOfflineModalVisible(false)}
-            />
-            <ConfirmModal
-                onConfirm={() => {
-                    setIsExportWithTemplateModalVisible(false);
-                    clearSelectedTransactions(undefined, true);
-                }}
-                onCancel={() => setIsExportWithTemplateModalVisible(false)}
-                isVisible={isExportWithTemplateModalVisible}
-                title={translate('export.exportInProgress')}
-                prompt={translate('export.conciergeWillSend')}
-                confirmText={translate('common.buttonConfirm')}
-                shouldShowCancelButton={false}
-            />
-        </View>
+        </ReportActionsListContext.Provider>
     );
 }
 

@@ -45,6 +45,7 @@ import usePermissions from '@hooks/usePermissions';
 import usePreferredPolicy from '@hooks/usePreferredPolicy';
 import usePrevious from '@hooks/usePrevious';
 import useReportIsArchived from '@hooks/useReportIsArchived';
+import useReportScrollManager from '@hooks/useReportScrollManager';
 import useResponsiveLayout from '@hooks/useResponsiveLayout';
 import useStyleUtils from '@hooks/useStyleUtils';
 import useTheme from '@hooks/useTheme';
@@ -195,6 +196,7 @@ import ReportActionItemMessage from './ReportActionItemMessage';
 import ReportActionItemMessageEdit from './ReportActionItemMessageEdit';
 import ReportActionItemSingle from './ReportActionItemSingle';
 import ReportActionItemThread from './ReportActionItemThread';
+import {useReportActionsListHelpers} from './ReportActionsListContext';
 import TripSummary from './TripSummary';
 
 type PureReportActionItemProps = {
@@ -475,6 +477,18 @@ function PureReportActionItem({
     const popoverAnchorRef = useRef<Exclude<ContextMenuAnchor, TextInput>>(null);
     const downloadedPreviews = useRef<string[]>([]);
     const prevDraftMessage = usePrevious(draftMessage);
+    const reportActionsListHelpers = useReportActionsListHelpers();
+    const reportScrollManager = useReportScrollManager();
+    // Add detailed debugging for context
+    useEffect(() => {
+        console.log('PureReportActionItem context debug:', {
+            hasHelpers: !!reportActionsListHelpers,
+            helperKeys: reportActionsListHelpers ? Object.keys(reportActionsListHelpers) : 'no helpers',
+            hasGetOffsetByIndex: !!reportActionsListHelpers?.getOffsetByIndex,
+            reportActionID: action.reportActionID,
+            isInEditMode: draftMessage !== undefined,
+        });
+    }, [reportActionsListHelpers, action.reportActionID, draftMessage]);
     const isReportActionLinked = linkedReportActionID && action.reportActionID && linkedReportActionID === action.reportActionID;
     const [isReportActionActive, setIsReportActionActive] = useState(!!isReportActionLinked);
     const isActionableWhisper =
@@ -568,9 +582,26 @@ function PureReportActionItem({
             return;
         }
 
+        // When entering edit mode (draftMessage changes from undefined to defined), get the offset
+        console.log('Entering edit mode for message at index:', index);
+        console.log('reportActionsListHelpers:', reportActionsListHelpers);
         focusComposerWithDelay(composerTextInputRef.current)(true);
-    }, [prevDraftMessage, draftMessage]);
+        // Call getOffsetByIndex from the context if available
+        if (reportActionsListHelpers?.getOffsetByIndex) {
+            const offset = reportActionsListHelpers.getOffsetByIndex(index);
+            console.log('Message offset when entering edit mode:', offset);
 
+            // You can also get current scroll info for more context
+            // InteractionManager.runAfterInteractions(() => {
+            //     setTimeout(() => {
+            //         const scrollInfo = reportActionsListHelpers.getCurrentScrollInfo();
+            //         reportScrollManager.scrollToOffset(scrollInfo.currentOffset + 15);
+            //     }, 150);
+            // });
+        } else {
+            console.warn('reportActionsListHelpers is not available in PureReportActionItem context');
+        }
+    }, [prevDraftMessage, draftMessage, index, reportActionsListHelpers]);
     useEffect(() => {
         if (!Permissions.canUseLinkPreviews()) {
             return;
