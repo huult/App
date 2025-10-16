@@ -592,12 +592,12 @@ function PureReportActionItem({
             console.log('Message offset when entering edit mode:', offset);
 
             // You can also get current scroll info for more context
-            // InteractionManager.runAfterInteractions(() => {
-            //     setTimeout(() => {
-            //         const scrollInfo = reportActionsListHelpers.getCurrentScrollInfo();
-            //         reportScrollManager.scrollToOffset(scrollInfo.currentOffset + 15);
-            //     }, 150);
-            // });
+            InteractionManager.runAfterInteractions(() => {
+                setTimeout(() => {
+                    const scrollInfo = reportActionsListHelpers.getCurrentScrollInfo();
+                    reportScrollManager.scrollToOffset(scrollInfo.currentOffset + 15);
+                }, 150);
+            });
         } else {
             console.warn('reportActionsListHelpers is not available in PureReportActionItem context');
         }
