@@ -14,6 +14,7 @@ import Log from '@libs/Log';
 import {hasCompletedGuidedSetupFlowSelector, wasInvitedToNewDotSelector} from '@libs/onboardingSelectors';
 import shouldOpenLastVisitedPath from '@libs/shouldOpenLastVisitedPath';
 import {getPathFromURL} from '@libs/Url';
+import {handleRouteChange} from '@libs/ViewportMetaManager';
 import {updateLastVisitedPath} from '@userActions/App';
 import {updateOnboardingLastVisitedPath} from '@userActions/Welcome';
 import {getOnboardingInitialPath} from '@userActions/Welcome/OnboardingFlow';
@@ -83,6 +84,9 @@ function parseAndLogRoute(state: NavigationState) {
     if (focusedRouteName) {
         new FS.Page(focusedRouteName, {path: currentPath}).start();
     }
+
+    // Update viewport meta tag based on current route
+    handleRouteChange(focusedRouteName);
 }
 
 function NavigationRoot({authenticated, lastVisitedPath, initialUrl, onReady}: NavigationRootProps) {
