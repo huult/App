@@ -9,7 +9,6 @@ import type {SearchFilterKey, SearchQueryString, UserFriendlyKey} from './compon
 import type CONST from './CONST';
 import type {IOUAction, IOUType} from './CONST';
 import type {IOURequestType} from './libs/actions/IOU';
-import Log from './libs/Log';
 import type {RootNavigatorParamList} from './libs/Navigation/types';
 import type {ReimbursementAccountStepToOpen} from './libs/ReimbursementAccountUtils';
 import {getUrlWithParams} from './libs/Url';
@@ -19,6 +18,25 @@ import type {ExitReason} from './types/form/ExitSurveyReasonForm';
 import type {ConnectionName, SageIntacctMappingName} from './types/onyx/Policy';
 import type {CustomFieldType} from './types/onyx/PolicyEmployee';
 import type AssertTypesNotEqual from './types/utils/AssertTypesNotEqual';
+
+// Lazy load Log to avoid circular dependency
+let LogModule: typeof import('./libs/Log') | null = null;
+const getLog = () => {
+    if (!LogModule) {
+        // Use dynamic import to break circular dependency
+        import('./libs/Log')
+            .then((module) => {
+                LogModule = module;
+            })
+            .catch(() => {
+                // Fallback to console if import fails
+                console.warn('Failed to load Log module');
+            });
+        // Return console as immediate fallback
+        return console;
+    }
+    return LogModule.default;
+};
 
 // This is a file containing constants for all the routes we want to be able to go to
 
@@ -74,7 +92,7 @@ const ROUTES = {
         route: 'search/view/:reportID/:reportActionID?',
         getRoute: ({reportID, reportActionID, backTo}: {reportID: string | undefined; reportActionID?: string; backTo?: string}) => {
             if (!reportID) {
-                Log.warn('Invalid reportID is used to build the SEARCH_REPORT route');
+                getLog().warn('Invalid reportID is used to build the SEARCH_REPORT route');
             }
 
             const baseRoute = reportActionID ? (`search/view/${reportID}/${reportActionID}` as const) : (`search/view/${reportID}` as const);
@@ -146,7 +164,7 @@ const ROUTES = {
         route: 'bank-account/:stepToOpen?',
         getRoute: (policyID: string | undefined, stepToOpen: ReimbursementAccountStepToOpen = '', backTo?: string) => {
             if (!policyID) {
-                Log.warn('Invalid policyID is used to build the BANK_ACCOUNT_WITH_STEP_TO_OPEN route');
+                getLog().warn('Invalid policyID is used to build the BANK_ACCOUNT_WITH_STEP_TO_OPEN route');
             }
 
             // eslint-disable-next-line no-restricted-syntax -- Legacy route generation
@@ -157,7 +175,7 @@ const ROUTES = {
         route: 'bank-account/enter-signer-info',
         getRoute: (policyID: string | undefined, bankAccountID: string | undefined, isCompleted: boolean) => {
             if (!policyID) {
-                Log.warn('Invalid policyID is used to build the BANK_ACCOUNT_ENTER_SIGNER_INFO route');
+                getLog().warn('Invalid policyID is used to build the BANK_ACCOUNT_ENTER_SIGNER_INFO route');
             }
             return `bank-account/enter-signer-info?policyID=${policyID}&bankAccountID=${bankAccountID}&isCompleted=${isCompleted}` as const;
         },
@@ -467,7 +485,7 @@ const ROUTES = {
         route: 'r/:reportID?/:reportActionID?',
         getRoute: (reportID: string | undefined, reportActionID?: string, referrer?: string, backTo?: string) => {
             if (!reportID) {
-                Log.warn('Invalid reportID is used to build the REPORT_WITH_ID route');
+                getLog().warn('Invalid reportID is used to build the REPORT_WITH_ID route');
             }
             const baseRoute = reportActionID ? (`r/${reportID}/${reportActionID}` as const) : (`r/${reportID}` as const);
 
@@ -509,7 +527,7 @@ const ROUTES = {
         route: 'r/:reportID/edit/policyField/:policyID/:fieldID',
         getRoute: (reportID: string | undefined, policyID: string | undefined, fieldID: string, backTo?: string) => {
             if (!policyID || !reportID) {
-                Log.warn('Invalid policyID or reportID is used to build the EDIT_REPORT_FIELD_REQUEST route', {
+                getLog().warn('Invalid policyID or reportID is used to build the EDIT_REPORT_FIELD_REQUEST route', {
                     policyID,
                     reportID,
                 });
@@ -523,7 +541,7 @@ const ROUTES = {
         route: 'r/:reportID/details/shareCode',
         getRoute: (reportID: string | undefined, backTo?: string) => {
             if (!reportID) {
-                Log.warn('Invalid reportID is used to build the REPORT_WITH_ID_DETAILS_SHARE_CODE route');
+                getLog().warn('Invalid reportID is used to build the REPORT_WITH_ID_DETAILS_SHARE_CODE route');
             }
 
             // eslint-disable-next-line no-restricted-syntax -- Legacy route generation
@@ -558,7 +576,7 @@ const ROUTES = {
         route: 'r/:reportID/details',
         getRoute: (reportID: string | number | undefined, backTo?: string) => {
             if (!reportID) {
-                Log.warn('Invalid reportID is used to build the REPORT_WITH_ID_DETAILS route');
+                getLog().warn('Invalid reportID is used to build the REPORT_WITH_ID_DETAILS route');
             }
 
             // eslint-disable-next-line no-restricted-syntax -- Legacy route generation
@@ -621,7 +639,7 @@ const ROUTES = {
         route: 'r/:reportID/split/:reportActionID',
         getRoute: (reportID: string | undefined, reportActionID: string, backTo?: string) => {
             if (!reportID) {
-                Log.warn('Invalid reportID is used to build the SPLIT_BILL_DETAILS route');
+                getLog().warn('Invalid reportID is used to build the SPLIT_BILL_DETAILS route');
             }
 
             // eslint-disable-next-line no-restricted-syntax -- Legacy route generation
@@ -632,7 +650,7 @@ const ROUTES = {
         route: 'r/:reportID/title',
         getRoute: (reportID: string | undefined, backTo?: string) => {
             if (!reportID) {
-                Log.warn('Invalid reportID is used to build the TASK_TITLE route');
+                getLog().warn('Invalid reportID is used to build the TASK_TITLE route');
             }
 
             // eslint-disable-next-line no-restricted-syntax -- Legacy route generation
@@ -643,7 +661,7 @@ const ROUTES = {
         route: 'r/:reportID/description',
         getRoute: (reportID: string | undefined, backTo?: string) => {
             if (!reportID) {
-                Log.warn('Invalid reportID is used to build the REPORT_DESCRIPTION route');
+                getLog().warn('Invalid reportID is used to build the REPORT_DESCRIPTION route');
             }
 
             // eslint-disable-next-line no-restricted-syntax -- Legacy route generation
@@ -654,7 +672,7 @@ const ROUTES = {
         route: 'r/:reportID/assignee',
         getRoute: (reportID: string | undefined, backTo?: string) => {
             if (!reportID) {
-                Log.warn('Invalid reportID is used to build the TASK_ASSIGNEE route');
+                getLog().warn('Invalid reportID is used to build the TASK_ASSIGNEE route');
             }
 
             // eslint-disable-next-line no-restricted-syntax -- Legacy route generation
@@ -689,7 +707,7 @@ const ROUTES = {
         route: 'r/:reportID/invite',
         getRoute: (reportID: string | undefined, backTo?: string) => {
             if (!reportID) {
-                Log.warn('Invalid reportID is used to build the ROOM_INVITE route');
+                getLog().warn('Invalid reportID is used to build the ROOM_INVITE route');
             }
 
             // eslint-disable-next-line no-restricted-syntax -- Legacy route generation
@@ -700,7 +718,7 @@ const ROUTES = {
         route: 'create/split-expense/overview/:reportID/:transactionID/:splitExpenseTransactionID?',
         getRoute: (reportID: string | undefined, originalTransactionID: string | undefined, splitExpenseTransactionID?: string, backTo?: string) => {
             if (!reportID || !originalTransactionID) {
-                Log.warn(`Invalid ${reportID}(reportID) or ${originalTransactionID}(transactionID) is used to build the SPLIT_EXPENSE route`);
+                getLog().warn(`Invalid ${reportID}(reportID) or ${originalTransactionID}(transactionID) is used to build the SPLIT_EXPENSE route`);
             }
 
             // eslint-disable-next-line no-restricted-syntax -- Legacy route generation
@@ -711,7 +729,7 @@ const ROUTES = {
         route: 'edit/split-expense/overview/:reportID/:transactionID/:splitExpenseTransactionID?',
         getRoute: (reportID: string | undefined, originalTransactionID: string | undefined, splitExpenseTransactionID?: string, backTo?: string) => {
             if (!reportID || !originalTransactionID) {
-                Log.warn(`Invalid ${reportID}(reportID) or ${originalTransactionID}(transactionID) is used to build the SPLIT_EXPENSE_EDIT route`);
+                getLog().warn(`Invalid ${reportID}(reportID) or ${originalTransactionID}(transactionID) is used to build the SPLIT_EXPENSE_EDIT route`);
             }
 
             // eslint-disable-next-line no-restricted-syntax -- Legacy route generation
@@ -756,7 +774,7 @@ const ROUTES = {
         route: ':action/:iouType/amount/:transactionID/:reportID/:reportActionID?/:pageIndex?/:backToReport?',
         getRoute: (action: IOUAction, iouType: IOUType, transactionID: string | undefined, reportID: string | undefined, reportActionID?: string, pageIndex?: string, backTo = '') => {
             if (!transactionID || !reportID) {
-                Log.warn('Invalid transactionID or reportID is used to build the MONEY_REQUEST_STEP_AMOUNT route');
+                getLog().warn('Invalid transactionID or reportID is used to build the MONEY_REQUEST_STEP_AMOUNT route');
             }
 
             // eslint-disable-next-line no-restricted-syntax -- Legacy route generation
@@ -767,7 +785,7 @@ const ROUTES = {
         route: ':action/:iouType/taxRate/:transactionID/:reportID?',
         getRoute: (action: IOUAction, iouType: IOUType, transactionID: string | undefined, reportID: string | undefined, backTo = '') => {
             if (!transactionID || !reportID) {
-                Log.warn('Invalid transactionID or reportID is used to build the MONEY_REQUEST_STEP_TAX_RATE route');
+                getLog().warn('Invalid transactionID or reportID is used to build the MONEY_REQUEST_STEP_TAX_RATE route');
             }
 
             // eslint-disable-next-line no-restricted-syntax -- Legacy route generation
@@ -778,7 +796,7 @@ const ROUTES = {
         route: ':action/:iouType/taxAmount/:transactionID/:reportID?',
         getRoute: (action: IOUAction, iouType: IOUType, transactionID: string | undefined, reportID: string | undefined, backTo = '') => {
             if (!transactionID || !reportID) {
-                Log.warn('Invalid transactionID or reportID is used to build the MONEY_REQUEST_STEP_TAX_AMOUNT route');
+                getLog().warn('Invalid transactionID or reportID is used to build the MONEY_REQUEST_STEP_TAX_AMOUNT route');
             }
 
             // eslint-disable-next-line no-restricted-syntax -- Legacy route generation
@@ -789,7 +807,7 @@ const ROUTES = {
         route: ':action/:iouType/category/:transactionID/:reportID/:reportActionID?',
         getRoute: (action: IOUAction, iouType: IOUType, transactionID: string | undefined, reportID: string | undefined, backTo = '', reportActionID?: string) => {
             if (!transactionID || !reportID) {
-                Log.warn('Invalid transactionID or reportID is used to build the MONEY_REQUEST_STEP_CATEGORY route');
+                getLog().warn('Invalid transactionID or reportID is used to build the MONEY_REQUEST_STEP_CATEGORY route');
             }
 
             // eslint-disable-next-line no-restricted-syntax -- Legacy route generation
@@ -800,7 +818,7 @@ const ROUTES = {
         route: ':action/:iouType/attendees/:transactionID/:reportID',
         getRoute: (action: IOUAction, iouType: IOUType, transactionID: string | undefined, reportID: string | undefined, backTo = '') => {
             if (!transactionID || !reportID) {
-                Log.warn('Invalid transactionID or reportID is used to build the MONEY_REQUEST_ATTENDEE route');
+                getLog().warn('Invalid transactionID or reportID is used to build the MONEY_REQUEST_ATTENDEE route');
             }
 
             // eslint-disable-next-line no-restricted-syntax -- Legacy route generation
@@ -811,7 +829,7 @@ const ROUTES = {
         route: ':action/:iouType/accountant/:transactionID/:reportID',
         getRoute: (action: IOUAction, iouType: IOUType, transactionID: string | undefined, reportID: string | undefined, backTo = '') => {
             if (!transactionID || !reportID) {
-                Log.warn('Invalid transactionID or reportID is used to build the MONEY_REQUEST_ACCOUNTANT route');
+                getLog().warn('Invalid transactionID or reportID is used to build the MONEY_REQUEST_ACCOUNTANT route');
             }
 
             // eslint-disable-next-line no-restricted-syntax -- Legacy route generation
@@ -880,10 +898,10 @@ const ROUTES = {
         route: ':action/:iouType/receipt/:transactionID/:reportID',
         getRoute: (reportID: string, transactionID: string, action: IOUAction, iouType: IOUType) => {
             if (!reportID) {
-                Log.warn('Invalid reportID is used to build the MONEY_REQUEST_RECEIPT_PREVIEW route');
+                getLog().warn('Invalid reportID is used to build the MONEY_REQUEST_RECEIPT_PREVIEW route');
             }
             if (!transactionID) {
-                Log.warn('Invalid transactionID is used to build the MONEY_REQUEST_RECEIPT_PREVIEW route');
+                getLog().warn('Invalid transactionID is used to build the MONEY_REQUEST_RECEIPT_PREVIEW route');
             }
             return `${action}/${iouType}/receipt/${transactionID}/${reportID}?readonly=false` as const;
         },
@@ -892,7 +910,7 @@ const ROUTES = {
         route: ':action/:iouType/report/:reportID/edit',
         getRoute: (action: IOUAction, iouType: IOUType, reportID?: string, shouldTurnOffSelectionMode?: boolean, backTo = '') => {
             if (!reportID) {
-                Log.warn('Invalid reportID while building route MONEY_REQUEST_EDIT_REPORT');
+                getLog().warn('Invalid reportID while building route MONEY_REQUEST_EDIT_REPORT');
             }
 
             // eslint-disable-next-line no-restricted-syntax -- Legacy route generation
@@ -903,7 +921,7 @@ const ROUTES = {
         route: 'settings/:policyID/tags',
         getRoute: (policyID: string | undefined, backTo = '') => {
             if (!policyID) {
-                Log.warn('Invalid policyID while building route SETTINGS_TAGS_ROOT');
+                getLog().warn('Invalid policyID while building route SETTINGS_TAGS_ROOT');
             }
 
             // eslint-disable-next-line no-restricted-syntax -- Legacy route generation
@@ -1034,7 +1052,7 @@ const ROUTES = {
         route: ':action/:iouType/date/:transactionID/:reportID/:reportActionID?',
         getRoute: (action: IOUAction, iouType: IOUType, transactionID: string | undefined, reportID: string | undefined, backTo = '', reportActionID?: string) => {
             if (!transactionID || !reportID) {
-                Log.warn('Invalid transactionID or reportID is used to build the MONEY_REQUEST_STEP_DATE route');
+                getLog().warn('Invalid transactionID or reportID is used to build the MONEY_REQUEST_STEP_DATE route');
             }
 
             // eslint-disable-next-line no-restricted-syntax -- Legacy route generation
@@ -1045,7 +1063,7 @@ const ROUTES = {
         route: ':action/:iouType/description/:transactionID/:reportID/:reportActionID?',
         getRoute: (action: IOUAction, iouType: IOUType, transactionID: string | undefined, reportID: string | undefined, backTo = '', reportActionID?: string) => {
             if (!transactionID || !reportID) {
-                Log.warn('Invalid transactionID or reportID is used to build the MONEY_REQUEST_STEP_DESCRIPTION route');
+                getLog().warn('Invalid transactionID or reportID is used to build the MONEY_REQUEST_STEP_DESCRIPTION route');
             }
 
             // eslint-disable-next-line no-restricted-syntax -- Legacy route generation
@@ -1056,7 +1074,7 @@ const ROUTES = {
         route: ':action/:iouType/distance/:transactionID/:reportID/:reportActionID?',
         getRoute: (action: IOUAction, iouType: IOUType, transactionID: string | undefined, reportID: string | undefined, backTo = '', reportActionID?: string) => {
             if (!transactionID || !reportID) {
-                Log.warn('Invalid transactionID or reportID is used to build the MONEY_REQUEST_STEP_DISTANCE route');
+                getLog().warn('Invalid transactionID or reportID is used to build the MONEY_REQUEST_STEP_DISTANCE route');
             }
 
             // eslint-disable-next-line no-restricted-syntax -- Legacy route generation
@@ -1067,7 +1085,7 @@ const ROUTES = {
         route: ':action/:iouType/distance-manual/:transactionID/:reportID/:reportActionID?',
         getRoute: (action: IOUAction, iouType: IOUType, transactionID: string | undefined, reportID: string | undefined, backTo = '', reportActionID?: string) => {
             if (!transactionID || !reportID) {
-                Log.warn('Invalid transactionID or reportID is used to build the MONEY_REQUEST_STEP_DISTANCE_MANUAL route');
+                getLog().warn('Invalid transactionID or reportID is used to build the MONEY_REQUEST_STEP_DISTANCE_MANUAL route');
             }
             // eslint-disable-next-line no-restricted-syntax -- Legacy route generation
             return getUrlWithBackToParam(`${action as string}/${iouType as string}/distance-manual/${transactionID}/${reportID}${reportActionID ? `/${reportActionID}` : ''}`, backTo);
@@ -1077,7 +1095,7 @@ const ROUTES = {
         route: ':action/:iouType/distanceRate/:transactionID/:reportID/:reportActionID?',
         getRoute: (action: IOUAction, iouType: IOUType, transactionID: string | undefined, reportID: string | undefined, backTo = '', reportActionID?: string) => {
             if (!transactionID || !reportID) {
-                Log.warn('Invalid transactionID or reportID is used to build the MONEY_REQUEST_STEP_DISTANCE_RATE route');
+                getLog().warn('Invalid transactionID or reportID is used to build the MONEY_REQUEST_STEP_DISTANCE_RATE route');
             }
 
             // eslint-disable-next-line no-restricted-syntax -- Legacy route generation
@@ -1088,7 +1106,7 @@ const ROUTES = {
         route: ':action/:iouType/merchant/:transactionID/:reportID/:reportActionID?',
         getRoute: (action: IOUAction, iouType: IOUType, transactionID: string | undefined, reportID: string | undefined, backTo = '', reportActionID?: string) => {
             if (!transactionID || !reportID) {
-                Log.warn('Invalid transactionID or reportID is used to build the MONEY_REQUEST_STEP_MERCHANT route');
+                getLog().warn('Invalid transactionID or reportID is used to build the MONEY_REQUEST_STEP_MERCHANT route');
             }
 
             // eslint-disable-next-line no-restricted-syntax -- Legacy route generation
@@ -1105,7 +1123,7 @@ const ROUTES = {
         route: ':action/:iouType/scan/:transactionID/:reportID',
         getRoute: (action: IOUAction, iouType: IOUType, transactionID: string | undefined, reportID: string | undefined, backTo = '') => {
             if (!transactionID || !reportID) {
-                Log.warn('Invalid transactionID or reportID is used to build the MONEY_REQUEST_STEP_SCAN route');
+                getLog().warn('Invalid transactionID or reportID is used to build the MONEY_REQUEST_STEP_SCAN route');
             }
 
             // eslint-disable-next-line no-restricted-syntax -- Legacy route generation
@@ -1239,7 +1257,7 @@ const ROUTES = {
         route: 'workspaces/:policyID',
         getRoute: (policyID: string | undefined, backTo?: string) => {
             if (!policyID) {
-                Log.warn('Invalid policyID is used to build the WORKSPACE_INITIAL route');
+                getLog().warn('Invalid policyID is used to build the WORKSPACE_INITIAL route');
             }
 
             // eslint-disable-next-line no-restricted-syntax -- Legacy route generation
@@ -1268,7 +1286,7 @@ const ROUTES = {
         route: 'workspaces/:policyID/overview',
         getRoute: (policyID: string | undefined, backTo?: string) => {
             if (!policyID) {
-                Log.warn('Invalid policyID is used to build the WORKSPACE_OVERVIEW route');
+                getLog().warn('Invalid policyID is used to build the WORKSPACE_OVERVIEW route');
             }
 
             // eslint-disable-next-line no-restricted-syntax -- Legacy route generation
@@ -1279,7 +1297,7 @@ const ROUTES = {
         route: 'workspaces/:policyID/overview/address',
         getRoute: (policyID: string | undefined, backTo?: string) => {
             if (!policyID) {
-                Log.warn('Invalid policyID is used to build the WORKSPACE_OVERVIEW_ADDRESS route');
+                getLog().warn('Invalid policyID is used to build the WORKSPACE_OVERVIEW_ADDRESS route');
             }
 
             // eslint-disable-next-line no-restricted-syntax -- Legacy route generation
@@ -1304,7 +1322,7 @@ const ROUTES = {
         route: 'workspaces/:policyID/accounting/quickbooks-online/export',
         getRoute: (policyID: string | undefined, backTo?: string) => {
             if (!policyID) {
-                Log.warn('Invalid policyID is used to build the POLICY_ACCOUNTING_QUICKBOOKS_ONLINE_EXPORT route');
+                getLog().warn('Invalid policyID is used to build the POLICY_ACCOUNTING_QUICKBOOKS_ONLINE_EXPORT route');
             }
 
             // eslint-disable-next-line no-restricted-syntax -- Legacy route generation
@@ -1321,7 +1339,7 @@ const ROUTES = {
         route: 'workspaces/:policyID/accounting/quickbooks-online/export/company-card-expense-account/account-select',
         getRoute: (policyID: string | undefined, backTo?: string) => {
             if (!policyID) {
-                Log.warn('Invalid policyID is used to build the POLICY_ACCOUNTING_QUICKBOOKS_ONLINE_COMPANY_CARD_EXPENSE_ACCOUNT_SELECT route');
+                getLog().warn('Invalid policyID is used to build the POLICY_ACCOUNTING_QUICKBOOKS_ONLINE_COMPANY_CARD_EXPENSE_ACCOUNT_SELECT route');
             }
 
             // eslint-disable-next-line no-restricted-syntax -- Legacy route generation
@@ -1332,7 +1350,7 @@ const ROUTES = {
         route: 'workspaces/:policyID/accounting/quickbooks-online/export/company-card-expense-account/default-vendor-select',
         getRoute: (policyID: string | undefined) => {
             if (!policyID) {
-                Log.warn('Invalid policyID is used to build the POLICY_ACCOUNTING_QUICKBOOKS_ONLINE_NON_REIMBURSABLE_DEFAULT_VENDOR_SELECT route');
+                getLog().warn('Invalid policyID is used to build the POLICY_ACCOUNTING_QUICKBOOKS_ONLINE_NON_REIMBURSABLE_DEFAULT_VENDOR_SELECT route');
             }
             return `workspaces/${policyID}/accounting/quickbooks-online/export/company-card-expense-account/default-vendor-select` as const;
         },
@@ -1341,7 +1359,7 @@ const ROUTES = {
         route: 'workspaces/:policyID/accounting/quickbooks-online/export/company-card-expense-account/card-select',
         getRoute: (policyID: string | undefined, backTo?: string) => {
             if (!policyID) {
-                Log.warn('Invalid policyID is used to build the POLICY_ACCOUNTING_QUICKBOOKS_ONLINE_COMPANY_CARD_EXPENSE_SELECT route');
+                getLog().warn('Invalid policyID is used to build the POLICY_ACCOUNTING_QUICKBOOKS_ONLINE_COMPANY_CARD_EXPENSE_SELECT route');
             }
 
             // eslint-disable-next-line no-restricted-syntax -- Legacy route generation
@@ -1388,7 +1406,7 @@ const ROUTES = {
         route: 'workspaces/:policyID/accounting/quickbooks-desktop/export/company-card-expense-account/account-select',
         getRoute: (policyID?: string, backTo?: string) => {
             if (!policyID) {
-                Log.warn('Invalid policyID is used to build the POLICY_ACCOUNTING_QUICKBOOKS_DESKTOP_COMPANY_CARD_EXPENSE_ACCOUNT_SELECT route');
+                getLog().warn('Invalid policyID is used to build the POLICY_ACCOUNTING_QUICKBOOKS_DESKTOP_COMPANY_CARD_EXPENSE_ACCOUNT_SELECT route');
             }
 
             // eslint-disable-next-line no-restricted-syntax -- Legacy route generation
@@ -1399,7 +1417,7 @@ const ROUTES = {
         route: 'workspaces/:policyID/accounting/quickbooks-desktop/export/company-card-expense-account/card-select',
         getRoute: (policyID?: string, backTo?: string) => {
             if (!policyID) {
-                Log.warn('Invalid policyID is used to build the POLICY_ACCOUNTING_QUICKBOOKS_DESKTOP_COMPANY_CARD_EXPENSE_SELECT route');
+                getLog().warn('Invalid policyID is used to build the POLICY_ACCOUNTING_QUICKBOOKS_DESKTOP_COMPANY_CARD_EXPENSE_SELECT route');
             }
 
             // eslint-disable-next-line no-restricted-syntax -- Legacy route generation
@@ -1410,7 +1428,7 @@ const ROUTES = {
         route: 'workspaces/:policyID/accounting/quickbooks-desktop/export/company-card-expense-account/default-vendor-select',
         getRoute: (policyID?: string) => {
             if (!policyID) {
-                Log.warn('Invalid policyID is used to build the POLICY_ACCOUNTING_QUICKBOOKS_DESKTOP_NON_REIMBURSABLE_DEFAULT_VENDOR_SELECT route');
+                getLog().warn('Invalid policyID is used to build the POLICY_ACCOUNTING_QUICKBOOKS_DESKTOP_NON_REIMBURSABLE_DEFAULT_VENDOR_SELECT route');
             }
             return `workspaces/${policyID}/accounting/quickbooks-desktop/export/company-card-expense-account/default-vendor-select` as const;
         },
@@ -1419,7 +1437,7 @@ const ROUTES = {
         route: 'workspaces/:policyID/accounting/quickbooks-desktop/export/company-card-expense-account',
         getRoute: (policyID?: string, backTo?: string) => {
             if (!policyID) {
-                Log.warn('Invalid policyID is used to build the POLICY_ACCOUNTING_QUICKBOOKS_DESKTOP_COMPANY_CARD_EXPENSE_ACCOUNT route');
+                getLog().warn('Invalid policyID is used to build the POLICY_ACCOUNTING_QUICKBOOKS_DESKTOP_COMPANY_CARD_EXPENSE_ACCOUNT route');
             }
 
             // eslint-disable-next-line no-restricted-syntax -- Legacy route generation
@@ -1430,7 +1448,7 @@ const ROUTES = {
         route: 'workspaces/:policyID/accounting/quickbooks-desktop/advanced',
         getRoute: (policyID?: string, backTo?: string) => {
             if (!policyID) {
-                Log.warn('Invalid policyID is used to build the WORKSPACE_ACCOUNTING_QUICKBOOKS_DESKTOP_ADVANCED route');
+                getLog().warn('Invalid policyID is used to build the WORKSPACE_ACCOUNTING_QUICKBOOKS_DESKTOP_ADVANCED route');
             }
 
             // eslint-disable-next-line no-restricted-syntax -- Legacy route generation
@@ -1441,7 +1459,7 @@ const ROUTES = {
         route: 'workspaces/:policyID/accounting/quickbooks-desktop/advanced/autosync',
         getRoute: (policyID?: string) => {
             if (!policyID) {
-                Log.warn('Invalid policyID is used to build the POLICY_ACCOUNTING_QUICKBOOKS_DESKTOP_AUTO_SYNC route');
+                getLog().warn('Invalid policyID is used to build the POLICY_ACCOUNTING_QUICKBOOKS_DESKTOP_AUTO_SYNC route');
             }
 
             return `workspaces/${policyID}/accounting/quickbooks-desktop/advanced/autosync` as const;
@@ -1451,7 +1469,7 @@ const ROUTES = {
         route: 'workspaces/:policyID/accounting/quickbooks-desktop/advanced/autosync/accounting-method',
         getRoute: (policyID?: string) => {
             if (!policyID) {
-                Log.warn('Invalid policyID is used to build the POLICY_ACCOUNTING_QUICKBOOKS_DESKTOP_ACCOUNTING_METHOD route');
+                getLog().warn('Invalid policyID is used to build the POLICY_ACCOUNTING_QUICKBOOKS_DESKTOP_ACCOUNTING_METHOD route');
             }
 
             return `workspaces/${policyID}/accounting/quickbooks-desktop/advanced/autosync/accounting-method` as const;
@@ -1461,7 +1479,7 @@ const ROUTES = {
         route: 'workspaces/:policyID/accounting/quickbooks-desktop/export/date-select',
         getRoute: (policyID?: string, backTo?: string) => {
             if (!policyID) {
-                Log.warn('Invalid policyID is used to build the POLICY_ACCOUNTING_QUICKBOOKS_DESKTOP_EXPORT_DATE_SELECT route');
+                getLog().warn('Invalid policyID is used to build the POLICY_ACCOUNTING_QUICKBOOKS_DESKTOP_EXPORT_DATE_SELECT route');
             }
 
             // eslint-disable-next-line no-restricted-syntax -- Legacy route generation
@@ -1472,7 +1490,7 @@ const ROUTES = {
         route: 'workspaces/:policyID/accounting/quickbooks-desktop/export/preferred-exporter',
         getRoute: (policyID?: string, backTo?: string) => {
             if (!policyID) {
-                Log.warn('Invalid policyID is used to build the POLICY_ACCOUNTING_QUICKBOOKS_DESKTOP_PREFERRED_EXPORTER route');
+                getLog().warn('Invalid policyID is used to build the POLICY_ACCOUNTING_QUICKBOOKS_DESKTOP_PREFERRED_EXPORTER route');
             }
 
             // eslint-disable-next-line no-restricted-syntax -- Legacy route generation
@@ -1483,7 +1501,7 @@ const ROUTES = {
         route: 'workspaces/:policyID/accounting/quickbooks-desktop/export/out-of-pocket-expense',
         getRoute: (policyID?: string, backTo?: string) => {
             if (!policyID) {
-                Log.warn('Invalid policyID is used to build the POLICY_ACCOUNTING_QUICKBOOKS_DESKTOP_EXPORT_OUT_OF_POCKET_EXPENSES route');
+                getLog().warn('Invalid policyID is used to build the POLICY_ACCOUNTING_QUICKBOOKS_DESKTOP_EXPORT_OUT_OF_POCKET_EXPENSES route');
             }
 
             // eslint-disable-next-line no-restricted-syntax -- Legacy route generation
@@ -1494,7 +1512,7 @@ const ROUTES = {
         route: 'workspaces/:policyID/accounting/quickbooks-desktop/export/out-of-pocket-expense/account-select',
         getRoute: (policyID?: string, backTo?: string) => {
             if (!policyID) {
-                Log.warn('Invalid policyID is used to build the POLICY_ACCOUNTING_QUICKBOOKS_DESKTOP_EXPORT_OUT_OF_POCKET_EXPENSES_ACCOUNT_SELECT route');
+                getLog().warn('Invalid policyID is used to build the POLICY_ACCOUNTING_QUICKBOOKS_DESKTOP_EXPORT_OUT_OF_POCKET_EXPENSES_ACCOUNT_SELECT route');
             }
 
             // eslint-disable-next-line no-restricted-syntax -- Legacy route generation
@@ -1505,7 +1523,7 @@ const ROUTES = {
         route: 'workspaces/:policyID/accounting/quickbooks-desktop/export/out-of-pocket-expense/entity-select',
         getRoute: (policyID?: string, backTo?: string) => {
             if (!policyID) {
-                Log.warn('Invalid policyID is used to build the POLICY_ACCOUNTING_QUICKBOOKS_DESKTOP_EXPORT_OUT_OF_POCKET_EXPENSES_SELECT route');
+                getLog().warn('Invalid policyID is used to build the POLICY_ACCOUNTING_QUICKBOOKS_DESKTOP_EXPORT_OUT_OF_POCKET_EXPENSES_SELECT route');
             }
 
             // eslint-disable-next-line no-restricted-syntax -- Legacy route generation
@@ -1516,7 +1534,7 @@ const ROUTES = {
         route: 'workspaces/:policyID/accounting/quickbooks-desktop/export',
         getRoute: (policyID: string | undefined, backTo?: string) => {
             if (!policyID) {
-                Log.warn('Invalid policyID is used to build the POLICY_ACCOUNTING_QUICKBOOKS_DESKTOP_EXPORT route');
+                getLog().warn('Invalid policyID is used to build the POLICY_ACCOUNTING_QUICKBOOKS_DESKTOP_EXPORT route');
             }
 
             // eslint-disable-next-line no-restricted-syntax -- Legacy route generation
@@ -1571,7 +1589,7 @@ const ROUTES = {
         route: 'workspaces/:policyID/overview/description',
         getRoute: (policyID: string | undefined) => {
             if (!policyID) {
-                Log.warn('Invalid policyID is used to build the WORKSPACE_OVERVIEW_DESCRIPTION route');
+                getLog().warn('Invalid policyID is used to build the WORKSPACE_OVERVIEW_DESCRIPTION route');
             }
             return `workspaces/${policyID}/overview/description` as const;
         },
@@ -1596,7 +1614,7 @@ const ROUTES = {
         route: 'workspaces/:policyID/workflows',
         getRoute: (policyID: string | undefined) => {
             if (!policyID) {
-                Log.warn('Invalid policyID is used to build the WORKSPACE_WORKFLOWS route');
+                getLog().warn('Invalid policyID is used to build the WORKSPACE_WORKFLOWS route');
             }
             return `workspaces/${policyID}/workflows` as const;
         },
@@ -1637,7 +1655,7 @@ const ROUTES = {
         route: 'workspaces/:policyID/workflows/auto-reporting-frequency/monthly-offset',
         getRoute: (policyID: string | undefined) => {
             if (!policyID) {
-                Log.warn('Invalid policyID is used to build the WORKSPACE_WORKFLOWS_AUTOREPORTING_MONTHLY_OFFSET route');
+                getLog().warn('Invalid policyID is used to build the WORKSPACE_WORKFLOWS_AUTOREPORTING_MONTHLY_OFFSET route');
             }
             return `workspaces/${policyID}/workflows/auto-reporting-frequency/monthly-offset` as const;
         },
@@ -1646,7 +1664,7 @@ const ROUTES = {
         route: 'workspaces/:policyID/invoices',
         getRoute: (policyID: string | undefined) => {
             if (!policyID) {
-                Log.warn('Invalid policyID is used to build the WORKSPACE_INVOICES route');
+                getLog().warn('Invalid policyID is used to build the WORKSPACE_INVOICES route');
             }
             return `workspaces/${policyID}/invoices` as const;
         },
@@ -1667,7 +1685,7 @@ const ROUTES = {
         route: 'workspaces/:policyID/members',
         getRoute: (policyID: string | undefined) => {
             if (!policyID) {
-                Log.warn('Invalid policyID is used to build the WORKSPACE_MEMBERS route');
+                getLog().warn('Invalid policyID is used to build the WORKSPACE_MEMBERS route');
             }
             return `workspaces/${policyID}/members` as const;
         },
@@ -1688,7 +1706,7 @@ const ROUTES = {
         route: 'workspaces/:policyID/accounting',
         getRoute: (policyID: string | undefined, newConnectionName?: ConnectionName, integrationToDisconnect?: ConnectionName, shouldDisconnectIntegrationBeforeConnecting?: boolean) => {
             if (!policyID) {
-                Log.warn('Invalid policyID is used to build the POLICY_ACCOUNTING route');
+                getLog().warn('Invalid policyID is used to build the POLICY_ACCOUNTING route');
             }
 
             let queryParams = '';
@@ -1708,7 +1726,7 @@ const ROUTES = {
         route: 'workspaces/:policyID/accounting/quickbooks-online/advanced',
         getRoute: (policyID: string | undefined) => {
             if (!policyID) {
-                Log.warn('Invalid policyID is used to build the WORKSPACE_ACCOUNTING_QUICKBOOKS_ONLINE_ADVANCED route');
+                getLog().warn('Invalid policyID is used to build the WORKSPACE_ACCOUNTING_QUICKBOOKS_ONLINE_ADVANCED route');
             }
             return `workspaces/${policyID}/accounting/quickbooks-online/advanced` as const;
         },
@@ -1741,7 +1759,7 @@ const ROUTES = {
         route: 'workspaces/:policyID/accounting/:connection/card-reconciliation/account',
         getRoute: (policyID: string | undefined, connection?: ValueOf<typeof CONST.POLICY.CONNECTIONS.ROUTE>, backTo?: string) => {
             if (!policyID) {
-                Log.warn('Invalid policyID is used to build the WORKSPACE_ACCOUNTING_RECONCILIATION_ACCOUNT_SETTINGS route');
+                getLog().warn('Invalid policyID is used to build the WORKSPACE_ACCOUNTING_RECONCILIATION_ACCOUNT_SETTINGS route');
             }
 
             // eslint-disable-next-line no-restricted-syntax -- Legacy route generation
@@ -1752,7 +1770,7 @@ const ROUTES = {
         route: 'workspaces/:policyID/categories',
         getRoute: (policyID: string | undefined) => {
             if (!policyID) {
-                Log.warn('Invalid policyID is used to build the WORKSPACE_CATEGORIES route');
+                getLog().warn('Invalid policyID is used to build the WORKSPACE_CATEGORIES route');
             }
             return `workspaces/${policyID}/categories` as const;
         },
@@ -1831,7 +1849,7 @@ const ROUTES = {
         route: 'workspaces/:policyID/more-features',
         getRoute: (policyID: string | undefined) => {
             if (!policyID) {
-                Log.warn('Invalid policyID is used to build the WORKSPACE_MORE_FEATURES route');
+                getLog().warn('Invalid policyID is used to build the WORKSPACE_MORE_FEATURES route');
             }
             return `workspaces/${policyID}/more-features` as const;
         },
@@ -1840,7 +1858,7 @@ const ROUTES = {
         route: 'workspaces/:policyID/tags',
         getRoute: (policyID: string | undefined) => {
             if (!policyID) {
-                Log.warn('Invalid policyID is used to build the WORKSPACE_TAGS route');
+                getLog().warn('Invalid policyID is used to build the WORKSPACE_TAGS route');
             }
             return `workspaces/${policyID}/tags` as const;
         },
@@ -1909,7 +1927,7 @@ const ROUTES = {
         route: 'workspaces/:policyID/taxes',
         getRoute: (policyID: string | undefined) => {
             if (!policyID) {
-                Log.warn('Invalid policyID is used to build the WORKSPACE_TAXES route');
+                getLog().warn('Invalid policyID is used to build the WORKSPACE_TAXES route');
             }
             return `workspaces/${policyID}/taxes` as const;
         },
@@ -1962,7 +1980,7 @@ const ROUTES = {
         route: 'workspaces/:policyID/change-owner/:accountID/:error',
         getRoute: (policyID: string | undefined, accountID: number, error: ValueOf<typeof CONST.POLICY.OWNERSHIP_ERRORS>, backTo?: string) => {
             if (!policyID) {
-                Log.warn('Invalid policyID is used to build the WORKSPACE_OWNER_CHANGE_CHECK route');
+                getLog().warn('Invalid policyID is used to build the WORKSPACE_OWNER_CHANGE_CHECK route');
             }
 
             // eslint-disable-next-line no-restricted-syntax -- Legacy route generation
@@ -1993,7 +2011,7 @@ const ROUTES = {
         route: 'workspaces/:policyID/reports',
         getRoute: (policyID: string | undefined) => {
             if (!policyID) {
-                Log.warn('Invalid policyID is used to build the WORKSPACE_REPORTS route');
+                getLog().warn('Invalid policyID is used to build the WORKSPACE_REPORTS route');
             }
             return `workspaces/${policyID}/reports` as const;
         },
@@ -2031,7 +2049,7 @@ const ROUTES = {
         route: 'workspaces/:policyID/company-cards',
         getRoute: (policyID: string | undefined) => {
             if (!policyID) {
-                Log.warn('Invalid policyID is used to build the WORKSPACE_COMPANY_CARDS route');
+                getLog().warn('Invalid policyID is used to build the WORKSPACE_COMPANY_CARDS route');
             }
             return `workspaces/${policyID}/company-cards` as const;
         },
@@ -2040,7 +2058,7 @@ const ROUTES = {
         route: 'workspaces/:policyID/company-cards/:bankName/bank-connection',
         getRoute: (policyID: string | undefined, bankName: string, backTo: string) => {
             if (!policyID) {
-                Log.warn('Invalid policyID is used to build the WORKSPACE_COMPANY_CARDS_BANK_CONNECTION route');
+                getLog().warn('Invalid policyID is used to build the WORKSPACE_COMPANY_CARDS_BANK_CONNECTION route');
             }
 
             // eslint-disable-next-line no-restricted-syntax -- Legacy route generation
@@ -2089,7 +2107,7 @@ const ROUTES = {
         route: 'workspaces/:policyID/expensify-card',
         getRoute: (policyID: string | undefined) => {
             if (!policyID) {
-                Log.warn('Invalid policyID is used to build the WORKSPACE_EXPENSIFY_CARD route');
+                getLog().warn('Invalid policyID is used to build the WORKSPACE_EXPENSIFY_CARD route');
             }
             return `workspaces/${policyID}/expensify-card` as const;
         },
@@ -2152,7 +2170,7 @@ const ROUTES = {
         route: 'workspaces/:policyID/expensify-card/choose-bank-account',
         getRoute: (policyID: string | undefined) => {
             if (!policyID) {
-                Log.warn('Invalid policyID is used to build the WORKSPACE_EXPENSIFY_CARD_BANK_ACCOUNT route');
+                getLog().warn('Invalid policyID is used to build the WORKSPACE_EXPENSIFY_CARD_BANK_ACCOUNT route');
             }
             return `workspaces/${policyID}/expensify-card/choose-bank-account` as const;
         },
@@ -2193,7 +2211,7 @@ const ROUTES = {
         route: 'workspaces/:policyID/rules',
         getRoute: (policyID: string | undefined) => {
             if (!policyID) {
-                Log.warn('Invalid policyID is used to build the WORKSPACE_RULES route');
+                getLog().warn('Invalid policyID is used to build the WORKSPACE_RULES route');
             }
             return `workspaces/${policyID}/rules` as const;
         },
@@ -2202,7 +2220,7 @@ const ROUTES = {
         route: 'workspaces/:policyID/distance-rates',
         getRoute: (policyID: string | undefined) => {
             if (!policyID) {
-                Log.warn('Invalid policyID is used to build the WORKSPACE_DISTANCE_RATES route');
+                getLog().warn('Invalid policyID is used to build the WORKSPACE_DISTANCE_RATES route');
             }
             return `workspaces/${policyID}/distance-rates` as const;
         },
@@ -2240,7 +2258,7 @@ const ROUTES = {
         route: 'workspaces/:policyID/per-diem',
         getRoute: (policyID: string | undefined, backTo?: string) => {
             if (!policyID) {
-                Log.warn('Invalid policyID is used to build the WORKSPACE_PER_DIEM route');
+                getLog().warn('Invalid policyID is used to build the WORKSPACE_PER_DIEM route');
             }
 
             // eslint-disable-next-line no-restricted-syntax -- Legacy route generation
@@ -2259,7 +2277,7 @@ const ROUTES = {
         route: 'workspaces/:policyID/receipt-partners',
         getRoute: (policyID: string | undefined, backTo?: string) => {
             if (!policyID) {
-                Log.warn('Invalid policyID is used to build the WORKSPACE_RECEIPT_PARTNERS route');
+                getLog().warn('Invalid policyID is used to build the WORKSPACE_RECEIPT_PARTNERS route');
             }
 
             // eslint-disable-next-line no-restricted-syntax -- Legacy route generation
@@ -2270,7 +2288,7 @@ const ROUTES = {
         route: 'workspaces/:policyID/receipt-partners/:integration/invite',
         getRoute: (policyID: string | undefined, integration: string, backTo?: string) => {
             if (!policyID) {
-                Log.warn('Invalid policyID is used to build the WORKSPACE_RECEIPT_PARTNERS_INVITE route');
+                getLog().warn('Invalid policyID is used to build the WORKSPACE_RECEIPT_PARTNERS_INVITE route');
             }
 
             // eslint-disable-next-line no-restricted-syntax -- Legacy route generation
@@ -2281,7 +2299,7 @@ const ROUTES = {
         route: 'workspaces/:policyID/receipt-partners/:integration/invite/edit',
         getRoute: (policyID: string | undefined, integration: string, backTo?: string) => {
             if (!policyID) {
-                Log.warn('Invalid policyID is used to build the WORKSPACE_RECEIPT_PARTNERS_INVITE_EDIT route');
+                getLog().warn('Invalid policyID is used to build the WORKSPACE_RECEIPT_PARTNERS_INVITE_EDIT route');
             }
 
             // eslint-disable-next-line no-restricted-syntax -- Legacy route generation
@@ -2421,7 +2439,7 @@ const ROUTES = {
         route: 'r/:reportID/trip/:transactionID',
         getRoute: (reportID: string | undefined, transactionID: string | undefined, backTo?: string) => {
             if (!reportID || !transactionID) {
-                Log.warn('Invalid reportID or transactionID is used to build the TRAVEL_TRIP_SUMMARY route');
+                getLog().warn('Invalid reportID or transactionID is used to build the TRAVEL_TRIP_SUMMARY route');
             }
 
             // eslint-disable-next-line no-restricted-syntax -- Legacy route generation
@@ -2432,7 +2450,7 @@ const ROUTES = {
         route: 'r/:reportID/trip/:transactionID/:pnr/:sequenceIndex',
         getRoute: (reportID: string | undefined, transactionID: string | undefined, pnr: string | undefined, sequenceIndex: number, backTo?: string) => {
             if (!reportID || !transactionID || !pnr) {
-                Log.warn('Invalid reportID, transactionID or pnr is used to build the TRAVEL_TRIP_DETAILS route');
+                getLog().warn('Invalid reportID, transactionID or pnr is used to build the TRAVEL_TRIP_DETAILS route');
             }
 
             // eslint-disable-next-line no-restricted-syntax -- Legacy route generation
@@ -2581,10 +2599,10 @@ const ROUTES = {
         route: 'r/:reportID/transaction/:transactionID/receipt/:action?/:iouType?',
         getRoute: (reportID: string | undefined, transactionID: string | undefined, readonly = false, isFromReviewDuplicates = false, mergeTransactionID?: string) => {
             if (!reportID) {
-                Log.warn('Invalid reportID is used to build the TRANSACTION_RECEIPT route');
+                getLog().warn('Invalid reportID is used to build the TRANSACTION_RECEIPT route');
             }
             if (!transactionID) {
-                Log.warn('Invalid transactionID is used to build the TRANSACTION_RECEIPT route');
+                getLog().warn('Invalid transactionID is used to build the TRANSACTION_RECEIPT route');
             }
             return `r/${reportID}/transaction/${transactionID}/receipt?readonly=${readonly}${
                 isFromReviewDuplicates ? '&isFromReviewDuplicates=true' : ''
@@ -2682,7 +2700,7 @@ const ROUTES = {
         route: 'workspaces/:policyID/accounting/xero/organization/:currentOrganizationID',
         getRoute: (policyID: string | undefined, currentOrganizationID: string | undefined) => {
             if (!policyID || !currentOrganizationID) {
-                Log.warn('Invalid policyID is used to build the POLICY_ACCOUNTING_XERO_ORGANIZATION route');
+                getLog().warn('Invalid policyID is used to build the POLICY_ACCOUNTING_XERO_ORGANIZATION route');
             }
             return `workspaces/${policyID}/accounting/xero/organization/${currentOrganizationID}` as const;
         },
@@ -2691,7 +2709,7 @@ const ROUTES = {
         route: 'workspaces/:policyID/accounting/xero/import/tracking-categories',
         getRoute: (policyID?: string) => {
             if (!policyID) {
-                Log.warn('Invalid policyID is used to build the POLICY_ACCOUNTING_XERO_TRACKING_CATEGORIES route');
+                getLog().warn('Invalid policyID is used to build the POLICY_ACCOUNTING_XERO_TRACKING_CATEGORIES route');
             }
             return `workspaces/${policyID}/accounting/xero/import/tracking-categories` as const;
         },
@@ -2737,7 +2755,7 @@ const ROUTES = {
         route: 'workspaces/:policyID/accounting/xero/advanced',
         getRoute: (policyID: string | undefined) => {
             if (!policyID) {
-                Log.warn('Invalid policyID is used to build the POLICY_ACCOUNTING_XERO_ADVANCED route');
+                getLog().warn('Invalid policyID is used to build the POLICY_ACCOUNTING_XERO_ADVANCED route');
             }
             return `workspaces/${policyID}/accounting/xero/advanced` as const;
         },
@@ -2746,7 +2764,7 @@ const ROUTES = {
         route: 'workspaces/:policyID/accounting/xero/advanced/autosync',
         getRoute: (policyID: string | undefined, backTo?: string) => {
             if (!policyID) {
-                Log.warn('Invalid policyID is used to build the POLICY_ACCOUNTING_XERO_AUTO_SYNC route');
+                getLog().warn('Invalid policyID is used to build the POLICY_ACCOUNTING_XERO_AUTO_SYNC route');
             }
 
             // eslint-disable-next-line no-restricted-syntax -- Legacy route generation
@@ -2757,7 +2775,7 @@ const ROUTES = {
         route: 'workspaces/:policyID/accounting/xero/advanced/autosync/accounting-method',
         getRoute: (policyID: string | undefined, backTo?: string) => {
             if (!policyID) {
-                Log.warn('Invalid policyID is used to build the POLICY_ACCOUNTING_XERO_ACCOUNTING_METHOD route');
+                getLog().warn('Invalid policyID is used to build the POLICY_ACCOUNTING_XERO_ACCOUNTING_METHOD route');
             }
 
             // eslint-disable-next-line no-restricted-syntax -- Legacy route generation
@@ -2774,7 +2792,7 @@ const ROUTES = {
         route: 'workspaces/:policyID/accounting/xero/advanced/invoice-account-selector',
         getRoute: (policyID: string | undefined) => {
             if (!policyID) {
-                Log.warn('Invalid policyID is used to build the POLICY_ACCOUNTING_XERO_INVOICE_SELECTOR route');
+                getLog().warn('Invalid policyID is used to build the POLICY_ACCOUNTING_XERO_INVOICE_SELECTOR route');
             }
             return `workspaces/${policyID}/accounting/xero/advanced/invoice-account-selector` as const;
         },
@@ -2783,7 +2801,7 @@ const ROUTES = {
         route: 'workspaces/:policyID/accounting/xero/advanced/bill-payment-account-selector',
         getRoute: (policyID: string | undefined) => {
             if (!policyID) {
-                Log.warn('Invalid policyID is used to build the POLICY_ACCOUNTING_XERO_BILL_PAYMENT_ACCOUNT_SELECTOR route');
+                getLog().warn('Invalid policyID is used to build the POLICY_ACCOUNTING_XERO_BILL_PAYMENT_ACCOUNT_SELECTOR route');
             }
             return `workspaces/${policyID}/accounting/xero/advanced/bill-payment-account-selector` as const;
         },
@@ -2833,7 +2851,7 @@ const ROUTES = {
         route: 'workspaces/:policyID/accounting/netsuite/subsidiary-selector',
         getRoute: (policyID: string | undefined) => {
             if (!policyID) {
-                Log.warn('Invalid policyID is used to build the POLICY_ACCOUNTING_NETSUITE_SUBSIDIARY_SELECTOR route');
+                getLog().warn('Invalid policyID is used to build the POLICY_ACCOUNTING_NETSUITE_SUBSIDIARY_SELECTOR route');
             }
             return `workspaces/${policyID}/accounting/netsuite/subsidiary-selector` as const;
         },
@@ -2859,7 +2877,7 @@ const ROUTES = {
         route: 'workspaces/:policyID/accounting/netsuite/import/custom/:importCustomField',
         getRoute: (policyID: string | undefined, importCustomField: ValueOf<typeof CONST.NETSUITE_CONFIG.IMPORT_CUSTOM_FIELDS>) => {
             if (!policyID) {
-                Log.warn('Invalid policyID is used to build the POLICY_ACCOUNTING_NETSUITE_IMPORT_CUSTOM_FIELD_MAPPING route');
+                getLog().warn('Invalid policyID is used to build the POLICY_ACCOUNTING_NETSUITE_IMPORT_CUSTOM_FIELD_MAPPING route');
             }
             return `workspaces/${policyID}/accounting/netsuite/import/custom/${importCustomField as string}` as const;
         },
@@ -2873,7 +2891,7 @@ const ROUTES = {
         route: 'workspaces/:policyID/accounting/netsuite/import/custom/:importCustomField/edit/:valueIndex/:fieldName',
         getRoute: (policyID: string | undefined, importCustomField: ValueOf<typeof CONST.NETSUITE_CONFIG.IMPORT_CUSTOM_FIELDS>, valueIndex: number, fieldName: string) => {
             if (!policyID) {
-                Log.warn('Invalid policyID is used to build the POLICY_ACCOUNTING_NETSUITE_IMPORT_CUSTOM_FIELD_EDIT route');
+                getLog().warn('Invalid policyID is used to build the POLICY_ACCOUNTING_NETSUITE_IMPORT_CUSTOM_FIELD_EDIT route');
             }
             return `workspaces/${policyID}/accounting/netsuite/import/custom/${importCustomField as string}/edit/${valueIndex}/${fieldName}` as const;
         },
@@ -2898,7 +2916,7 @@ const ROUTES = {
         route: 'workspaces/:policyID/connections/netsuite/export/',
         getRoute: (policyID: string | undefined, backTo?: string) => {
             if (!policyID) {
-                Log.warn('Invalid policyID is used to build the POLICY_ACCOUNTING_NETSUITE_EXPORT route');
+                getLog().warn('Invalid policyID is used to build the POLICY_ACCOUNTING_NETSUITE_EXPORT route');
             }
 
             // eslint-disable-next-line no-restricted-syntax -- Legacy route generation
@@ -2921,7 +2939,7 @@ const ROUTES = {
         route: 'workspaces/:policyID/connections/netsuite/export/expenses/:expenseType',
         getRoute: (policyID: string | undefined, expenseType: ValueOf<typeof CONST.NETSUITE_EXPENSE_TYPE>, backTo?: string) => {
             if (!policyID) {
-                Log.warn('Invalid policyID is used to build the POLICY_ACCOUNTING_NETSUITE_EXPORT_EXPENSES route');
+                getLog().warn('Invalid policyID is used to build the POLICY_ACCOUNTING_NETSUITE_EXPORT_EXPENSES route');
             }
 
             // eslint-disable-next-line no-restricted-syntax -- Legacy route generation
@@ -2962,7 +2980,7 @@ const ROUTES = {
         route: 'workspaces/:policyID/connections/netsuite/export/invoice-item-preference/select',
         getRoute: (policyID: string | undefined, backTo?: string) => {
             if (!policyID) {
-                Log.warn('Invalid policyID is used to build the POLICY_ACCOUNTING_NETSUITE_INVOICE_ITEM_PREFERENCE_SELECT route');
+                getLog().warn('Invalid policyID is used to build the POLICY_ACCOUNTING_NETSUITE_INVOICE_ITEM_PREFERENCE_SELECT route');
             }
 
             // eslint-disable-next-line no-restricted-syntax -- Legacy route generation
@@ -2973,7 +2991,7 @@ const ROUTES = {
         route: 'workspaces/:policyID/connections/netsuite/export/invoice-item-preference/invoice-item/select',
         getRoute: (policyID: string | undefined) => {
             if (!policyID) {
-                Log.warn('Invalid policyID is used to build the POLICY_ACCOUNTING_NETSUITE_INVOICE_ITEM_SELECT route');
+                getLog().warn('Invalid policyID is used to build the POLICY_ACCOUNTING_NETSUITE_INVOICE_ITEM_SELECT route');
             }
             return `workspaces/${policyID}/connections/netsuite/export/invoice-item-preference/invoice-item/select` as const;
         },
@@ -2990,7 +3008,7 @@ const ROUTES = {
         route: 'workspaces/:policyID/connections/netsuite/advanced/',
         getRoute: (policyID: string | undefined) => {
             if (!policyID) {
-                Log.warn('Invalid policyID is used to build the POLICY_ACCOUNTING_NETSUITE_ADVANCED route');
+                getLog().warn('Invalid policyID is used to build the POLICY_ACCOUNTING_NETSUITE_ADVANCED route');
             }
             return `workspaces/${policyID}/connections/netsuite/advanced/` as const;
         },
@@ -3028,7 +3046,7 @@ const ROUTES = {
         route: 'workspaces/:policyID/connections/netsuite/advanced/autosync',
         getRoute: (policyID: string | undefined, backTo?: string) => {
             if (!policyID) {
-                Log.warn('Invalid policyID is used to build the POLICY_ACCOUNTING_NETSUITE_AUTO_SYNC route');
+                getLog().warn('Invalid policyID is used to build the POLICY_ACCOUNTING_NETSUITE_AUTO_SYNC route');
             }
 
             // eslint-disable-next-line no-restricted-syntax -- Legacy route generation
@@ -3039,7 +3057,7 @@ const ROUTES = {
         route: 'workspaces/:policyID/connections/netsuite/advanced/autosync/accounting-method',
         getRoute: (policyID: string | undefined, backTo?: string) => {
             if (!policyID) {
-                Log.warn('Invalid policyID is used to build the POLICY_ACCOUNTING_NETSUITE_ACCOUNTING_METHOD route');
+                getLog().warn('Invalid policyID is used to build the POLICY_ACCOUNTING_NETSUITE_ACCOUNTING_METHOD route');
             }
 
             // eslint-disable-next-line no-restricted-syntax -- Legacy route generation
@@ -3064,7 +3082,7 @@ const ROUTES = {
         route: 'workspaces/:policyID/accounting/sage-intacct/entity',
         getRoute: (policyID: string | undefined) => {
             if (!policyID) {
-                Log.warn('Invalid policyID is used to build the POLICY_ACCOUNTING_SAGE_INTACCT_ENTITY route');
+                getLog().warn('Invalid policyID is used to build the POLICY_ACCOUNTING_SAGE_INTACCT_ENTITY route');
             }
             return `workspaces/${policyID}/accounting/sage-intacct/entity` as const;
         },
@@ -3159,7 +3177,7 @@ const ROUTES = {
         route: 'workspaces/:policyID/accounting/sage-intacct/advanced',
         getRoute: (policyID: string | undefined) => {
             if (!policyID) {
-                Log.warn('Invalid policyID is used to build the POLICY_ACCOUNTING_SAGE_INTACCT_ADVANCED route');
+                getLog().warn('Invalid policyID is used to build the POLICY_ACCOUNTING_SAGE_INTACCT_ADVANCED route');
             }
             return `workspaces/${policyID}/accounting/sage-intacct/advanced` as const;
         },
@@ -3168,7 +3186,7 @@ const ROUTES = {
         route: 'workspaces/:policyID/accounting/sage-intacct/advanced/payment-account',
         getRoute: (policyID: string | undefined) => {
             if (!policyID) {
-                Log.warn('Invalid policyID is used to build the POLICY_ACCOUNTING_SAGE_INTACCT_PAYMENT_ACCOUNT route');
+                getLog().warn('Invalid policyID is used to build the POLICY_ACCOUNTING_SAGE_INTACCT_PAYMENT_ACCOUNT route');
             }
             return `workspaces/${policyID}/accounting/sage-intacct/advanced/payment-account` as const;
         },
@@ -3177,7 +3195,7 @@ const ROUTES = {
         route: 'workspaces/:policyID/accounting/sage-intacct/advanced/autosync',
         getRoute: (policyID: string | undefined) => {
             if (!policyID) {
-                Log.warn('Invalid policyID is used to build the POLICY_ACCOUNTING_SAGE_INTACCT_AUTO_SYNC route');
+                getLog().warn('Invalid policyID is used to build the POLICY_ACCOUNTING_SAGE_INTACCT_AUTO_SYNC route');
             }
             return `workspaces/${policyID}/accounting/sage-intacct/advanced/autosync` as const;
         },
@@ -3186,7 +3204,7 @@ const ROUTES = {
         route: 'workspaces/:policyID/accounting/sage-intacct/advanced/autosync/accounting-method',
         getRoute: (policyID: string | undefined) => {
             if (!policyID) {
-                Log.warn('Invalid policyID is used to build the POLICY_ACCOUNTING_SAGE_INTACCT_ACCOUNTING_METHOD route');
+                getLog().warn('Invalid policyID is used to build the POLICY_ACCOUNTING_SAGE_INTACCT_ACCOUNTING_METHOD route');
             }
             return `workspaces/${policyID}/accounting/sage-intacct/advanced/autosync/accounting-method` as const;
         },
@@ -3215,7 +3233,7 @@ const ROUTES = {
         route: 'debug/report/:reportID/actions/:reportActionID',
         getRoute: (reportID: string | undefined, reportActionID: string) => {
             if (!reportID) {
-                Log.warn('Invalid reportID is used to build the DEBUG_REPORT_ACTION route');
+                getLog().warn('Invalid reportID is used to build the DEBUG_REPORT_ACTION route');
             }
             return `debug/report/${reportID}/actions/${reportActionID}` as const;
         },
