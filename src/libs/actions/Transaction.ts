@@ -249,6 +249,8 @@ function getOnyxDataForRouteRequest(transactionID: string, transactionState: Tra
             break;
     }
 
+    console.log('****** skipResetRouteError ******', skipResetRouteError);
+
     return {
         optimisticData: [
             {

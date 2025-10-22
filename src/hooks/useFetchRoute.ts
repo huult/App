@@ -2,7 +2,7 @@ import {deepEqual} from 'fast-equals';
 import {useEffect} from 'react';
 import type {OnyxEntry} from 'react-native-onyx';
 import {getRoute} from '@libs/actions/Transaction';
-import isSearchTopmostFullScreenRoute from '@libs/Navigation/helpers/isSearchTopmostFullScreenRoute';
+import Navigation from '@libs/Navigation/Navigation';
 import {getValidWaypoints, hasRoute as hasRouteTransactionUtils, isDistanceRequest, isManualDistanceRequest} from '@libs/TransactionUtils';
 import type {IOUAction} from '@src/CONST';
 import CONST from '@src/CONST';
@@ -35,7 +35,10 @@ export default function useFetchRoute(
             return;
         }
 
-        getRoute(transaction.transactionID, validatedWaypoints, transactionState, isSearchTopmostFullScreenRoute());
+        const currentRoute = Navigation.getActiveRoute();
+        const isSearchViewRoute = currentRoute.includes('search/view/');
+
+        getRoute(transaction.transactionID, validatedWaypoints, transactionState, isSearchViewRoute);
     }, [shouldFetchRoute, transaction?.transactionID, validatedWaypoints, isOffline, action, transactionState, isIOURequestStepDistance]);
 
     return {shouldFetchRoute, validatedWaypoints};
