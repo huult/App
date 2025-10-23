@@ -22,6 +22,7 @@ import useSubscriptionPlan from '@hooks/useSubscriptionPlan';
 import useTheme from '@hooks/useTheme';
 import useThemeStyles from '@hooks/useThemeStyles';
 import useWorkspacesTabIndicatorStatus from '@hooks/useWorkspacesTabIndicatorStatus';
+import {isMobileChrome} from '@libs/Browser';
 import clearSelectedText from '@libs/clearSelectedText/clearSelectedText';
 import interceptAnonymousUser from '@libs/interceptAnonymousUser';
 import {getPreservedNavigatorState} from '@libs/Navigation/AppNavigator/createSplitNavigator/usePreserveNavigatorState';
@@ -42,6 +43,7 @@ import NAVIGATORS from '@src/NAVIGATORS';
 import ONYXKEYS from '@src/ONYXKEYS';
 import ROUTES from '@src/ROUTES';
 import SCREENS from '@src/SCREENS';
+import KeyboardUtils from '@src/utils/keyboard';
 import NAVIGATION_TABS from './NAVIGATION_TABS';
 
 type NavigationTabBarProps = {
@@ -181,6 +183,7 @@ function NavigationTabBar({selectedTab, isTopLevelBar = false}: NavigationTabBar
     const showWorkspaces = useCallback(() => {
         navigateToWorkspacesPage({shouldUseNarrowLayout, currentUserLogin, policy: lastViewedPolicy});
     }, [shouldUseNarrowLayout, currentUserLogin, lastViewedPolicy]);
+    const isVisible = KeyboardUtils.isKeyboardVisible();
 
     if (!shouldUseNarrowLayout) {
         return (
@@ -330,6 +333,13 @@ function NavigationTabBar({selectedTab, isTopLevelBar = false}: NavigationTabBar
                 </View>
             </>
         );
+    }
+
+    console.log('****** isVisible ******', isVisible);
+    console.log('****** isMobileChrome() ******', isMobileChrome());
+
+    if (isVisible && isMobileChrome()) {
+        return null;
     }
 
     return (

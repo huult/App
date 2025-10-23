@@ -39,7 +39,11 @@ const dismissKeyboardAndExecute = (cb: () => void): Promise<void> => {
     });
 };
 
-const utils = {dismiss, dismissKeyboardAndExecute};
+const isKeyboardVisible = (): boolean => {
+    return isVisible;
+};
+
+const utils = {dismiss, dismissKeyboardAndExecute, isKeyboardVisible};
 
 export type {SimplifiedKeyboardEvent};
 export default utils;
