@@ -173,6 +173,7 @@ function SearchAutocompleteList({
     allFeeds,
     allCards,
     ref,
+    contextualReportID = undefined,
 }: SearchAutocompleteListProps) {
     const styles = useThemeStyles();
     const {translate, localeCompare} = useLocalize();
@@ -202,6 +203,7 @@ function SearchAutocompleteList({
             includeCurrentUser: true,
             countryCode,
             shouldShowGBR: false,
+            contextualReportID,
         });
     }, [areOptionsInitialized, options, draftComments, betas, autocompleteQueryValue, countryCode]);
 

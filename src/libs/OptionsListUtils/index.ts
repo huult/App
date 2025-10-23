@@ -1860,6 +1860,7 @@ function getValidOptions(
         ...config
     }: GetOptionsConfig = {},
     countryCode: number = CONST.DEFAULT_COUNTRY_CODE,
+    contextualReportID = undefined,
 ): Options {
     const restrictedLogins = getRestrictedLogins(config, options, canShowManagerMcTest);
 
@@ -1923,6 +1924,18 @@ function getValidOptions(
         };
 
         filteredReports = optionsOrderBy(options.reports, recentReportComparator, maxRecentReportElements ?? maxElements, filteringFunction);
+
+        if (contextualReportID && !filteredReports.find((item) => item.reportID === contextualReportID)) {
+            const contextualReport = options.reports.find((item) => item.reportID === contextualReportID);
+            if (contextualReport) {
+                // If we have a max limit and the array is at capacity, remove the last item
+                if (filteredReports.length === (maxRecentReportElements ?? maxElements)) {
+                    filteredReports.pop();
+                }
+                // Add the contextual report at the beginning
+                filteredReports.unshift(contextualReport);
+            }
+        }
 
         const {recentReports, workspaceOptions, selfDMOption} = getValidReports(filteredReports, {
             ...getValidReportsConfig,
@@ -2060,6 +2073,7 @@ function getSearchOptions({
     includeCurrentUser = false,
     countryCode = CONST.DEFAULT_COUNTRY_CODE,
     shouldShowGBR = false,
+    contextualReportID = undefined,
 }: SearchOptionsConfig): Options {
     Timing.start(CONST.TIMING.LOAD_SEARCH_OPTIONS);
     Performance.markStart(CONST.TIMING.LOAD_SEARCH_OPTIONS);
@@ -2088,6 +2102,7 @@ function getSearchOptions({
             shouldShowGBR,
         },
         countryCode,
+        contextualReportID,
     );
 
     Timing.end(CONST.TIMING.LOAD_SEARCH_OPTIONS);

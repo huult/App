@@ -533,6 +533,7 @@ function SearchRouter({onRouterClose, shouldHideInputCaret, isSearchRouterDispla
                     personalDetails={personalDetails}
                     reports={reports}
                     allFeeds={allFeeds}
+                    contextualReportID={contextualReportID}
                     allCards={allCards}
                 />
             )}
