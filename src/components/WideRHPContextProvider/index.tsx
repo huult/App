@@ -81,41 +81,40 @@ function WideRHPContextProvider({children}: React.PropsWithChildren) {
     const [shouldRenderSecondaryOverlay, setShouldRenderSecondaryOverlay] = useState(false);
     const [expenseReportIDs, setExpenseReportIDs] = useState<Set<string>>(new Set());
 
-    // Return undefined if RHP is not the last route
-    const lastVisibleRHPRouteKey = useRootNavigationState((state) => {
-        // Safe handling when navigation is not yet initialized
+    /**
+     * Helper function to calculate current wide RHP keys from navigation state
+     */
+    const calculateWideRHPKeys = useCallback((state: NavigationState | undefined, allKeys: string[]) => {
         if (!state) {
-            return undefined;
-        }
-        const lastFullScreenRouteIndex = state?.routes.findLastIndex((route) => isFullScreenName(route.name));
-        const lastRHPRouteIndex = state?.routes.findLastIndex((route) => route.name === NAVIGATORS.RIGHT_MODAL_NAVIGATOR);
-
-        // Both routes have to be present and the RHP have to be after last full screen for it to be visible.
-        if (lastFullScreenRouteIndex === -1 || lastRHPRouteIndex === -1 || lastFullScreenRouteIndex > lastRHPRouteIndex) {
-            return undefined;
-        }
-
-        return state?.routes.at(lastRHPRouteIndex)?.key;
-    });
-
-    const wideRHPRouteKeys = useMemo(() => {
-        const rootState = navigationRef.getRootState();
-
-        if (!rootState) {
             return [];
         }
 
-        const lastRHPRoute = rootState.routes.find((route) => route.key === lastVisibleRHPRouteKey);
+        // Calculate last visible RHP route key
+        const lastFullScreenRouteIndex = state?.routes.findLastIndex((route) => isFullScreenName(route.name));
+        const lastRHPRouteIndex = state?.routes.findLastIndex((route) => route.name === NAVIGATORS.RIGHT_MODAL_NAVIGATOR);
 
+        if (lastFullScreenRouteIndex === -1 || lastRHPRouteIndex === -1 || lastFullScreenRouteIndex > lastRHPRouteIndex) {
+            return [];
+        }
+
+        const lastVisibleRHPKey = state?.routes.at(lastRHPRouteIndex)?.key;
+        if (!lastVisibleRHPKey) {
+            return [];
+        }
+
+        const lastRHPRoute = state.routes.find((route) => route.key === lastVisibleRHPKey);
         if (!lastRHPRoute) {
             return [];
         }
 
         const lastRHPKeys = extractNavigationKeys(lastRHPRoute.state);
-        const currentKeys = allWideRHPRouteKeys.filter((key) => lastRHPKeys.has(key));
+        return allKeys.filter((key) => lastRHPKeys.has(key));
+    }, []);
 
-        return currentKeys;
-    }, [allWideRHPRouteKeys, lastVisibleRHPRouteKey]);
+    const wideRHPRouteKeys = useMemo(() => {
+        const rootState = navigationRef.getRootState();
+        return calculateWideRHPKeys(rootState, allWideRHPRouteKeys);
+    }, [allWideRHPRouteKeys, calculateWideRHPKeys]);
 
     /**
      * Determines whether the secondary overlay should be displayed.
@@ -135,8 +134,11 @@ function WideRHPContextProvider({children}: React.PropsWithChildren) {
             return false;
         }
 
+        // Use the same calculation logic as wideRHPRouteKeys but with current state
+        const currentWideRHPKeys = calculateWideRHPKeys(state, allWideRHPRouteKeys);
+
         // Check the focused route to avoid glitching when quickly close and open RHP.
-        if (wideRHPRouteKeys.length > 0 && !wideRHPRouteKeys.includes(focusedRoute.key) && isRHPLastRootRoute && focusedRoute.name !== SCREENS.SEARCH.REPORT_RHP) {
+        if (currentWideRHPKeys.length > 0 && !currentWideRHPKeys.includes(focusedRoute.key) && isRHPLastRootRoute && focusedRoute.name !== SCREENS.SEARCH.REPORT_RHP) {
             return true;
         }
 
