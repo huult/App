@@ -81,16 +81,25 @@ function getTaxRatesSection({
     const selectedTaxRateWithDisabledState: Tax[] = [];
     const numberOfTaxRates = enabledTaxRates.length;
 
+    console.log('****** selectedOptions ******', selectedOptions);
+
     selectedOptions.forEach((tax) => {
+        const taxInfo = enabledTaxRates.find((enabledTax) => enabledTax.modifiedName === tax.modifiedName);
+        console.log('****** taxInfo ******', taxInfo);
+
         if (enabledTaxRatesNames.includes(tax.modifiedName)) {
-            selectedTaxRateWithDisabledState.push({...tax, isDisabled: false, isSelected: true});
+            selectedTaxRateWithDisabledState.push({...tax, ...taxInfo, isDisabled: false, isSelected: true});
             return;
         }
-        selectedTaxRateWithDisabledState.push({...tax, isDisabled: true, isSelected: true});
+        selectedTaxRateWithDisabledState.push({...tax, ...taxInfo, isDisabled: true, isSelected: true});
     });
+
+    console.log('****** selectedTaxRateWithDisabledState ******', selectedTaxRateWithDisabledState);
 
     // If all tax are disabled but there's a previously selected tag, show only the selected tag
     if (numberOfTaxRates === 0 && selectedOptions.length > 0) {
+        console.log('****** 44 ******', 44);
+
         policyRatesSections.push({
             // "Selected" section
             title: '',
@@ -100,6 +109,7 @@ function getTaxRatesSection({
 
         return policyRatesSections;
     }
+    console.log('****** policyRatesSections ******', policyRatesSections);
 
     if (searchValue) {
         const taxesForSearch = [
@@ -117,6 +127,8 @@ function getTaxRatesSection({
         return policyRatesSections;
     }
 
+    console.log('****** 4433 ******', 4433);
+
     if (numberOfTaxRates < CONST.STANDARD_LIST_ITEM_LIMIT) {
         policyRatesSections.push({
             // "All" section when items amount less than the threshold
@@ -124,6 +136,11 @@ function getTaxRatesSection({
             shouldShow: false,
             data: getTaxRatesOptions([...selectedTaxRateWithDisabledState, ...enabledTaxRatesWithoutSelectedOptions]),
         });
+
+        console.log('****** selectedTaxRateWithDisabledState ******', selectedTaxRateWithDisabledState);
+        console.log('****** enabledTaxRatesWithoutSelectedOptions ******', enabledTaxRatesWithoutSelectedOptions);
+
+        console.log('****** policyRatesSections32 ******', policyRatesSections);
 
         return policyRatesSections;
     }
@@ -143,6 +160,8 @@ function getTaxRatesSection({
         shouldShow: true,
         data: getTaxRatesOptions(enabledTaxRatesWithoutSelectedOptions),
     });
+
+    console.log('****** policyRatesSections 12 ******', policyRatesSections);
 
     return policyRatesSections;
 }

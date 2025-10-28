@@ -7,7 +7,7 @@ import Navigation from '@libs/Navigation/Navigation';
 import {getHeaderMessageForNonUserList} from '@libs/OptionsListUtils';
 import {getTaxRatesSection} from '@libs/TaxOptionsListUtils';
 import type {Tax, TaxRatesOption} from '@libs/TaxOptionsListUtils';
-import {getEnabledTaxRateCount} from '@libs/TransactionUtils';
+import {getEnabledTaxRateCount, transformedTaxRates} from '@libs/TransactionUtils';
 import CONST from '@src/CONST';
 import type {IOUAction} from '@src/CONST';
 import ONYXKEYS from '@src/ONYXKEYS';
@@ -100,13 +100,21 @@ function TaxPicker({selectedTaxRate = '', policyID, transactionID, onSubmit, act
 
     const handleSelectRow = useCallback(
         (newSelectedOption: TaxRatesOption) => {
+            const taxes = transformedTaxRates(policy, transaction);
+            const tax = Object.values(taxes).find((taxRate) => taxRate.code === transaction?.taxCode);
+            const isDiff = transaction?.taxValue !== tax?.value;
+
+            if (isDiff) {
+                onSubmit(newSelectedOption);
+                return;
+            }
             if (selectedOptionKey === newSelectedOption.keyForList) {
                 onDismiss();
                 return;
             }
             onSubmit(newSelectedOption);
         },
-        [onSubmit, onDismiss, selectedOptionKey],
+        [policy, transaction, selectedOptionKey, onSubmit, onDismiss],
     );
 
     return (

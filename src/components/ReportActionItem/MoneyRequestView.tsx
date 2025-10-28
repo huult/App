@@ -76,6 +76,7 @@ import {
     isPerDiemRequest as isPerDiemRequestTransactionUtils,
     isScanning,
     shouldShowAttendees as shouldShowAttendeesTransactionUtils,
+    transformedTaxRates,
 } from '@libs/TransactionUtils';
 import ViolationsUtils from '@libs/Violations/ViolationsUtils';
 import Navigation from '@navigation/Navigation';
@@ -231,7 +232,17 @@ function MoneyRequestView({
         : convertToDisplayString(Math.abs(transactionTaxAmount ?? 0), transactionCurrency);
 
     const taxRatesDescription = taxRates?.name;
-    const taxRateTitle = updatedTransaction ? getTaxName(policy, updatedTransaction) : getTaxName(policy, transaction);
+
+    const currentTransaction = updatedTransaction ?? transaction;
+    let taxRateTitle = getTaxName(policy, currentTransaction);
+    const taxes = transformedTaxRates(policy, transaction);
+    const tax = Object.values(taxes).find((taxRate) => taxRate.code === currentTransaction?.taxCode);
+    const currentTaxValue = currentTransaction?.taxValue;
+    const isDiff = currentTaxValue !== tax?.value;
+
+    if (isDiff && tax?.value && currentTaxValue) {
+        taxRateTitle = taxRateTitle?.replace(`(${tax.value})`, `(${currentTaxValue})`);
+    }
 
     const actualTransactionDate = isFromMergeTransaction && updatedTransaction ? getFormattedCreated(updatedTransaction) : transactionDate;
     const fallbackTaxRateTitle = transaction?.taxValue;
