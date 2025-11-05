@@ -239,8 +239,9 @@ function MoneyRequestView({
     const tax = Object.values(taxes).find((taxRate) => taxRate.code === currentTransaction?.taxCode);
     const currentTaxValue = currentTransaction?.taxValue;
     const isDiff = currentTaxValue !== tax?.value;
+    const isTaxOutOfPolicy = isDiff && tax?.value && currentTaxValue;
 
-    if (isDiff && tax?.value && currentTaxValue) {
+    if (isTaxOutOfPolicy) {
         taxRateTitle = taxRateTitle?.replace(`(${tax.value})`, `(${currentTaxValue})`);
     }
 
@@ -835,7 +836,7 @@ function MoneyRequestView({
                                 );
                             }}
                             brickRoadIndicator={getErrorForField('tax') ? CONST.BRICK_ROAD_INDICATOR_STATUS.ERROR : undefined}
-                            errorText={getErrorForField('tax')}
+                            errorText={getErrorForField('tax') || (isTaxOutOfPolicy ? ViolationsUtils.getViolationTranslation({name: 'taxOutOfPolicy'}, translate, true) : undefined)}
                             copyValue={taxRateCopyValue}
                             copyable={!!taxRateCopyValue}
                         />
