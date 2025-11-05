@@ -19,6 +19,7 @@ import useNetwork from '@hooks/useNetwork';
 import useOnyx from '@hooks/useOnyx';
 import useResponsiveLayout from '@hooks/useResponsiveLayout';
 import useThemeStyles from '@hooks/useThemeStyles';
+import {getFileResolution, isHighResolutionImage} from '@libs/fileDownload/FileUtils';
 import KeyboardShortcut from '@libs/KeyboardShortcut';
 import {getOriginalMessage, getReportAction, isMoneyRequestAction} from '@libs/ReportActionsUtils';
 import type {AvatarSource} from '@libs/UserUtils';
@@ -28,6 +29,7 @@ import ONYXKEYS from '@src/ONYXKEYS';
 import type {FileObject} from '@src/types/utils/Attachment';
 import {isEmptyObject} from '@src/types/utils/EmptyObject';
 import viewRef from '@src/types/utils/viewRef';
+import SafeString from '@src/utils/SafeString';
 import {AttachmentStateContext} from './AttachmentStateContextProvider';
 import type {AttachmentModalBaseContentProps} from './types';
 
@@ -68,6 +70,7 @@ function AttachmentModalBaseContent({
     // This logic is used to ensure that the source is updated when the source changes and
     // that the initially provided source is always used as a fallback.
     const [source, setSource] = useState<AvatarSource>(() => sourceProp);
+    const [previewSource, setPreviewSource] = useState<AvatarSource | undefined>();
     const isLocalSource = typeof source === 'string' && /^file:|^blob:/.test(source);
     const sourceForAttachmentView = source || sourceProp;
     useEffect(() => {
@@ -109,12 +112,20 @@ function AttachmentModalBaseContent({
         setFile(filesProp ?? fallbackFile);
     }, [filesProp, fallbackFile, setFile]);
 
+    const [isHighResolution, setIsHighResolution] = useState<boolean>(false);
+    useEffect(() => {
+        getFileResolution(fileToDisplay).then((resolution) => {
+            setIsHighResolution(isHighResolutionImage(resolution));
+        });
+    }, [fileToDisplay]);
+
     /**
      * Keeps the attachment source in sync with the attachment displayed currently in the carousel.
      */
     const onNavigate = useCallback(
         (attachment: Attachment) => {
             setSource(attachment.source);
+            setPreviewSource(attachment.previewSource);
             setFile(attachment.file);
             setIsAuthTokenRequiredState(attachment.isAuthTokenRequired ?? false);
             onCarouselAttachmentChange(attachment);
@@ -181,14 +192,34 @@ function AttachmentModalBaseContent({
     }, [clearAttachmentErrors]);
 
     const {isAttachmentLoaded} = useContext(AttachmentStateContext);
+
     const shouldShowDownloadButton = useMemo(() => {
         const isValidContext = !isEmptyObject(report) || type === CONST.ATTACHMENT_TYPE.SEARCH;
         if (!isValidContext || isErrorInAttachment(source)) {
             return false;
         }
 
-        return !!onDownloadAttachment && isDownloadButtonReadyToBeShown && !shouldShowNotFoundPage && !isOffline && !isLocalSource && isAttachmentLoaded?.(source);
-    }, [isAttachmentLoaded, isDownloadButtonReadyToBeShown, isErrorInAttachment, isLocalSource, isOffline, onDownloadAttachment, report, shouldShowNotFoundPage, source, type]);
+        // When isHighResolution is true, check if previewSource is loaded instead of the main source
+        let sourceToCheck: AvatarSource = source;
+        if (isHighResolution && previewSource) {
+            const previewSourceString = SafeString(previewSource);
+            sourceToCheck = previewSourceString || source;
+        }
+        return !!onDownloadAttachment && isDownloadButtonReadyToBeShown && !shouldShowNotFoundPage && !isOffline && !isLocalSource && isAttachmentLoaded?.(sourceToCheck);
+    }, [
+        isAttachmentLoaded,
+        isDownloadButtonReadyToBeShown,
+        isErrorInAttachment,
+        isLocalSource,
+        isOffline,
+        onDownloadAttachment,
+        report,
+        shouldShowNotFoundPage,
+        source,
+        type,
+        isHighResolution,
+        previewSource,
+    ]);
 
     // We need to pass a shared value of type boolean to the context, so `falseSV` acts as a default value.
     const falseSV = useSharedValue(false);
