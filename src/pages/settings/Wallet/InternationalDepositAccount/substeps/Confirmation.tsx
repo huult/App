@@ -14,6 +14,7 @@ import useOnyx from '@hooks/useOnyx';
 import useThemeStyles from '@hooks/useThemeStyles';
 import {getCurrencySymbol} from '@libs/CurrencyUtils';
 import {getLatestErrorMessage} from '@libs/ErrorUtils';
+import {isIBANCountry, isValidIBAN} from '@libs/ValidationUtils';
 import type CustomSubStepProps from '@pages/settings/Wallet/InternationalDepositAccount/types';
 import {clearReimbursementAccountBankCreation, createCorpayBankAccountForWalletFlow, hideBankAccountErrors} from '@userActions/BankAccounts';
 import CONST from '@src/CONST';
@@ -43,6 +44,7 @@ function Confirmation({onNext, onMove, formValues, fieldsMap}: CustomSubStepProp
     const [corpayFields] = useOnyx(ONYXKEYS.CORPAY_FIELDS, {canBeMissing: false});
     const [reimbursementAccount] = useOnyx(ONYXKEYS.REIMBURSEMENT_ACCOUNT, {canBeMissing: false});
     const {isOffline} = useNetwork();
+    const [invalidIban, setInvalidIban] = React.useState(false);
 
     const getTitle = (field: CorpayFormField, fieldName: string) => {
         if ((field.valueSet ?? []).length > 0) {
@@ -57,6 +59,23 @@ function Confirmation({onNext, onMove, formValues, fieldsMap}: CustomSubStepProp
     };
 
     const getDataAndGoToNextStep = (values: FormOnyxValues<typeof ONYXKEYS.FORMS.INTERNATIONAL_BANK_ACCOUNT_FORM>) => {
+        console.log('****** values ******', values);
+        console.log('****** formValues ******', formValues);
+
+        // Additional IBAN validation for accountNumber field in countries that use IBAN
+        if (values['accountNumber']) {
+            const countryCode = values.bankCountry || values.accountHolderCountry || '';
+            const accountNumber = String(values['accountNumber']);
+
+            // Check if this country uses IBAN and if the account number looks like an IBAN
+            if (countryCode && isIBANCountry(countryCode) && /^[A-Z]{2}\d{2}[A-Z0-9]+$/i.test(accountNumber)) {
+                // Validate IBAN checksum
+                if (!isValidIBAN(accountNumber)) {
+                    setInvalidIban(true);
+                }
+            }
+        }
+
         createCorpayBankAccountForWalletFlow({...formValues, ...values}, corpayFields?.classification ?? '', corpayFields?.destinationCountry ?? '', corpayFields?.preferredMethod ?? '');
     };
 
@@ -203,7 +222,7 @@ function Confirmation({onNext, onMove, formValues, fieldsMap}: CustomSubStepProp
                     <FormHelpMessage
                         style={[styles.mt3, styles.mbn1]}
                         isError
-                        message={errorMessage}
+                        message={invalidIban ? translate('bankAccount.error.invalidIban') : errorMessage}
                     />
                 )}
             </FormProvider>

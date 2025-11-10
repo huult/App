@@ -5,6 +5,7 @@ import type {FormOnyxValues} from '@components/Form/types';
 import type {LocaleContextProps} from '@components/LocaleContextProvider';
 import {addErrorMessage} from '@libs/ErrorUtils';
 import {getCurrentAddress} from '@libs/PersonalDetailsUtils';
+import * as ValidationUtils from '@libs/ValidationUtils';
 import CONST from '@src/CONST';
 import type ONYXKEYS from '@src/ONYXKEYS';
 import type {InternationalBankAccountForm} from '@src/types/form';

@@ -762,6 +762,205 @@ function isValidTaxIDEINNumber(number: string, country: Country | '') {
     }
 }
 
+/**
+ * Validates an IBAN (International Bank Account Number) using the checksum algorithm.
+ * @param iban - The IBAN to validate
+ * @returns True if the IBAN is valid, false otherwise
+ */
+function isValidIBAN(iban: string): boolean {
+    // Remove spaces and convert to uppercase
+    const cleanedIban = iban.replace(/\s/g, '').toUpperCase();
+
+    // Check if IBAN matches basic format (2 letters + 2 digits + up to 30 alphanumeric characters)
+    if (!/^[A-Z]{2}\d{2}[A-Z0-9]+$/.test(cleanedIban)) {
+        return false;
+    }
+
+    // IBAN length validation per country
+    const ibanLengths: Record<string, number> = {
+        AD: 24,
+        AE: 23,
+        AL: 28,
+        AT: 20,
+        AZ: 28,
+        BA: 20,
+        BE: 16,
+        BG: 22,
+        BH: 22,
+        BR: 29,
+        BY: 28,
+        CH: 21,
+        CR: 22,
+        CY: 28,
+        CZ: 24,
+        DE: 22,
+        DK: 18,
+        DO: 28,
+        EE: 20,
+        EG: 29,
+        ES: 24,
+        FI: 18,
+        FO: 18,
+        FR: 27,
+        GB: 22,
+        GE: 22,
+        GI: 23,
+        GL: 18,
+        GR: 27,
+        GT: 28,
+        HR: 21,
+        HU: 28,
+        IE: 22,
+        IL: 23,
+        IS: 26,
+        IT: 27,
+        JO: 30,
+        KW: 30,
+        KZ: 20,
+        LB: 28,
+        LC: 32,
+        LI: 21,
+        LT: 20,
+        LU: 20,
+        LV: 21,
+        MC: 27,
+        MD: 24,
+        ME: 22,
+        MK: 19,
+        MR: 27,
+        MT: 31,
+        MU: 30,
+        NL: 18,
+        NO: 15,
+        PK: 24,
+        PL: 28,
+        PS: 29,
+        PT: 25,
+        QA: 29,
+        RO: 24,
+        RS: 22,
+        SA: 24,
+        SE: 24,
+        SI: 19,
+        SK: 24,
+        SM: 27,
+        TN: 24,
+        TR: 26,
+        UA: 29,
+        VA: 22,
+        VG: 24,
+        XK: 20,
+    };
+
+    const countryCode = cleanedIban.substring(0, 2);
+    const expectedLength = ibanLengths[countryCode];
+
+    if (!expectedLength || cleanedIban.length !== expectedLength) {
+        return false;
+    }
+
+    // Move first 4 characters to the end and convert letters to numbers (A=10, B=11, ..., Z=35)
+    const rearranged = cleanedIban.substring(4) + cleanedIban.substring(0, 4);
+    const numericIban = rearranged
+        .split('')
+        .map((char) => {
+            const code = char.charCodeAt(0);
+            return code >= 65 && code <= 90 ? (code - 55).toString() : char;
+        })
+        .join('');
+
+    // Calculate mod 97 for large numbers using string manipulation
+    let remainder = 0;
+    for (const digit of numericIban) {
+        remainder = (remainder * 10 + parseInt(digit, 10)) % 97;
+    }
+
+    return remainder === 1;
+}
+
+/**
+ * Checks if a country uses IBAN for bank account numbers
+ * @param countryCode - The two-letter country code
+ * @returns True if the country uses IBAN, false otherwise
+ */
+function isIBANCountry(countryCode: string): boolean {
+    const ibanCountries = [
+        'AD',
+        'AE',
+        'AL',
+        'AT',
+        'AZ',
+        'BA',
+        'BE',
+        'BG',
+        'BH',
+        'BR',
+        'BY',
+        'CH',
+        'CR',
+        'CY',
+        'CZ',
+        'DE',
+        'DK',
+        'DO',
+        'EE',
+        'EG',
+        'ES',
+        'FI',
+        'FO',
+        'FR',
+        'GB',
+        'GE',
+        'GI',
+        'GL',
+        'GR',
+        'GT',
+        'HR',
+        'HU',
+        'IE',
+        'IL',
+        'IS',
+        'IT',
+        'JO',
+        'KW',
+        'KZ',
+        'LB',
+        'LC',
+        'LI',
+        'LT',
+        'LU',
+        'LV',
+        'MC',
+        'MD',
+        'ME',
+        'MK',
+        'MR',
+        'MT',
+        'MU',
+        'NL',
+        'NO',
+        'PK',
+        'PL',
+        'PS',
+        'PT',
+        'QA',
+        'RO',
+        'RS',
+        'SA',
+        'SE',
+        'SI',
+        'SK',
+        'SM',
+        'TN',
+        'TR',
+        'UA',
+        'VA',
+        'VG',
+        'XK',
+    ];
+    return ibanCountries.includes(countryCode.toUpperCase());
+}
+
 export {
     meetsMinimumAgeRequirement,
     meetsMaximumAgeRequirement,
@@ -815,4 +1014,6 @@ export {
     isValidRegistrationNumber,
     isValidInputLength,
     isValidTaxIDEINNumber,
+    isValidIBAN,
+    isIBANCountry,
 };

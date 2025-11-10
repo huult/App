@@ -2860,6 +2860,7 @@ const translations = {
             routingNumber: 'Please enter a valid routing number',
             accountNumber: 'Please enter a valid account number',
             routingAndAccountNumberCannotBeSame: "Routing and account numbers can't match",
+            invalidIban: 'Invalid IBAN',
             companyType: 'Please select a valid company type',
             tooManyAttempts: 'Due to a high number of login attempts, this option has been disabled for 24 hours. Please try again later or enter details manually instead.',
             address: 'Please enter a valid address',
