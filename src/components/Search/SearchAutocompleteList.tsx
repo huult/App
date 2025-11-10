@@ -15,6 +15,7 @@ import useLocalize from '@hooks/useLocalize';
 import useOnyx from '@hooks/useOnyx';
 import useResponsiveLayout from '@hooks/useResponsiveLayout';
 import useThemeStyles from '@hooks/useThemeStyles';
+import {isSafari} from '@libs/Browser';
 import {getCardFeedsForDisplay} from '@libs/CardFeedUtils';
 import {getCardDescription, isCard, isCardHiddenFromSearch} from '@libs/CardUtils';
 import {getDecodedCategoryName} from '@libs/CategoryUtils';
@@ -44,6 +45,7 @@ import {
 } from '@libs/SearchQueryUtils';
 import {getDatePresets, getHasOptions} from '@libs/SearchUIUtils';
 import StringUtils from '@libs/StringUtils';
+import addViewportResizeListener from '@libs/VisualViewport';
 import Timing from '@userActions/Timing';
 import CONST, {CONTINUATION_DETECTION_SEARCH_FILTER_KEYS} from '@src/CONST';
 import ONYXKEYS from '@src/ONYXKEYS';
@@ -749,6 +751,26 @@ function SearchAutocompleteList({
         CONST.TIMING.SEARCH_OPTION_LIST_DEBOUNCE_TIME,
     );
 
+    const [viewportChangeKey, setViewportChangeKey] = useState(0);
+
+    useEffect(() => {
+        // Only add viewport listener if we're on Safari, where this issue is most prominent
+        if (!isSafari()) {
+            return;
+        }
+
+        const removeViewportListener = addViewportResizeListener(() => {
+            // Force re-layout when viewport changes (e.g., keyboard hide/show) on Safari
+            // This fixes the touch position misalignment issue that occurs when the keyboard
+            // hides during a long-press scroll operation in Safari
+            setTimeout(() => {
+                setViewportChangeKey((prev) => prev + 1);
+            }, 0);
+        });
+
+        return removeViewportListener;
+    }, []);
+
     useEffect(() => {
         debounceHandleSearch();
     }, [autocompleteQueryWithoutFilters, debounceHandleSearch]);
@@ -848,6 +870,7 @@ function SearchAutocompleteList({
         // will fail because the list will be empty on first render so we only render after options are initialized.
         areOptionsInitialized && (
             <SelectionList<OptionData | SearchQueryItem>
+                key={isSafari() ? `selection-list-${viewportChangeKey}` : 'selection-list'}
                 showLoadingPlaceholder
                 fixedNumItemsForLoader={4}
                 loaderSpeed={CONST.TIMING.SKELETON_ANIMATION_SPEED}
@@ -859,11 +882,11 @@ function SearchAutocompleteList({
                 listItemWrapperStyle={[styles.pr0, styles.pl0]}
                 getItemHeight={getItemHeight}
                 onLayout={() => {
-                    setPerformanceTimersEnd();
-                    setIsInitialRender(false);
-                    if (!!textInputRef?.current && ref && 'current' in ref) {
-                        ref.current?.updateExternalTextInputFocus?.(textInputRef.current.isFocused());
-                    }
+                    // setPerformanceTimersEnd();
+                    // setIsInitialRender(false);
+                    // if (!!textInputRef?.current && ref && 'current' in ref) {
+                    //     ref.current?.updateExternalTextInputFocus?.(textInputRef.current.isFocused());
+                    // }
                 }}
                 showScrollIndicator={!shouldUseNarrowLayout}
                 sectionTitleStyles={styles.mhn2}
