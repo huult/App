@@ -20,7 +20,7 @@ import {canUseTouchScreen as canUseTouchScreenCheck} from '@libs/DeviceCapabilit
 import NarrowPaneContext from '@libs/Navigation/AppNavigator/Navigators/NarrowPaneContext';
 import Overlay from '@libs/Navigation/AppNavigator/Navigators/Overlay';
 import Navigation from '@libs/Navigation/Navigation';
-import {areAllModalsHidden, closeTop, onModalDidClose, setCloseModal, setModalVisibility, willAlertModalBecomeVisible} from '@userActions/Modal';
+import {areAllModalsHidden, close, closeTop, onModalDidClose, setCloseModal, setModalVisibility, willAlertModalBecomeVisible} from '@userActions/Modal';
 import CONST from '@src/CONST';
 import ModalContext from './ModalContext';
 import ReanimatedModal from './ReanimatedModal';
@@ -108,6 +108,13 @@ function BaseModal({
     const hideModal = useCallback(
         (callHideCallback = true) => {
             shouldCallHideModalOnUnmount.current = false;
+
+            // Ensure setReadyToFocus is called to resolve any pending focus promises
+            // This is a fallback in case handleDismissModal didn't execute due to quick unmounting
+            close(() => {
+                ComposerFocusManager.setReadyToFocus(uniqueModalId);
+            });
+
             if (areAllModalsHidden()) {
                 if (shouldSetModalVisibility && !Navigation.isTopmostRouteModalScreen()) {
                     setModalVisibility(false);

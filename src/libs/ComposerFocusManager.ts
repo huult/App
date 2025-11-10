@@ -187,6 +187,9 @@ function resetReadyToFocus(id: ModalId) {
     promise.ready = new Promise<void>((resolve) => {
         promise.resolve = resolve;
     });
+
+    console.log('****** set id ******', id);
+
     promiseMap.set(id, promise);
 }
 
@@ -207,11 +210,16 @@ function setReadyToFocus(id?: ModalId) {
         return;
     }
     promise.resolve?.();
+    console.log('****** delete id ******', id);
+    console.log('****** delete key ******', key);
+
     promiseMap.delete(key);
 }
 
 function isReadyToFocus(id?: ModalId) {
     const key = id ?? getTopmostModalId();
+    console.log('****** getTopmostModalId() ******', getTopmostModalId());
+
     const promise = promiseMap.get(key);
     if (!promise) {
         return Promise.resolve();

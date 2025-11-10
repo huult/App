@@ -156,11 +156,10 @@ function ReanimatedModal({
         // Specifically on Android, the Modal's onDismiss callback does not work reliably. There's a reported issue at:
         // https://stackoverflow.com/questions/58937956/react-native-modal-ondismiss-not-invoked
         // Therefore, we manually call onDismiss and onModalHide here.
-        if (getPlatform() !== CONST.PLATFORM.IOS) {
-            onDismiss?.();
+        if (getPlatform() === CONST.PLATFORM.ANDROID) {
             onModalHide();
         }
-    }, [onDismiss, onModalHide]);
+    }, [onModalHide]);
 
     const containerView = (
         <Container
@@ -218,11 +217,12 @@ function ReanimatedModal({
                 statusBarTranslucent={statusBarTranslucent}
                 testID={testID}
                 onDismiss={() => {
-                    if (getPlatform() !== CONST.PLATFORM.IOS) {
-                        return;
-                    }
+                    console.log('****** 4494949 ******', 4494949);
+
                     onDismiss?.();
-                    onModalHide();
+                    if (getPlatform() !== CONST.PLATFORM.ANDROID) {
+                        onModalHide();
+                    }
                 }}
                 // eslint-disable-next-line react/jsx-props-no-spreading
                 {...props}
