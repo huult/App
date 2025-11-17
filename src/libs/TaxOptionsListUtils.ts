@@ -74,10 +74,10 @@ function getTaxRatesSection({
     const taxes = transformedTaxRates(policy, transaction);
 
     const sortedTaxRates = sortTaxRates(taxes, localeCompare);
-    const selectedOptionNames = selectedOptions.map((selectedOption) => selectedOption.modifiedName);
+    const selectedOptionNames = new Set(selectedOptions.map((selectedOption) => selectedOption.modifiedName));
     const enabledTaxRates = sortedTaxRates.filter((taxRate) => !taxRate.isDisabled);
-    const enabledTaxRatesNames = enabledTaxRates.map((tax) => tax.modifiedName);
-    const enabledTaxRatesWithoutSelectedOptions = enabledTaxRates.filter((tax) => tax.modifiedName && !selectedOptionNames.includes(tax.modifiedName));
+    const enabledTaxRatesNames = new Set(enabledTaxRates.map((tax) => tax.modifiedName));
+    const enabledTaxRatesWithoutSelectedOptions = enabledTaxRates.filter((tax) => tax.modifiedName && !selectedOptionNames.has(tax.modifiedName));
     const selectedTaxRateWithDisabledState: Tax[] = [];
     const numberOfTaxRates = enabledTaxRates.length;
 
