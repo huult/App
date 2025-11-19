@@ -10,7 +10,7 @@ import ScreenWrapper from '@components/ScreenWrapper';
 import TextPicker from '@components/TextPicker';
 import useLocalize from '@hooks/useLocalize';
 import useThemeStyles from '@hooks/useThemeStyles';
-import {createPolicyTax, getNextTaxCode, getTaxValueWithPercentage, validateTaxName, validateTaxValue} from '@libs/actions/TaxRate';
+import {createPolicyTax, getNextTaxCode, getTaxValueWithPercentage, validateTaxName, validateTaxNameInModal, validateTaxValue} from '@libs/actions/TaxRate';
 import Navigation from '@libs/Navigation/Navigation';
 import type {PlatformStackScreenProps} from '@libs/Navigation/PlatformStackNavigation/types';
 import type {SettingsNavigatorParamList} from '@libs/Navigation/types';
@@ -86,7 +86,7 @@ function WorkspaceCreateTaxPage({
                             validate={validateForm}
                             submitButtonText={translate('common.save')}
                             enabledWhenOffline
-                            shouldValidateOnBlur={false}
+                            shouldValidateOnBlur
                             addBottomSafeAreaPadding
                         >
                             <View style={styles.mhn5}>
@@ -101,6 +101,7 @@ function WorkspaceCreateTaxPage({
                                     multiline={false}
                                     role={CONST.ROLE.PRESENTATION}
                                     required
+                                    customValidate={policy ? validateTaxNameInModal(policy, INPUT_IDS.NAME) : undefined}
                                 />
                                 <InputWrapper
                                     InputComponent={AmountPicker}

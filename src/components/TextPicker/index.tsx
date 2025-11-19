@@ -20,6 +20,7 @@ function TextPicker(
         disabled = false,
         interactive = true,
         required = false,
+        customValidate,
         ...rest
     }: TextPickerProps,
     forwardedRef: ForwardedRef<View>,
@@ -69,6 +70,7 @@ function TextPicker(
                 onValueSelected={updateInput}
                 disabled={disabled}
                 required={required}
+                customValidate={customValidate}
                 // eslint-disable-next-line react/jsx-props-no-spreading
                 {...rest}
             />

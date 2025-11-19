@@ -1,5 +1,7 @@
 import type {MenuItemBaseProps} from '@components/MenuItem';
 import type {BaseTextInputProps} from '@components/TextInput/BaseTextInput/types';
+import type {FormInputErrors, FormOnyxValues} from '@components/Form/types';
+import type ONYXKEYS from '@src/ONYXKEYS';
 
 type TextProps = Exclude<BaseTextInputProps, 'value' | 'onInputChange'>;
 
@@ -27,6 +29,9 @@ type TextSelectorModalProps = {
 
     /** Whether the field is required */
     required?: boolean;
+
+    /** Custom validation function for the modal */
+    customValidate?: (values: FormOnyxValues<typeof ONYXKEYS.FORMS.TEXT_PICKER_MODAL_FORM>) => Record<string, string>;
 } & Pick<MenuItemBaseProps, 'subtitle' | 'description'> &
     Omit<TextProps, 'ref'>;
 
@@ -60,6 +65,9 @@ type TextPickerProps = {
 
     /** Whether the field is required */
     required?: boolean;
+
+    /** Custom validation function for the modal */
+    customValidate?: (values: FormOnyxValues<typeof ONYXKEYS.FORMS.TEXT_PICKER_MODAL_FORM>) => Record<string, string>;
 } & Pick<MenuItemBaseProps, 'rightLabel' | 'subtitle' | 'description' | 'interactive'> &
     TextProps;
 

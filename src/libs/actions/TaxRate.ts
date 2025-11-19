@@ -1,6 +1,6 @@
 import type {NullishDeep, OnyxEntry} from 'react-native-onyx';
 import Onyx from 'react-native-onyx';
-import type {FormOnyxValues} from '@components/Form/types';
+import type {FormInputErrors, FormOnyxValues} from '@components/Form/types';
 import type {LocaleContextProps} from '@components/LocaleContextProvider';
 import * as API from '@libs/API';
 import type {
@@ -57,6 +57,23 @@ const validateTaxName = (policy: Policy, values: FormOnyxValues<typeof ONYXKEYS.
     }
 
     return errors;
+};
+
+/**
+ * Function to validate tax name in TextPicker modal
+ */
+const validateTaxNameInModal = (policy: Policy, inputID: string) => {
+    return (values: FormOnyxValues<typeof ONYXKEYS.FORMS.TEXT_PICKER_MODAL_FORM>) => {
+        const errors: Record<string, string> = {};
+        const name = values[inputID];
+        
+        if (name && policy?.taxRates?.taxes && isExistingTaxName(name, policy.taxRates.taxes)) {
+            // eslint-disable-next-line @typescript-eslint/no-deprecated
+            errors[inputID] = translateLocal('workspace.taxes.error.taxRateAlreadyExists');
+        }
+
+        return errors;
+    };
 };
 
 const validateTaxCode = (policy: Policy, values: FormOnyxValues<typeof ONYXKEYS.FORMS.WORKSPACE_TAX_CODE_FORM>) => {
@@ -667,6 +684,7 @@ export {
     getTaxValueWithPercentage,
     setPolicyTaxesEnabled,
     validateTaxName,
+    validateTaxNameInModal,
     validateTaxCode,
     validateTaxValue,
     deletePolicyTaxes,
