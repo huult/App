@@ -115,6 +115,7 @@ function BaseModal({
                 ComposerFocusManager.setReadyToFocus(uniqueModalId);
             });
 
+            willAlertModalBecomeVisible(false);
             if (areAllModalsHidden()) {
                 if (shouldSetModalVisibility && !Navigation.isTopmostRouteModalScreen()) {
                     setModalVisibility(false);
