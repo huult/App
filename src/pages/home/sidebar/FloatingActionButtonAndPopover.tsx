@@ -444,7 +444,7 @@ function FloatingActionButtonAndPopover({onHideCreateMenu, onShowCreateMenu, ref
                     rightIconAccountID: quickActionAvatars.at(0)?.id ?? CONST.DEFAULT_NUMBER_ID,
                     description: quickActionSubtitle,
                     onSelected,
-                    shouldCallAfterModalHide: shouldUseNarrowLayout,
+                    shouldCallAfterModalHide: true, // Always delay callback to ensure proper modal dismissal
                     rightIconReportID: quickActionReport?.reportID,
                 },
             ];
@@ -468,7 +468,7 @@ function FloatingActionButtonAndPopover({onHideCreateMenu, onShowCreateMenu, ref
                     icon: Expensicons.ReceiptScan,
                     text: translate('quickAction.scanReceipt'),
                     description: getReportName(policyChatForActivePolicy),
-                    shouldCallAfterModalHide: shouldUseNarrowLayout,
+                    shouldCallAfterModalHide: true, // Always delay callback to ensure proper modal dismissal
                     onSelected,
                     rightIconReportID: policyChatForActivePolicy?.reportID,
                 },
@@ -490,7 +490,6 @@ function FloatingActionButtonAndPopover({onHideCreateMenu, onShowCreateMenu, ref
         quickActionTitle,
         quickActionAvatars,
         quickActionSubtitle,
-        shouldUseNarrowLayout,
         isDelegateAccessRestricted,
         isValidReport,
         selectOption,
@@ -525,7 +524,7 @@ function FloatingActionButtonAndPopover({onHideCreateMenu, onShowCreateMenu, ref
         {
             icon: Expensicons.Location,
             text: translate('iou.trackDistance'),
-            shouldCallAfterModalHide: shouldUseNarrowLayout,
+            shouldCallAfterModalHide: true, // Always delay callback to ensure proper modal dismissal
             onSelected: () => {
                 interceptAnonymousUser(() => {
                     if (shouldRedirectToExpensifyClassic) {
@@ -542,7 +541,7 @@ function FloatingActionButtonAndPopover({onHideCreateMenu, onShowCreateMenu, ref
                   {
                       icon: icons.Document,
                       text: translate('report.newReport.createReport'),
-                      shouldCallAfterModalHide: shouldUseNarrowLayout,
+                      shouldCallAfterModalHide: true, // Always delay callback to ensure proper modal dismissal
                       onSelected: () => {
                           interceptAnonymousUser(() => {
                               if (shouldRedirectToExpensifyClassic) {
@@ -577,7 +576,7 @@ function FloatingActionButtonAndPopover({onHideCreateMenu, onShowCreateMenu, ref
         {
             icon: Expensicons.ChatBubble,
             text: translate('sidebarScreen.fabNewChat'),
-            shouldCallAfterModalHide: shouldUseNarrowLayout,
+            shouldCallAfterModalHide: true, // Always delay callback to ensure proper modal dismissal
             onSelected: () => interceptAnonymousUser(startNewChat),
         },
         ...(canSendInvoice
@@ -603,6 +602,7 @@ function FloatingActionButtonAndPopover({onHideCreateMenu, onShowCreateMenu, ref
                 icon: Expensicons.Suitcase,
                 text: translate('travel.bookTravel'),
                 rightIcon: isTravelEnabled && shouldOpenTravelDotLinkWeb() ? icons.NewWindow : undefined,
+                shouldCallAfterModalHide: true, // Always delay callback to ensure proper modal dismissal
                 onSelected: () => interceptAnonymousUser(() => openTravel()),
             },
         ],
@@ -613,6 +613,7 @@ function FloatingActionButtonAndPopover({onHideCreateMenu, onShowCreateMenu, ref
                       iconStyles: styles.popoverIconCircle,
                       iconFill: theme.icon,
                       text: translate('testDrive.quickAction.takeATwoMinuteTestDrive'),
+                      shouldCallAfterModalHide: true, // Always delay callback to ensure proper modal dismissal
                       onSelected: () => interceptAnonymousUser(() => startTestDrive(introSelected, tryNewDot?.hasBeenAddedToNudgeMigration ?? false, isUserPaidPolicyMember)),
                   },
               ]
@@ -627,7 +628,7 @@ function FloatingActionButtonAndPopover({onHideCreateMenu, onShowCreateMenu, ref
                       iconHeight: variables.h40,
                       text: translate('workspace.new.newWorkspace'),
                       description: translate('workspace.new.getTheExpensifyCardAndMore'),
-                      shouldCallAfterModalHide: shouldUseNarrowLayout,
+                      shouldCallAfterModalHide: true, // Always delay callback to ensure proper modal dismissal
                       onSelected: () => interceptAnonymousUser(() => Navigation.navigate(ROUTES.WORKSPACE_CONFIRMATION.getRoute(Navigation.getActiveRoute()))),
                   },
               ]
@@ -654,7 +655,13 @@ function FloatingActionButtonAndPopover({onHideCreateMenu, onShowCreateMenu, ref
                             if (!item.onSelected) {
                                 return;
                             }
-                            navigateAfterInteraction(item.onSelected);
+                            // If shouldCallAfterModalHide is true, let PopoverMenu handle the timing
+                            // Otherwise, use navigateAfterInteraction for immediate execution
+                            if (item.shouldCallAfterModalHide) {
+                                item.onSelected();
+                            } else {
+                                navigateAfterInteraction(item.onSelected);
+                            }
                         },
                     };
                 })}
