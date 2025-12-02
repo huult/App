@@ -1,4 +1,5 @@
-import {Str} from 'expensify-common';
+import {PUBLIC_DOMAINS_SET, Str} from 'expensify-common';
+import escapeRegExp from 'lodash/escapeRegExp';
 import type {OnyxCollection, OnyxEntry} from 'react-native-onyx';
 import Onyx from 'react-native-onyx';
 import type {ValueOf} from 'type-fest';
@@ -931,6 +932,98 @@ function getCurrentXeroOrganizationName(policy: Policy | undefined): string | un
     return findCurrentXeroOrganization(getXeroTenants(policy), policy?.connections?.xero?.config?.tenantID)?.name;
 }
 
+/**
+ * Get company name from various accounting integrations
+ */
+function getCompanyNameFromAccountingIntegration(policy: Policy | undefined): string | undefined {
+    if (!policy?.connections) {
+        return undefined;
+    }
+
+    // Check Xero organization name
+    if (policy.connections.xero?.data?.tenants) {
+        const xeroOrgName = getCurrentXeroOrganizationName(policy);
+        if (xeroOrgName) {
+            return xeroOrgName;
+        }
+    }
+
+    // Check NetSuite subsidiary name
+    if (policy.connections.netsuite?.options?.data?.subsidiaryList && policy.connections.netsuite?.options?.config?.subsidiaryID) {
+        const subsidiary = policy.connections.netsuite.options.data.subsidiaryList.find((sub) => sub.internalID === policy.connections?.netsuite?.options?.config?.subsidiaryID);
+        if (subsidiary?.name) {
+            return subsidiary.name;
+        }
+    }
+
+    // Check Sage Intacct entity name
+    if (policy.connections.intacct?.data?.entities && policy.connections.intacct?.config?.entity) {
+        const entity = policy.connections.intacct.data.entities.find((ent) => ent.id === policy.connections?.intacct?.config?.entity);
+        if (entity?.name) {
+            return entity.name;
+        }
+    }
+
+    // QuickBooks doesn't typically provide a company name in the same way
+    // The connection itself represents the company, but we can't extract a clean company name
+
+    return undefined;
+}
+
+/**
+ * Checks if a workspace name appears to be a default/generated name
+ * This includes checking against the pattern used by generateDefaultWorkspaceName
+ */
+function isDefaultWorkspaceName(workspaceName: string | undefined, ownerEmail: string | undefined): boolean {
+    if (!workspaceName || !ownerEmail) {
+        return false;
+    }
+
+    const emailParts = ownerEmail.split('@');
+    if (emailParts.length !== 2) {
+        return false;
+    }
+
+    const username = emailParts[0] ?? '';
+    const domain = emailParts[1] ?? '';
+
+    // Check for SMS domain pattern
+    const isSMSDomain = `@${domain}` === CONST.SMS.DOMAIN;
+    if (isSMSDomain) {
+        // Match "My Group Workspace" or "My Group Workspace N" pattern
+        return /^My Group Workspace(\s+\d+)?$/i.test(workspaceName);
+    }
+
+    // For other domains, check if it follows the "{Name}'s Workspace" or "{Domain}'s Workspace" pattern
+    // This covers patterns like "John's Workspace", "John's Workspace 2", "Acme's Workspace", etc.
+
+    // Get the display name that would be used for workspace generation
+    let expectedNamePart = '';
+    const domainLower = domain.toLowerCase();
+
+    if (!PUBLIC_DOMAINS_SET.has(domainLower)) {
+        // Use domain name for non-public domains
+        expectedNamePart = domain.split('.')[0] ?? '';
+    } else {
+        // For public domains, it could be display name or username
+        // We'll check for both patterns
+        const usernamePart = username;
+
+        // Check if it matches either pattern
+        const usernamePattern = new RegExp(`^${escapeRegExp(usernamePart)}'s\\s+Workspace(\\s+\\d+)?$`, 'i');
+        if (usernamePattern.test(workspaceName)) {
+            return true;
+        }
+
+        // Note: We can't easily check for display name pattern here since we don't have access to personal details
+        // But the username pattern should catch most cases
+        return false;
+    }
+
+    const domainPattern = new RegExp(`^${escapeRegExp(expectedNamePart)}'s\\s+Workspace(\\s+\\d+)?$`, 'i');
+    return domainPattern.test(workspaceName);
+}
+
 function getXeroBankAccounts(policy: Policy | undefined, selectedBankAccountId: string | undefined): SelectorType[] {
     const bankAccounts = policy?.connections?.xero?.data?.bankAccounts ?? [];
 
@@ -1648,6 +1741,8 @@ export {
     getXeroTenants,
     findCurrentXeroOrganization,
     getCurrentXeroOrganizationName,
+    getCompanyNameFromAccountingIntegration,
+    isDefaultWorkspaceName,
     getXeroBankAccounts,
     findSelectedVendorWithDefaultSelect,
     findSelectedBankAccountWithDefaultSelect,

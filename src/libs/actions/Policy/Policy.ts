@@ -1794,6 +1794,130 @@ function updateWorkspaceDescription(policyID: string, description: string, curre
     });
 }
 
+/**
+ * Updates workspace name from accounting integration company name if workspace has default name.
+ * This is called automatically when accounting integration is connected and provides a company name.
+ */
+function updateWorkspaceNameFromAccountingIntegration(policyID: string, policy: Policy, companyName: string) {
+    const currentWorkspaceName = policy?.name;
+    const ownerEmail = policy?.owner;
+
+    // Only update if workspace has default name
+    if (!PolicyUtils.isDefaultWorkspaceName(currentWorkspaceName, ownerEmail)) {
+        return;
+    }
+
+    // Use the company name from the accounting integration
+    const newWorkspaceName = companyName.trim();
+
+    if (!newWorkspaceName || newWorkspaceName === currentWorkspaceName) {
+        return;
+    }
+
+    // Create optimistic report action for the name update
+    const optimisticReportAction = ReportUtils.buildOptimisticPolicyChangeLogReportAction({
+        actionName: CONST.REPORT.ACTIONS.TYPE.POLICY_CHANGE_LOG.UPDATE_NAME,
+        originalMessage: {
+            oldName: currentWorkspaceName ?? '',
+            newName: newWorkspaceName,
+            automaticAction: true, // Mark this as an automatic action
+        },
+    });
+
+    const adminsChatReportID = policy?.chatReportIDAdmins;
+
+    const optimisticData: OnyxUpdate[] = [
+        {
+            onyxMethod: Onyx.METHOD.MERGE,
+            key: `${ONYXKEYS.COLLECTION.POLICY}${policyID}`,
+            value: {
+                name: newWorkspaceName,
+                pendingFields: {
+                    name: CONST.RED_BRICK_ROAD_PENDING_ACTION.UPDATE,
+                },
+                errorFields: {
+                    name: null,
+                },
+            },
+        },
+    ];
+
+    if (adminsChatReportID) {
+        optimisticData.push({
+            onyxMethod: Onyx.METHOD.MERGE,
+            key: `${ONYXKEYS.COLLECTION.REPORT_ACTIONS}${adminsChatReportID}`,
+            value: {
+                [optimisticReportAction.reportActionID]: optimisticReportAction,
+            },
+        });
+    }
+
+    const successData: OnyxUpdate[] = [
+        {
+            onyxMethod: Onyx.METHOD.MERGE,
+            key: `${ONYXKEYS.COLLECTION.POLICY}${policyID}`,
+            value: {
+                pendingFields: {
+                    name: null,
+                },
+            },
+        },
+    ];
+
+    if (adminsChatReportID) {
+        successData.push({
+            onyxMethod: Onyx.METHOD.MERGE,
+            key: `${ONYXKEYS.COLLECTION.REPORT_ACTIONS}${adminsChatReportID}`,
+            value: {
+                [optimisticReportAction.reportActionID]: {
+                    pendingAction: null,
+                },
+            },
+        });
+    }
+
+    const failureData: OnyxUpdate[] = [
+        {
+            onyxMethod: Onyx.METHOD.MERGE,
+            key: `${ONYXKEYS.COLLECTION.POLICY}${policyID}`,
+            value: {
+                name: currentWorkspaceName,
+                pendingFields: {
+                    name: null,
+                },
+                errorFields: {
+                    name: ErrorUtils.getMicroSecondOnyxErrorWithTranslationKey('workspace.editor.genericFailureMessage'),
+                },
+            },
+        },
+    ];
+
+    if (adminsChatReportID) {
+        failureData.push({
+            onyxMethod: Onyx.METHOD.MERGE,
+            key: `${ONYXKEYS.COLLECTION.REPORT_ACTIONS}${adminsChatReportID}`,
+            value: {
+                [optimisticReportAction.reportActionID]: {
+                    pendingAction: null,
+                    errors: ErrorUtils.getMicroSecondOnyxErrorWithTranslationKey('workspace.editor.genericFailureMessage'),
+                },
+            },
+        });
+    }
+
+    const params: UpdateWorkspaceGeneralSettingsParams = {
+        policyID,
+        workspaceName: newWorkspaceName,
+        currency: policy?.outputCurrency ?? '',
+    };
+
+    API.write(WRITE_COMMANDS.UPDATE_WORKSPACE_GENERAL_SETTINGS, params, {
+        optimisticData,
+        successData,
+        failureData,
+    });
+}
+
 function setWorkspaceErrors(policyID: string, errors: Errors) {
     if (!allPolicies?.[policyID]) {
         return;
@@ -6476,6 +6600,72 @@ function setWorkspaceConfirmationCurrency(currency: string) {
     Onyx.merge(ONYXKEYS.FORMS.WORKSPACE_CONFIRMATION_FORM_DRAFT, {currency});
 }
 
+/**
+ * Monitor connection sync progress for all policies and trigger workspace name updates
+ * when sync completes successfully for policies with default workspace names.
+ * This should be called once during app initialization to set up the monitoring.
+ */
+function initializeSyncProgressMonitor() {
+    // Track previous sync states to detect completion
+    const previousSyncStates = new Map<string, string | undefined>();
+
+    // Subscribe to all sync progress changes
+    const connectionId = Onyx.connect({
+        key: ONYXKEYS.COLLECTION.POLICY_CONNECTION_SYNC_PROGRESS,
+        waitForCollectionCallback: true,
+        callback: (allSyncProgress) => {
+            if (!allSyncProgress) {
+                return;
+            }
+
+            Object.entries(allSyncProgress).forEach(([progressKey, syncProgress]) => {
+                if (!syncProgress) {
+                    return;
+                }
+
+                const policyID = progressKey.replace(ONYXKEYS.COLLECTION.POLICY_CONNECTION_SYNC_PROGRESS, '');
+                const previousStage = previousSyncStates.get(policyID);
+                const currentStage = syncProgress.stageInProgress;
+
+                // Update tracking
+                previousSyncStates.set(policyID, currentStage);
+
+                // Check if sync just completed (transitioned to JOB_DONE)
+                if (
+                    previousStage &&
+                    previousStage !== CONST.POLICY.CONNECTIONS.SYNC_STAGE_NAME.JOB_DONE &&
+                    currentStage === CONST.POLICY.CONNECTIONS.SYNC_STAGE_NAME.JOB_DONE &&
+                    syncProgress.connectionName
+                ) {
+                    // Get the policy to check if workspace name update is needed
+                    Onyx.connect({
+                        key: `${ONYXKEYS.COLLECTION.POLICY}${policyID}`,
+                        callback: (policy) => {
+                            if (policy && PolicyUtils.isDefaultWorkspaceName(policy.name, policy.owner)) {
+                                const companyName = PolicyUtils.getCompanyNameFromAccountingIntegration(policy);
+                                if (companyName) {
+                                    updateWorkspaceNameFromAccountingIntegration(policyID, policy, companyName);
+                                }
+                            }
+                        },
+                    });
+                }
+            });
+        },
+    });
+
+    return connectionId;
+}
+
+/**
+ * Initialize workspace sync monitoring that automatically updates workspace names
+ * when accounting integrations sync successfully.
+ */
+const initWorkspaceSyncMonitor = () => {
+    console.debug('[Policy] Setting up workspace sync monitor for automatic name updates');
+    initializeSyncProgressMonitor();
+};
+
 export {
     leaveWorkspace,
     addBillingCardAndRequestPolicyOwnerChange,
@@ -6600,4 +6790,5 @@ export {
     clearPolicyTitleFieldError,
     inviteWorkspaceEmployeesToUber,
     setWorkspaceConfirmationCurrency,
+    initWorkspaceSyncMonitor,
 };

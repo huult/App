@@ -178,6 +178,7 @@ import type {
     RemoveMembersWarningPrompt,
     RenamedRoomActionParams,
     RenamedWorkspaceNameActionParams,
+    RenamedWorkspaceNameFromAccountingIntegrationActionParams,
     ReportArchiveReasonsClosedParams,
     ReportArchiveReasonsInvoiceReceiverPolicyDeletedParams,
     ReportArchiveReasonsMergedParams,
@@ -6299,6 +6300,8 @@ const translations = {
         updateDefaultReimbursable: ({oldValue, newValue}: UpdatedPolicyFieldWithNewAndOldValueParams) => `updated "Cash expense default" to "${newValue}" (previously "${oldValue}")`,
         updateDefaultTitleEnforced: ({value}: UpdatedPolicyFieldWithValueParam) => `turned "Enforce default report titles" ${value ? 'on' : 'off'}`,
         renamedWorkspaceNameAction: ({oldName, newName}: RenamedWorkspaceNameActionParams) => `updated the name of this workspace to "${newName}" (previously "${oldName}")`,
+        renamedWorkspaceNameFromAccountingIntegrationAction: ({oldName, newName, integrationName}: RenamedWorkspaceNameFromAccountingIntegrationActionParams) =>
+            `I updated your workspace name to match the company name from your ${integrationName} connection. New name: "${newName}" (previously "${oldName}")`,
         updateWorkspaceDescription: ({newDescription, oldDescription}: UpdatedPolicyDescriptionParams) =>
             !oldDescription
                 ? `set the description of this workspace to "${newDescription}"`

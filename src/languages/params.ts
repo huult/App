@@ -545,6 +545,8 @@ type WorkspaceOwnerWillNeedToAddOrUpdatePaymentCardParams = {workspaceOwnerName:
 
 type RenamedWorkspaceNameActionParams = {oldName: string; newName: string};
 
+type RenamedWorkspaceNameFromAccountingIntegrationActionParams = {oldName: string; newName: string; integrationName: string};
+
 type StatementTitleParams = {year: number | string; monthName: string};
 
 type BadgeFreeTrialParams = {numOfDays: number};
@@ -1032,6 +1034,7 @@ export type {
     RemoveMemberPromptParams,
     StatementTitleParams,
     RenamedWorkspaceNameActionParams,
+    RenamedWorkspaceNameFromAccountingIntegrationActionParams,
     WorkspaceOwnerWillNeedToAddOrUpdatePaymentCardParams,
     ActionsAreCurrentlyRestricted,
     ChangeOwnerHasFailedSettlementsParams,

@@ -8144,6 +8144,42 @@ function buildOptimisticRetractedReportAction(created = DateUtils.getDBTime()): 
     };
 }
 
+/**
+ * Builds an optimistic policy change log report action with a randomly generated reportActionID
+ */
+function buildOptimisticPolicyChangeLogReportAction({
+    actionName,
+    originalMessage = {},
+    created = DateUtils.getDBTime(),
+}: {
+    actionName: ValueOf<typeof CONST.REPORT.ACTIONS.TYPE.POLICY_CHANGE_LOG>;
+    originalMessage?: Record<string, unknown>;
+    created?: string;
+}): ReportAction {
+    return {
+        reportActionID: rand64(),
+        actionName,
+        actorAccountID: currentUserAccountID,
+        pendingAction: CONST.RED_BRICK_ROAD_PENDING_ACTION.ADD,
+        message: [],
+        originalMessage: {
+            lastModified: created,
+            ...originalMessage,
+        },
+        person: [
+            {
+                style: 'strong',
+                text: getCurrentUserDisplayNameOrEmail(),
+                type: CONST.REPORT.MESSAGE.TYPE.TEXT,
+            },
+        ],
+        automatic: false,
+        avatar: getCurrentUserAvatar(),
+        created,
+        shouldShow: true,
+    };
+}
+
 function buildOptimisticReopenedReportAction(created = DateUtils.getDBTime()): OptimisticReopenedReportAction {
     return {
         reportActionID: rand64(),
@@ -13268,6 +13304,7 @@ export {
     buildOptimisticUnreportedTransactionAction,
     isBusinessInvoiceRoom,
     buildOptimisticResolvedDuplicatesReportAction,
+    buildOptimisticPolicyChangeLogReportAction,
     getTitleReportField,
     getReportFieldsByPolicyID,
     getGroupChatDraft,
