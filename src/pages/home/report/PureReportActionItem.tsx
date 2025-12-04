@@ -471,7 +471,10 @@ function PureReportActionItem({
     isTryNewDotNVPDismissed = false,
     currentUserAccountID,
     bankAccountList,
+    shouldShowErrorMessages,
 }: PureReportActionItemProps) {
+    console.log('****** ,shouldShowErrorMessages ******', shouldShowErrorMessages);
+
     const actionSheetAwareScrollViewContext = useContext(ActionSheetAwareScrollView.ActionSheetAwareScrollViewContext);
     const {translate, formatPhoneNumber, localeCompare, formatTravelDate, getLocalDateFromDatetime} = useLocalize();
     const personalDetail = useCurrentUserPersonalDetails();
@@ -1801,6 +1804,7 @@ function PureReportActionItem({
                                 errorRowStyles={[styles.ml10, styles.mr2]}
                                 needsOffscreenAlphaCompositing={isMoneyRequestAction(action)}
                                 shouldDisableStrikeThrough
+                                shouldShowErrorMessages={shouldShowErrorMessages}
                             >
                                 {renderSearchHeader(
                                     <>
