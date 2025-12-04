@@ -882,11 +882,11 @@ function SearchAutocompleteList({
                 listItemWrapperStyle={[styles.pr0, styles.pl0]}
                 getItemHeight={getItemHeight}
                 onLayout={() => {
-                    // setPerformanceTimersEnd();
-                    // setIsInitialRender(false);
-                    // if (!!textInputRef?.current && ref && 'current' in ref) {
-                    //     ref.current?.updateExternalTextInputFocus?.(textInputRef.current.isFocused());
-                    // }
+                    setPerformanceTimersEnd();
+                    setIsInitialRender(false);
+                    if (!!textInputRef?.current && ref && 'current' in ref) {
+                        ref.current?.updateExternalTextInputFocus?.(textInputRef.current.isFocused());
+                    }
                 }}
                 showScrollIndicator={!shouldUseNarrowLayout}
                 sectionTitleStyles={styles.mhn2}
