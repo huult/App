@@ -134,11 +134,6 @@ function TaxPicker({selectedTaxRate = '', policyID, transactionID, onSubmit, act
                 return;
             }
 
-            if (!isTaxValid) {
-                onSubmit({...sections.at(0)?.data[0]});
-                return;
-            }
-
             onSubmit(newSelectedOption);
         },
         [selectedOptionKey, isTaxValid, onSubmit, onDismiss, sections],
