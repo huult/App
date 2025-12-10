@@ -61,7 +61,9 @@ function TaxPicker({selectedTaxRate = '', policyID, transactionID, onSubmit, act
     );
 
     const taxRateInfo = getTaxByID(policy, transaction?.taxCode ?? '');
-    const isTaxValid = taxRateInfo && !taxRateInfo.isDisabled && taxRateInfo.pendingAction !== CONST.RED_BRICK_ROAD_PENDING_ACTION.DELETE;
+    const isTaxValid = taxRateInfo && taxRateInfo.pendingAction !== CONST.RED_BRICK_ROAD_PENDING_ACTION.DELETE;
+    console.log('****** isTaxValid ******', isTaxValid);
+    console.log('****** taxRateInfo ******', taxRateInfo);
 
     const isEditing = action === CONST.IOU.ACTION.EDIT;
     const isEditingSplitBill = isEditing && iouType === CONST.IOU.TYPE.SPLIT;
