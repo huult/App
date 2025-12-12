@@ -136,9 +136,16 @@ function TaxPicker({selectedTaxRate = '', policyID, transactionID, onSubmit, act
                 return;
             }
 
+            console.log('****** isTaxValid ******', isTaxValid);
+
+            if (!isTaxValid) {
+                onSubmit(newSelectedOption, true);
+                return;
+            }
+
             onSubmit(newSelectedOption);
         },
-        [selectedOptionKey, isTaxValid, onSubmit, onDismiss, sections],
+        [selectedOptionKey, isTaxValid, onSubmit, onDismiss],
     );
 
     return (
