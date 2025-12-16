@@ -288,7 +288,7 @@ function MoneyRequestView({
     const taxRateTitle = transactionWithTax?.taxCode ? getTaxName(policy, transactionWithTax) : '';
 
     const actualTransactionDate = isFromMergeTransaction && updatedTransaction ? getFormattedCreated(updatedTransaction) : transactionDate;
-    // const fallbackTaxRateTitle = transaction?.taxValue;
+    const fallbackTaxRateTitle = transaction?.taxValue;
 
     const isSettled = isSettledReportUtils(moneyRequestReport?.reportID);
     const isCancelled = moneyRequestReport && moneyRequestReport?.isCancelledIOU;
@@ -549,7 +549,7 @@ function MoneyRequestView({
     const decodedCategoryName = getDecodedCategoryName(categoryValue);
     const categoryCopyValue = !canEdit ? decodedCategoryName : undefined;
     const cardCopyValue = cardProgramName;
-    const taxRateValue = taxRateTitle;
+    const taxRateValue = taxRateTitle ?? fallbackTaxRateTitle ?? '';
 
     const taxRateCopyValue = !canEditTaxFields ? taxRateValue : undefined;
     const taxAmountTitle = formattedTaxAmount ? formattedTaxAmount.toString() : '';
