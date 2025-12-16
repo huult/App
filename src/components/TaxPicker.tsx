@@ -44,6 +44,8 @@ type TaxPickerProps = {
 
 function TaxPicker({selectedTaxRate = '', policyID, transactionID, onSubmit, action, iouType, onDismiss = Navigation.goBack, addBottomSafeAreaPadding}: TaxPickerProps) {
     const {translate, localeCompare} = useLocalize();
+    console.log('****** selectedTaxRate ******', selectedTaxRate);
+
     const [searchValue, setSearchValue] = useState('');
     const [splitDraftTransaction] = useOnyx(`${ONYXKEYS.COLLECTION.SPLIT_TRANSACTION_DRAFT}${transactionID}`, {canBeMissing: true});
 
@@ -68,6 +70,9 @@ function TaxPicker({selectedTaxRate = '', policyID, transactionID, onSubmit, act
 
     const shouldShowTextInput = !isTaxRatesCountBelowThreshold;
 
+    const taxWasDeleted =
+        !!transaction?.taxCode && transaction?.taxValue !== undefined && Object.keys(taxRates?.taxes ?? {}).find((taxCode) => taxCode === transaction?.taxCode) === undefined;
+
     const selectedOptions = useMemo<Tax[]>(() => {
         if (!selectedTaxRate) {
             return [];
@@ -82,17 +87,42 @@ function TaxPicker({selectedTaxRate = '', policyID, transactionID, onSubmit, act
         ];
     }, [selectedTaxRate]);
 
-    const sections = useMemo(
-        () =>
-            getTaxRatesSection({
+    const sections = useMemo(() => {
+        if (taxWasDeleted) {
+            const taxRatesSection = getTaxRatesSection({
                 policy,
                 searchValue,
                 localeCompare,
                 selectedOptions,
                 transaction: currentTransaction,
-            }),
-        [searchValue, selectedOptions, policy, currentTransaction, localeCompare],
-    );
+            });
+            return taxRatesSection.map((section) => {
+                return {
+                    ...section,
+                    data: [
+                        ...section.data,
+                        {
+                            code: transaction?.taxCode,
+                            text: transaction?.taxValue ?? '',
+                            keyForList: transaction?.taxCode ?? '',
+                            searchText: transaction?.taxValue ?? '',
+                            tooltipText: transaction?.taxValue ?? '',
+                            isDisabled: true,
+                            isSelected: true,
+                        },
+                    ],
+                };
+            });
+        }
+
+        return getTaxRatesSection({
+            policy,
+            searchValue,
+            localeCompare,
+            selectedOptions,
+            transaction: currentTransaction,
+        });
+    }, [taxWasDeleted, policy, searchValue, localeCompare, selectedOptions, currentTransaction, transaction?.taxCode, transaction?.taxValue]);
 
     const headerMessage = getHeaderMessageForNonUserList((sections.at(0)?.data?.length ?? 0) > 0, searchValue);
 
@@ -104,9 +134,9 @@ function TaxPicker({selectedTaxRate = '', policyID, transactionID, onSubmit, act
                 onDismiss();
                 return;
             }
-            onSubmit(newSelectedOption);
+            onSubmit(newSelectedOption, taxWasDeleted);
         },
-        [onSubmit, onDismiss, selectedOptionKey],
+        [selectedOptionKey, onSubmit, taxWasDeleted, onDismiss],
     );
 
     return (

@@ -62,9 +62,25 @@ function IOURequestStepTaxRatePage({
         Navigation.goBack(backTo);
     };
 
-    const taxRateTitle = getTaxName(policy, currentTransaction);
+    const taxRateTitle = currentTransaction?.taxCode !== '' ? getTaxName(policy, currentTransaction) : '';
 
-    const updateTaxRates = (taxes: TaxRatesOption) => {
+    const updateTaxRates = (taxes: TaxRatesOption, taxWasDeleted: boolean) => {
+        if (taxWasDeleted && isEditing) {
+            updateMoneyRequestTaxRate({
+                transactionID: currentTransaction?.transactionID,
+                optimisticReportActionID: report?.reportID,
+                taxCode: '',
+                taxAmount: convertToBackendAmount(0),
+                policy,
+                policyTagList: policyTags,
+                policyCategories,
+                currentUserAccountIDParam,
+                currentUserEmailParam,
+                isASAPSubmitBetaEnabled,
+            });
+            navigateBack();
+            return;
+        }
         if (!currentTransaction || !taxes.code || !taxRates) {
             Navigation.goBack();
             return;
