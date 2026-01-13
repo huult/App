@@ -290,7 +290,7 @@ function WorkspaceOverviewPage({policyDraft, policy: policyProp, route}: Workspa
     }, [isLoadingBill]);
 
     useEffect(() => {
-        if (!isFocused || !prevIsPendingDelete || isPendingDelete) {
+        if (!isOffline && (!isFocused || !prevIsPendingDelete || isPendingDelete)) {
             return;
         }
 
@@ -300,7 +300,7 @@ function WorkspaceOverviewPage({policyDraft, policy: policyProp, route}: Workspa
         }
         setIsDeleteModalOpen(false);
         setIsDeleteWorkspaceErrorModalOpen(true);
-    }, [isFocused, isPendingDelete, prevIsPendingDelete, policyLastErrorMessage]);
+    }, [isFocused, isPendingDelete, prevIsPendingDelete, policyLastErrorMessage, isOffline]);
 
     const onDeleteWorkspace = useCallback(() => {
         if (shouldCalculateBillNewDot(account?.canDowngrade)) {
