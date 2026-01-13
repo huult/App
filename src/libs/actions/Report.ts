@@ -5796,6 +5796,37 @@ function buildOptimisticChangePolicyData(
     const reportIDToThreadsReportIDsMap = buildReportIDToThreadsReportIDsMap();
     updatePolicyIdForReportAndThreads(reportID, policy.id, reportIDToThreadsReportIDsMap, optimisticData, failureData);
 
+    // SOLUTION 2
+    // 1.3 Clear transaction thread references to force recreation with new policy
+    // When moving to a different workspace, transaction threads need to be recreated to properly reflect the new policy context
+    // const transactionss = getReportTransactions(reportID);
+    // for (const transaction of transactionss) {
+    //     const iouAction = ReportActionsUtils.getIOUActionForReportID(reportID, transaction.transactionID);
+    //     console.log('******  ******', iouAction?.childReportID);
+
+    //     if (iouAction?.childReportID) {
+    //         const reportActionsForReport = allReportActions?.[reportID];
+    //         optimisticData.push({
+    //             onyxMethod: Onyx.METHOD.MERGE,
+    //             key: `${ONYXKEYS.COLLECTION.REPORT_ACTIONS}${reportID}`,
+    //             value: {
+    //                 [iouAction.reportActionID]: {
+    //                     childReportID: CONST.FAKE_REPORT_ID,
+    //                 },
+    //             },
+    //         });
+    //         failureData.push({
+    //             onyxMethod: Onyx.METHOD.MERGE,
+    //             key: `${ONYXKEYS.COLLECTION.REPORT_ACTIONS}${reportID}`,
+    //             value: {
+    //                 [iouAction.reportActionID]: {
+    //                     childReportID: iouAction.childReportID,
+    //                 },
+    //             },
+    //         });
+    //     }
+    // }
+
     // We reopen and reassign the report if the report is open/submitted and the manager is not a member of the new policy. This is to prevent the old manager from seeing a report that they can't action on.
     let newStatusNum = report?.statusNum;
     const isOpenOrSubmitted = isOpenExpenseReport(report) || isProcessingReport(report);

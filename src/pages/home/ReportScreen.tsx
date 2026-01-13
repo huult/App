@@ -571,6 +571,15 @@ function ReportScreen({route, navigation, isInSidePanel = false}: ReportScreenPr
         createOneTransactionThreadReportRef.current = createOneTransactionThreadReport;
     }, [createOneTransactionThreadReport]);
 
+    // SOLUTION 2
+    // useEffect(() => {
+    //     if (transactionThreadReportID !== CONST.FAKE_REPORT_ID || transactionThreadReport?.reportID || (!reportMetadata.hasOnceLoadedReportActions && !reportMetadata?.isOptimisticReport)) {
+    //         return;
+    //     }
+
+    //     createOneTransactionThreadReportRef.current();
+    // }, [reportMetadata.hasOnceLoadedReportActions, reportMetadata?.isOptimisticReport, transactionThreadReport?.reportID, transactionThreadReportID]);
+
     useEffect(() => {
         if (
             (transactionThreadReportID !== CONST.FAKE_REPORT_ID && !!transactionThreadReport?.reportID) ||
