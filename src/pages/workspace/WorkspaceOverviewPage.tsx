@@ -187,7 +187,8 @@ function WorkspaceOverviewPage({policyDraft, policy: policyProp, route}: Workspa
     console.log('****** cardFeeds ******', cardFeeds);
     console.log('****** cardFeeds ******', cardFeeds);
 
-    const isOfflineCardDeletionError = isOffline && (!isEmptyObject(cardFeeds) || !isEmptyObject(cardsList));
+    // const isOfflineCardDeletionError = isOffline && (!isEmptyObject(cardFeeds) || !isEmptyObject(cardsList));
+    const isOfflineCardDeletionError = true;
 
     // We have the same focus effect in the WorkspaceInitialPage, this way we can get the policy data in narrow
     // as well as in the wide layout when looking at policy settings.
@@ -289,12 +290,12 @@ function WorkspaceOverviewPage({policyDraft, policy: policyProp, route}: Workspa
     }, [isLoadingBill]);
 
     useEffect(() => {
-        if (isOffline && (!isFocused || !prevIsPendingDelete || isPendingDelete)) {
+        if (!isFocused || !prevIsPendingDelete || isPendingDelete) {
             return;
         }
 
         if (!policyLastErrorMessage) {
-            goBackFromInvalidPolicy();
+            // goBackFromInvalidPolicy();
             return;
         }
         setIsDeleteModalOpen(false);
