@@ -428,7 +428,6 @@ function deleteWorkspace(params: DeleteWorkspaceActionParams) {
             value: {
                 avatarURL: policy?.avatarURL,
                 pendingAction: null,
-                errors: ErrorUtils.getMicroSecondOnyxErrorWithTranslationKey('workspace.editor.genericFailureMessage'),
             },
         },
         // @ts-expect-error - will be solved in https://github.com/Expensify/App/issues/73830
