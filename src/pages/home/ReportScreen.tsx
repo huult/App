@@ -465,7 +465,7 @@ function ReportScreen({route, navigation, isInSidePanel = false}: ReportScreenPr
     const lastReportActionIDFromRoute = usePrevious(!firstRenderRef.current ? reportActionIDFromRoute : undefined);
 
     const [isNavigatingToDeletedAction, setIsNavigatingToDeletedAction] = useState(false);
-
+    const createOneTransactionThreadReportRef = useRef<() => void>(() => {});
     const isLinkedActionInaccessibleWhisper = useMemo(
         () => !!linkedAction && isWhisperAction(linkedAction) && !(linkedAction?.whisperedToAccountIDs ?? []).includes(currentUserAccountID),
         [currentUserAccountID, linkedAction],
@@ -538,10 +538,10 @@ function ReportScreen({route, navigation, isInSidePanel = false}: ReportScreenPr
         }
 
         // If there is one transaction thread that has not yet been created, we should create it.
-        if (transactionThreadReportID === CONST.FAKE_REPORT_ID && !transactionThreadReport) {
-            createOneTransactionThreadReport();
-            return;
-        }
+        // if (transactionThreadReportID === CONST.FAKE_REPORT_ID && !transactionThreadReport) {
+        //     createOneTransactionThreadReport();
+        //     return;
+        // }
 
         // When a user goes through onboarding for the first time, various tasks are created for chatting with Concierge.
         // If this function is called too early (while the application is still loading), we will not have information about policies,
@@ -558,20 +558,7 @@ function ReportScreen({route, navigation, isInSidePanel = false}: ReportScreenPr
         }
 
         openReport(reportIDFromRoute, reportActionIDFromRoute);
-    }, [
-        reportMetadata.isOptimisticReport,
-        report,
-        isOffline,
-        transactionThreadReportID,
-        transactionThreadReport,
-        reportIDFromRoute,
-        reportActionIDFromRoute,
-        createOneTransactionThreadReport,
-        isLoadingApp,
-        introSelected,
-        isOnboardingCompleted,
-        isInviteOnboardingComplete,
-    ]);
+    }, [reportMetadata.isOptimisticReport, report, isOffline, reportIDFromRoute, reportActionIDFromRoute, isLoadingApp, introSelected, isOnboardingCompleted, isInviteOnboardingComplete]);
 
     useEffect(() => {
         if (!isAnonymousUser) {
@@ -579,6 +566,22 @@ function ReportScreen({route, navigation, isInSidePanel = false}: ReportScreenPr
         }
         prevIsAnonymousUser.current = true;
     }, [isAnonymousUser]);
+
+    useEffect(() => {
+        createOneTransactionThreadReportRef.current = createOneTransactionThreadReport;
+    }, [createOneTransactionThreadReport]);
+
+    useEffect(() => {
+        if (
+            (transactionThreadReportID !== CONST.FAKE_REPORT_ID && !!transactionThreadReport?.reportID) ||
+            transactionThreadReport?.reportID ||
+            (!reportMetadata.hasOnceLoadedReportActions && !reportMetadata?.isOptimisticReport)
+        ) {
+            return;
+        }
+
+        createOneTransactionThreadReportRef.current();
+    }, [reportMetadata.hasOnceLoadedReportActions, reportMetadata?.isOptimisticReport, transactionThreadReport?.reportID, transactionThreadReportID]);
 
     useEffect(() => {
         if (isLoadingReportData || !prevIsLoadingReportData || !prevIsAnonymousUser.current || isAnonymousUser) {
