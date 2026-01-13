@@ -335,6 +335,7 @@ type DeleteWorkspaceActionParams = {
     bankAccountList: OnyxEntry<BankAccountList>;
     lastUsedPaymentMethods?: LastPaymentMethod;
     localeCompare: LocaleContextProps['localeCompare'];
+    isOfflineCardDeletionError?: boolean;
 };
 
 /**
@@ -358,6 +359,7 @@ function deleteWorkspace(params: DeleteWorkspaceActionParams) {
         bankAccountList,
         localeCompare,
         personalPolicyID,
+        isOfflineCardDeletionError,
     } = params;
 
     // This will be fixed as part of https://github.com/Expensify/Expensify/issues/507850
@@ -381,7 +383,7 @@ function deleteWorkspace(params: DeleteWorkspaceActionParams) {
             value: {
                 avatarURL: '',
                 pendingAction: CONST.RED_BRICK_ROAD_PENDING_ACTION.DELETE,
-                errors: null,
+                errors: isOfflineCardDeletionError ? ErrorUtils.getMicroSecondOnyxErrorWithTranslationKey('common.genericErrorMessage') : null,
             },
         },
         {
@@ -426,6 +428,7 @@ function deleteWorkspace(params: DeleteWorkspaceActionParams) {
             value: {
                 avatarURL: policy?.avatarURL,
                 pendingAction: null,
+                errors: ErrorUtils.getMicroSecondOnyxErrorWithTranslationKey('workspace.editor.genericFailureMessage'),
             },
         },
         // @ts-expect-error - will be solved in https://github.com/Expensify/App/issues/73830
@@ -598,6 +601,7 @@ function deleteWorkspace(params: DeleteWorkspaceActionParams) {
             });
         }
     }
+
     const apiParams: DeleteWorkspaceParams = {policyID, reportIDToOptimisticCloseReportActionID: JSON.stringify(reportIDToOptimisticCloseReportActionID)};
 
     API.write(WRITE_COMMANDS.DELETE_WORKSPACE, apiParams, {optimisticData, finallyData, failureData});

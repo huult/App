@@ -184,6 +184,10 @@ function WorkspaceOverviewPage({policyDraft, policy: policyProp, route}: Workspa
     }, [policyDraft?.id, route.params.policyID]);
 
     const {isOffline} = useNetwork({onReconnect: fetchPolicyData});
+    console.log('****** cardFeeds ******', cardFeeds);
+    console.log('****** cardFeeds ******', cardFeeds);
+
+    const isOfflineCardDeletionError = isOffline && (!isEmptyObject(cardFeeds) || !isEmptyObject(cardsList));
 
     // We have the same focus effect in the WorkspaceInitialPage, this way we can get the policy data in narrow
     // as well as in the wide layout when looking at policy settings.
@@ -239,10 +243,11 @@ function WorkspaceOverviewPage({policyDraft, policy: policyProp, route}: Workspa
             lastUsedPaymentMethods: lastPaymentMethod,
             localeCompare,
             personalPolicyID,
+            isOfflineCardDeletionError,
         });
         if (isOffline) {
             setIsDeleteModalOpen(false);
-            goBackFromInvalidPolicy();
+            // goBackFromInvalidPolicy();
         }
     }, [
         policy?.id,
@@ -258,6 +263,7 @@ function WorkspaceOverviewPage({policyDraft, policy: policyProp, route}: Workspa
         activePolicyID,
         bankAccountList,
         personalPolicyID,
+        isOfflineCardDeletionError,
     ]);
 
     const handleLeaveWorkspace = useCallback(() => {
@@ -283,7 +289,7 @@ function WorkspaceOverviewPage({policyDraft, policy: policyProp, route}: Workspa
     }, [isLoadingBill]);
 
     useEffect(() => {
-        if (!isFocused || !prevIsPendingDelete || isPendingDelete) {
+        if (isOffline && (!isFocused || !prevIsPendingDelete || isPendingDelete)) {
             return;
         }
 
