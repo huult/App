@@ -4864,6 +4864,46 @@ function exportToIntegration(reportID: string, connectionName: ConnectionName) {
     API.write(WRITE_COMMANDS.REPORT_EXPORT, params, {optimisticData, failureData});
 }
 
+function bulkExportReportsToIntegration(reportIDs: string[], connectionName: ConnectionName) {
+    const optimisticReportActions: Record<string, string> = {};
+    const optimisticData: OnyxUpdate[] = [];
+    const failureData: OnyxUpdate[] = [];
+
+    // Build optimistic actions for each report
+    reportIDs.forEach((reportID) => {
+        const action = buildOptimisticExportIntegrationAction(connectionName);
+        const optimisticReportActionID = action.reportActionID;
+        optimisticReportActions[reportID] = optimisticReportActionID;
+
+        optimisticData.push({
+            onyxMethod: Onyx.METHOD.MERGE,
+            key: `${ONYXKEYS.COLLECTION.REPORT_ACTIONS}${reportID}`,
+            value: {
+                [optimisticReportActionID]: action,
+            },
+        });
+
+        failureData.push({
+            onyxMethod: Onyx.METHOD.MERGE,
+            key: `${ONYXKEYS.COLLECTION.REPORT_ACTIONS}${reportID}`,
+            value: {
+                [optimisticReportActionID]: {
+                    errors: getMicroSecondOnyxErrorWithTranslationKey('common.genericErrorMessage'),
+                },
+            },
+        });
+    });
+
+    const params = {
+        reportIDList: reportIDs.join(','),
+        connectionName,
+        type: 'MANUAL',
+        optimisticReportActions: JSON.stringify(optimisticReportActions),
+    } satisfies ReportExportParams;
+
+    API.write(WRITE_COMMANDS.REPORT_EXPORT, params, {optimisticData, failureData});
+}
+
 function markAsManuallyExported(reportID: string, connectionName: ConnectionName) {
     const action = buildOptimisticExportIntegrationAction(connectionName, true);
     const label = CONST.POLICY.CONNECTIONS.NAME_USER_FRIENDLY[connectionName];
@@ -4912,6 +4952,61 @@ function markAsManuallyExported(reportID: string, connectionName: ConnectionName
                 optimisticReportActionID,
             },
         ]),
+    } satisfies MarkAsExportedParams;
+
+    API.write(WRITE_COMMANDS.MARK_AS_EXPORTED, params, {optimisticData, successData, failureData});
+}
+
+function bulkMarkReportsAsManuallyExported(reportIDs: string[], connectionName: ConnectionName) {
+    const label = CONST.POLICY.CONNECTIONS.NAME_USER_FRIENDLY[connectionName];
+    const optimisticData: OnyxUpdate[] = [];
+    const successData: OnyxUpdate[] = [];
+    const failureData: OnyxUpdate[] = [];
+    const dataArray: Array<{reportID: string; label: string; optimisticReportActionID: string}> = [];
+
+    // Build optimistic actions for each report
+    reportIDs.forEach((reportID) => {
+        const action = buildOptimisticExportIntegrationAction(connectionName, true);
+        const optimisticReportActionID = action.reportActionID;
+
+        dataArray.push({
+            reportID,
+            label,
+            optimisticReportActionID,
+        });
+
+        optimisticData.push({
+            onyxMethod: Onyx.METHOD.MERGE,
+            key: `${ONYXKEYS.COLLECTION.REPORT_ACTIONS}${reportID}`,
+            value: {
+                [optimisticReportActionID]: action,
+            },
+        });
+
+        successData.push({
+            onyxMethod: Onyx.METHOD.MERGE,
+            key: `${ONYXKEYS.COLLECTION.REPORT_ACTIONS}${reportID}`,
+            value: {
+                [optimisticReportActionID]: {
+                    pendingAction: null,
+                },
+            },
+        });
+
+        failureData.push({
+            onyxMethod: Onyx.METHOD.MERGE,
+            key: `${ONYXKEYS.COLLECTION.REPORT_ACTIONS}${reportID}`,
+            value: {
+                [optimisticReportActionID]: {
+                    errors: getMicroSecondOnyxErrorWithTranslationKey('common.genericErrorMessage'),
+                },
+            },
+        });
+    });
+
+    const params = {
+        markedManually: true,
+        data: JSON.stringify(dataArray),
     } satisfies MarkAsExportedParams;
 
     API.write(WRITE_COMMANDS.MARK_AS_EXPORTED, params, {optimisticData, successData, failureData});
@@ -6471,6 +6566,7 @@ export {
     exportReportToCSV,
     exportReportToPDF,
     exportToIntegration,
+    bulkExportReportsToIntegration,
     flagComment,
     getCurrentUserAccountID,
     getMostRecentReportID,
@@ -6488,6 +6584,7 @@ export {
     leaveGroupChat,
     leaveRoom,
     markAsManuallyExported,
+    bulkMarkReportsAsManuallyExported,
     markCommentAsUnread,
     navigateToAndOpenChildReport,
     navigateToAndOpenReport,

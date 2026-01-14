@@ -37,7 +37,7 @@ import useTheme from '@hooks/useTheme';
 import useThemeStyles from '@hooks/useThemeStyles';
 import {confirmReadyToOpenApp} from '@libs/actions/App';
 import {setupMergeTransactionDataAndNavigate} from '@libs/actions/MergeTransaction';
-import {moveIOUReportToPolicy, moveIOUReportToPolicyAndInviteSubmitter, searchInServer} from '@libs/actions/Report';
+import {bulkExportReportsToIntegration, bulkMarkReportsAsManuallyExported, moveIOUReportToPolicy, moveIOUReportToPolicyAndInviteSubmitter, searchInServer} from '@libs/actions/Report';
 import {
     approveMoneyRequestOnSearch,
     deleteMoneyRequestOnSearch,
@@ -65,6 +65,7 @@ import {getTransactionsAndReportsFromSearch} from '@libs/MergeTransactionUtils';
 import Navigation from '@libs/Navigation/Navigation';
 import type {PlatformStackScreenProps} from '@libs/Navigation/PlatformStackNavigation/types';
 import type {SearchFullscreenNavigatorParamList} from '@libs/Navigation/types';
+import * as PolicyUtils from '@libs/PolicyUtils';
 import {getActiveAdminWorkspaces, hasDynamicExternalWorkflow, hasOnlyPersonalPolicies as hasOnlyPersonalPoliciesUtil, isPaidGroupPolicy} from '@libs/PolicyUtils';
 import {getOriginalMessage, isMoneyRequestAction} from '@libs/ReportActionsUtils';
 import {isMergeActionForSelectedTransactions} from '@libs/ReportSecondaryActionUtils';
@@ -280,6 +281,22 @@ function SearchPage({route}: SearchPageProps) {
             clearSelectedTransactions(undefined, true);
         },
         [queryJSON, selectedTransactionsKeys, areAllMatchingItemsSelected, selectedTransactionReportIDs, showConfirmModal, translate, clearSelectedTransactions],
+    );
+
+    const handleBulkExportToIntegration = useCallback(
+        (connectionName: ValueOf<typeof CONST.POLICY.CONNECTIONS.NAME>) => {
+            bulkExportReportsToIntegration(selectedReportIDs, connectionName);
+            clearSelectedTransactions(undefined, true);
+        },
+        [selectedReportIDs, clearSelectedTransactions],
+    );
+
+    const handleBulkMarkAsManuallyExported = useCallback(
+        (connectionName: ValueOf<typeof CONST.POLICY.CONNECTIONS.NAME>) => {
+            bulkMarkReportsAsManuallyExported(selectedReportIDs, connectionName);
+            clearSelectedTransactions(undefined, true);
+        },
+        [selectedReportIDs, clearSelectedTransactions],
     );
 
     const policyIDsWithVBBA = useMemo(() => {
@@ -653,6 +670,33 @@ function SearchPage({route}: SearchPageProps) {
                     shouldCloseModalOnSelect: true,
                     shouldCallAfterModalHide: true,
                 });
+            }
+
+            // Add accounting integration export options if all selected reports belong to the same policy with a connected accounting integration
+            // and we're viewing full reports (not individual expenses)
+            if (areFullReportsSelected && policy && selectedReportIDs.length > 0) {
+                const connectedIntegration = PolicyUtils.getConnectedIntegration(policy);
+                if (connectedIntegration) {
+                    exportOptions.push({
+                        text: translate('workspace.common.exportIntegrationSelected', {connectionName: connectedIntegration}),
+                        icon: expensifyIcons.Export,
+                        onSelected: () => {
+                            handleBulkExportToIntegration(connectedIntegration);
+                        },
+                        shouldCloseModalOnSelect: true,
+                        shouldCallAfterModalHide: true,
+                    });
+
+                    exportOptions.push({
+                        text: translate('workspace.common.markAsExported'),
+                        icon: expensifyIcons.Export,
+                        onSelected: () => {
+                            handleBulkMarkAsManuallyExported(connectedIntegration);
+                        },
+                        shouldCloseModalOnSelect: true,
+                        shouldCallAfterModalHide: true,
+                    });
+                }
             }
 
             return exportOptions;
