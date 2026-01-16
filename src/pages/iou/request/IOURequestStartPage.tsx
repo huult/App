@@ -77,6 +77,7 @@ function IOURequestStartPage({
     const policy = usePolicy(report?.policyID);
     const [lastSelectedTab, selectedTabResult] = useOnyx(`${ONYXKEYS.COLLECTION.SELECTED_TAB}${CONST.TAB.IOU_REQUEST_TYPE}`, {canBeMissing: true});
     const [selectedTab, setSelectedTab] = useState(lastSelectedTab);
+    const hasManuallySelectedTab = useRef(false);
 
     const isLoadingSelectedTab = shouldUseTab ? isLoadingOnyxValue(selectedTabResult) : false;
     const [transaction, transactionResult] = useOnyx(`${ONYXKEYS.COLLECTION.TRANSACTION_DRAFT}${getNonEmptyStringOnyxID(route?.params.transactionID)}`, {canBeMissing: true});
@@ -144,13 +145,16 @@ function IOURequestStartPage({
         Performance.markEnd(CONST.TIMING.OPEN_CREATE_EXPENSE);
     }, []);
 
+    console.log('****** isLoadingOnyxValue(selectedTabResult) ******', isLoadingOnyxValue(selectedTabResult));
+    console.log('****** selectedTab ******', selectedTab);
+
     useEffect(() => {
-        if (isLoadingSelectedTab || selectedTab) {
+        if (isLoadingSelectedTab || selectedTab || hasManuallySelectedTab.current) {
             return;
         }
+
         setSelectedTab(lastSelectedTab);
-        // We only want to set the selected tab when selectedTab is not set yet, don't want to run this effect again when lastSelectedTab changes
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+        hasManuallySelectedTab.current = false;
     }, [isLoadingSelectedTab, selectedTab]);
 
     const navigateBack = () => {
@@ -197,6 +201,11 @@ function IOURequestStartPage({
 
     const onTabSelected = useCallback(
         (newIouType: IOURequestType) => {
+            console.log('****** onTabSelected ******', {
+                newIouType,
+            });
+
+            hasManuallySelectedTab.current = true;
             setSelectedTab(newIouType);
             resetIOUTypeIfChanged(newIouType);
         },
