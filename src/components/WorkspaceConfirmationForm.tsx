@@ -1,5 +1,6 @@
 import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {View} from 'react-native';
+import type {ValueOf} from 'type-fest';
 import useAutoFocusInput from '@hooks/useAutoFocusInput';
 import useCurrentUserPersonalDetails from '@hooks/useCurrentUserPersonalDetails';
 import {useMemoizedLazyExpensifyIcons} from '@hooks/useLazyAsset';
@@ -13,6 +14,7 @@ import type {CustomRNImageManipulatorResult} from '@libs/cropOrRotateImage/types
 import {addErrorMessage} from '@libs/ErrorUtils';
 import getFirstAlphaNumericCharacter from '@libs/getFirstAlphaNumericCharacter';
 import Navigation from '@libs/Navigation/Navigation';
+import type {OptionData} from '@libs/ReportUtils';
 import {getDefaultWorkspaceAvatar} from '@libs/ReportUtils';
 import {isRequiredFulfilled} from '@libs/ValidationUtils';
 import CONST from '@src/CONST';
@@ -26,7 +28,9 @@ import FormProvider from './Form/FormProvider';
 import InputWrapper from './Form/InputWrapper';
 import type {FormInputErrors, FormOnyxValues} from './Form/types';
 import HeaderWithBackButton from './HeaderWithBackButton';
+import MenuItemWithTopDescription from './MenuItemWithTopDescription';
 import ScrollView from './ScrollView';
+import Switch from './Switch';
 import Text from './Text';
 import TextInput from './TextInput';
 
@@ -35,6 +39,9 @@ type WorkspaceConfirmationSubmitFunctionParams = {
     currency: string;
     avatarFile: File | CustomRNImageManipulatorResult | undefined;
     policyID: string;
+    planType?: ValueOf<typeof CONST.POLICY.TYPE>;
+    ownerEmail?: string;
+    makeMeAdmin?: boolean;
 };
 
 type WorkspaceConfirmationFormProps = {
@@ -60,6 +67,43 @@ function WorkspaceConfirmationForm({onSubmit, policyOwnerEmail = '', onBackButto
     const {translate} = useLocalize();
     const {inputCallbackRef} = useAutoFocusInput();
 
+    const [account] = useOnyx(ONYXKEYS.ACCOUNT);
+    const [allPolicies] = useOnyx(ONYXKEYS.COLLECTION.POLICY);
+    const [session, metadata] = useOnyx(ONYXKEYS.SESSION, {canBeMissing: false});
+    const [draftValues] = useOnyx(ONYXKEYS.FORMS.WORKSPACE_CONFIRMATION_FORM_DRAFT, {canBeMissing: true});
+
+    const currentUserPersonalDetails = useCurrentUserPersonalDetails();
+    const isApprovedAccountant = !!account?.isApprovedAccountant;
+
+    // Determine if user is a member of any Control workspaces
+    const hasControlWorkspace = useMemo(() => {
+        if (!allPolicies) {
+            return false;
+        }
+        return Object.values(allPolicies).some((policy) => policy?.type === CONST.POLICY.TYPE.CORPORATE);
+    }, [allPolicies]);
+
+    const defaultWorkspaceName = generateDefaultWorkspaceName(policyOwnerEmail || session?.email);
+    const [workspaceNameFirstCharacter, setWorkspaceNameFirstCharacter] = useState(defaultWorkspaceName ?? '');
+
+    const userCurrency = draftValues?.currency ?? currentUserPersonalDetails?.localCurrencyCode ?? CONST.CURRENCY.USD;
+
+    // State for approved accountant fields
+    const [selectedPlanType, setSelectedPlanType] = useState<ValueOf<typeof CONST.POLICY.TYPE>>(hasControlWorkspace ? CONST.POLICY.TYPE.CORPORATE : CONST.POLICY.TYPE.TEAM);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars -- setSelectedOwner will be used when owner selector is implemented
+    const [selectedOwner, setSelectedOwner] = useState<OptionData | null>(() => {
+        // Initialize owner to current user for approved accountants
+        if (isApprovedAccountant && currentUserPersonalDetails) {
+            return {
+                text: currentUserPersonalDetails.displayName ?? currentUserPersonalDetails.login ?? '',
+                login: currentUserPersonalDetails.login,
+                accountID: currentUserPersonalDetails.accountID,
+            } as OptionData;
+        }
+        return null;
+    });
+    const [makeMeAdmin, setMakeMeAdmin] = useState(true);
+
     const validate = useCallback(
         (values: FormOnyxValues<typeof ONYXKEYS.FORMS.WORKSPACE_CONFIRMATION_FORM>) => {
             const errors: FormInputErrors<typeof ONYXKEYS.FORMS.WORKSPACE_CONFIRMATION_FORM> = {};
@@ -83,15 +127,6 @@ function WorkspaceConfirmationForm({onSubmit, policyOwnerEmail = '', onBackButto
     );
 
     const policyID = useMemo(() => generatePolicyID(), []);
-    const [session, metadata] = useOnyx(ONYXKEYS.SESSION, {canBeMissing: false});
-
-    const currentUserPersonalDetails = useCurrentUserPersonalDetails();
-    const [draftValues] = useOnyx(ONYXKEYS.FORMS.WORKSPACE_CONFIRMATION_FORM_DRAFT, {canBeMissing: true});
-
-    const defaultWorkspaceName = generateDefaultWorkspaceName(policyOwnerEmail || session?.email);
-    const [workspaceNameFirstCharacter, setWorkspaceNameFirstCharacter] = useState(defaultWorkspaceName ?? '');
-
-    const userCurrency = draftValues?.currency ?? currentUserPersonalDetails?.localCurrencyCode ?? CONST.CURRENCY.USD;
 
     useEffect(() => {
         return () => {
@@ -161,6 +196,11 @@ function WorkspaceConfirmationForm({onSubmit, policyOwnerEmail = '', onBackButto
                             currency: val[INPUT_IDS.CURRENCY],
                             avatarFile,
                             policyID,
+                            ...(isApprovedAccountant && {
+                                planType: selectedPlanType,
+                                ownerEmail: selectedOwner?.login ?? '',
+                                makeMeAdmin: selectedOwner && selectedOwner.login !== currentUserPersonalDetails?.login ? makeMeAdmin : undefined,
+                            }),
                         })
                     }
                     enabledWhenOffline
@@ -196,6 +236,48 @@ function WorkspaceConfirmationForm({onSubmit, policyOwnerEmail = '', onBackButto
                                 currencySelectorRoute={ROUTES.CURRENCY_SELECTION}
                             />
                         </View>
+
+                        {isApprovedAccountant && (
+                            <>
+                                {/* Plan Type Selector */}
+                                <View style={[styles.mhn5, styles.mt4]}>
+                                    <MenuItemWithTopDescription
+                                        title={selectedPlanType === CONST.POLICY.TYPE.CORPORATE ? translate('workspace.type.control') : translate('workspace.type.collect')}
+                                        description={translate('workspace.common.planType')}
+                                        shouldShowRightIcon
+                                        onPress={() => {
+                                            // Toggle between Control and Collect
+                                            setSelectedPlanType(selectedPlanType === CONST.POLICY.TYPE.CORPORATE ? CONST.POLICY.TYPE.TEAM : CONST.POLICY.TYPE.CORPORATE);
+                                        }}
+                                    />
+                                </View>
+
+                                {/* Owner Selector */}
+                                <View style={[styles.mhn5, styles.mt4]}>
+                                    <MenuItemWithTopDescription
+                                        title={selectedOwner?.text ?? currentUserPersonalDetails?.displayName ?? currentUserPersonalDetails?.login ?? ''}
+                                        description={translate('common.owner')}
+                                        shouldShowRightIcon
+                                        onPress={() => {
+                                            // TODO: Navigate to participant selector page
+                                            // Navigation.navigate(ROUTES.WORKSPACE_OWNER_SELECTOR);
+                                        }}
+                                    />
+                                </View>
+
+                                {/* Keep me as an admin toggle - only show when owner is different from current user */}
+                                {!!selectedOwner && selectedOwner.login !== currentUserPersonalDetails?.login && (
+                                    <View style={[styles.mt4, styles.flexRow, styles.justifyContentBetween, styles.alignItemsCenter]}>
+                                        <Text>{translate('workspace.new.keepMeAsAdmin')}</Text>
+                                        <Switch
+                                            isOn={makeMeAdmin}
+                                            onToggle={setMakeMeAdmin}
+                                            accessibilityLabel={translate('workspace.new.keepMeAsAdmin')}
+                                        />
+                                    </View>
+                                )}
+                            </>
+                        )}
                     </View>
                 </FormProvider>
             </ScrollView>

@@ -24,12 +24,17 @@ function WorkspaceConfirmationPage() {
     const onSubmit = (params: WorkspaceConfirmationSubmitFunctionParams) => {
         const policyID = params.policyID || generatePolicyID();
         const routeToNavigate = isSmallScreenWidth ? ROUTES.WORKSPACE_INITIAL.getRoute(policyID) : ROUTES.WORKSPACE_OVERVIEW.getRoute(policyID);
+
+        // For approved accountants, use the owner email they specified, otherwise use empty string
+        const ownerEmail = params.ownerEmail ?? '';
+        const shouldMakeMeAdmin = params.makeMeAdmin ?? false;
+
         createWorkspaceWithPolicyDraftAndNavigateToIt({
             introSelected,
-            policyOwnerEmail: '',
+            policyOwnerEmail: ownerEmail,
             policyName: params.name,
             transitionFromOldDot: false,
-            makeMeAdmin: false,
+            makeMeAdmin: shouldMakeMeAdmin,
             backTo: '',
             policyID,
             currency: params.currency,
