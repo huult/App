@@ -40,6 +40,8 @@ import {setupMergeTransactionDataAndNavigate} from '@libs/actions/MergeTransacti
 import {moveIOUReportToPolicy, moveIOUReportToPolicyAndInviteSubmitter, searchInServer} from '@libs/actions/Report';
 import {
     approveMoneyRequestOnSearch,
+    bulkExportToIntegrationOnSearch,
+    bulkMarkAsExportedOnSearch,
     deleteMoneyRequestOnSearch,
     exportSearchItemsToCSV,
     getExportTemplates,
@@ -65,7 +67,13 @@ import {getTransactionsAndReportsFromSearch} from '@libs/MergeTransactionUtils';
 import Navigation from '@libs/Navigation/Navigation';
 import type {PlatformStackScreenProps} from '@libs/Navigation/PlatformStackNavigation/types';
 import type {SearchFullscreenNavigatorParamList} from '@libs/Navigation/types';
-import {getActiveAdminWorkspaces, hasDynamicExternalWorkflow, hasOnlyPersonalPolicies as hasOnlyPersonalPoliciesUtil, isPaidGroupPolicy} from '@libs/PolicyUtils';
+import {
+    getActiveAdminWorkspaces,
+    getValidConnectedIntegration,
+    hasDynamicExternalWorkflow,
+    hasOnlyPersonalPolicies as hasOnlyPersonalPoliciesUtil,
+    isPaidGroupPolicy,
+} from '@libs/PolicyUtils';
 import {getOriginalMessage, isMoneyRequestAction} from '@libs/ReportActionsUtils';
 import {isMergeActionForSelectedTransactions} from '@libs/ReportSecondaryActionUtils';
 import {
@@ -92,6 +100,7 @@ import ONYXKEYS from '@src/ONYXKEYS';
 import ROUTES from '@src/ROUTES';
 import type SCREENS from '@src/SCREENS';
 import type {Policy, Report, SearchResults, Transaction} from '@src/types/onyx';
+import type {ConnectionName} from '@src/types/onyx/Policy';
 import type {FileObject} from '@src/types/utils/Attachment';
 import SearchPageNarrow from './SearchPageNarrow';
 import SearchPageWide from './SearchPageWide';
@@ -131,6 +140,8 @@ function SearchPage({route}: SearchPageProps) {
 
     const [isOfflineModalVisible, setIsOfflineModalVisible] = useState(false);
     const [isDownloadErrorModalVisible, setIsDownloadErrorModalVisible] = useState(false);
+    const [isExportToIntegrationModalVisible, setIsExportToIntegrationModalVisible] = useState(false);
+    const [isMarkAsExportedModalVisible, setIsMarkAsExportedModalVisible] = useState(false);
     const [searchRequestResponseStatusCode, setSearchRequestResponseStatusCode] = useState<number | null>(null);
     const {showConfirmModal} = useConfirmModal();
     const {isBetaEnabled} = usePermissions();
@@ -363,6 +374,52 @@ function SearchPage({route}: SearchPageProps) {
         clearSelectedTransactions,
         setIsDownloadErrorModalVisible,
     ]);
+
+    const handleBulkExportToIntegration = useCallback(
+        (connectionName: ConnectionName) => {
+            setIsExportToIntegrationModalVisible(false);
+
+            if (isOffline) {
+                setIsOfflineModalVisible(true);
+                return;
+            }
+
+            const reportIDList = selectedReportIDs.filter((id) => id !== undefined);
+
+            if (reportIDList.length === 0 || !hash) {
+                return;
+            }
+
+            bulkExportToIntegrationOnSearch(hash, reportIDList, connectionName);
+
+            // Clear selections after export
+            clearSelectedTransactions();
+        },
+        [isOffline, selectedReportIDs, hash, clearSelectedTransactions],
+    );
+
+    const handleBulkMarkAsExported = useCallback(
+        (connectionName: ConnectionName) => {
+            setIsMarkAsExportedModalVisible(false);
+
+            if (isOffline) {
+                setIsOfflineModalVisible(true);
+                return;
+            }
+
+            const reportIDList = selectedReportIDs.filter((id) => id !== undefined);
+
+            if (reportIDList.length === 0 || !hash) {
+                return;
+            }
+
+            bulkMarkAsExportedOnSearch(hash, reportIDList, connectionName);
+
+            // Clear selections after marking
+            clearSelectedTransactions();
+        },
+        [isOffline, selectedReportIDs, hash, clearSelectedTransactions],
+    );
 
     const handleApproveWithDEWCheck = useCallback(async () => {
         if (isOffline) {
@@ -673,6 +730,33 @@ function SearchPage({route}: SearchPageProps) {
                     shouldCloseModalOnSelect: true,
                     shouldCallAfterModalHide: true,
                 });
+            }
+
+            // Add accounting integration export option if all selected reports belong to the same policy with a connected accounting integration
+            if (areFullReportsSelected && policy && selectedReportIDs.length > 0 && typeExpenseReport) {
+                const connectedIntegration = getValidConnectedIntegration(policy);
+                if (connectedIntegration) {
+                    exportOptions.push(
+                        {
+                            text: translate('workspace.common.exportIntegrationSelected', {connectionName: connectedIntegration}),
+                            icon: expensifyIcons.Export,
+                            onSelected: () => {
+                                setIsExportToIntegrationModalVisible(true);
+                            },
+                            shouldCloseModalOnSelect: false,
+                            shouldCallAfterModalHide: false,
+                        },
+                        {
+                            text: translate('workspace.common.markAsExported'),
+                            icon: expensifyIcons.Export,
+                            onSelected: () => {
+                                setIsMarkAsExportedModalVisible(true);
+                            },
+                            shouldCloseModalOnSelect: false,
+                            shouldCallAfterModalHide: false,
+                        },
+                    );
+                }
             }
 
             return exportOptions;
@@ -1291,6 +1375,42 @@ function SearchPage({route}: SearchPageProps) {
                             onConfirm={dismissModalAndUpdateUseHold}
                         />
                     )}
+                    {isExportToIntegrationModalVisible &&
+                        (() => {
+                            const policy = selectedPolicyIDs.length === 1 ? policies?.[`${ONYXKEYS.COLLECTION.POLICY}${selectedPolicyIDs.at(0)}`] : undefined;
+                            const connectedIntegration = getValidConnectedIntegration(policy);
+                            return connectedIntegration ? (
+                                <DecisionModal
+                                    title={translate('export.exportReportsToIntegration.title')}
+                                    prompt={translate('export.exportReportsToIntegration.description')}
+                                    isSmallScreenWidth={isSmallScreenWidth}
+                                    onSecondOptionSubmit={() => handleBulkExportToIntegration(connectedIntegration)}
+                                    secondOptionText={translate('common.buttonConfirm')}
+                                    onFirstOptionSubmit={() => setIsExportToIntegrationModalVisible(false)}
+                                    firstOptionText={translate('common.cancel')}
+                                    isVisible={isExportToIntegrationModalVisible}
+                                    onClose={() => setIsExportToIntegrationModalVisible(false)}
+                                />
+                            ) : null;
+                        })()}
+                    {isMarkAsExportedModalVisible &&
+                        (() => {
+                            const policy = selectedPolicyIDs.length === 1 ? policies?.[`${ONYXKEYS.COLLECTION.POLICY}${selectedPolicyIDs.at(0)}`] : undefined;
+                            const connectedIntegration = getValidConnectedIntegration(policy);
+                            return connectedIntegration ? (
+                                <DecisionModal
+                                    title={translate('export.markAsExported.title')}
+                                    prompt={translate('export.markAsExported.description')}
+                                    isSmallScreenWidth={isSmallScreenWidth}
+                                    onSecondOptionSubmit={() => handleBulkMarkAsExported(connectedIntegration)}
+                                    secondOptionText={translate('common.buttonConfirm')}
+                                    onFirstOptionSubmit={() => setIsMarkAsExportedModalVisible(false)}
+                                    firstOptionText={translate('common.cancel')}
+                                    isVisible={isMarkAsExportedModalVisible}
+                                    onClose={() => setIsMarkAsExportedModalVisible(false)}
+                                />
+                            ) : null;
+                        })()}
                 </View>
             )}
         </>

@@ -7832,6 +7832,14 @@ const translations = {
         expenseLevelExport: 'All Data - expense level',
         exportInProgress: 'Export in progress',
         conciergeWillSend: 'Concierge will send you the file shortly.',
+        exportReportsToIntegration: {
+            title: 'Export in progress',
+            description: 'Concierge will send you a message if any reports fail to export.',
+        },
+        markAsExported: {
+            title: 'Mark as exported',
+            description: 'Are you sure you want to mark these reports as manually exported?',
+        },
     },
     domain: {
         notVerified: 'Not verified',
