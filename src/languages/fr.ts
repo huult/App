@@ -6898,6 +6898,7 @@ Exigez des informations de dépense comme les reçus et les descriptions, défin
                 [CONST.SEARCH.GROUP_BY.FROM]: 'De',
                 [CONST.SEARCH.GROUP_BY.CARD]: 'Carte',
                 [CONST.SEARCH.GROUP_BY.WITHDRAWAL_ID]: 'ID de retrait',
+                [CONST.SEARCH.GROUP_BY.CATEGORY]: 'Catégorie',
             },
             feed: 'Flux',
             withdrawalType: {
@@ -6937,6 +6938,7 @@ Exigez des informations de dépense comme les reçus et les descriptions, défin
             allMatchingItemsSelected: 'Tous les éléments correspondants sont sélectionnés',
         },
         topSpenders: 'Plus gros dépensiers',
+        topCategories: 'Principales catégories',
     },
     genericErrorPage: {
         title: 'Oh oh, quelque chose s’est mal passé !',

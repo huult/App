@@ -6699,6 +6699,7 @@ ${reportName}
                 [CONST.SEARCH.GROUP_BY.FROM]: '从',
                 [CONST.SEARCH.GROUP_BY.CARD]: '卡片',
                 [CONST.SEARCH.GROUP_BY.WITHDRAWAL_ID]: '提款 ID',
+                [CONST.SEARCH.GROUP_BY.CATEGORY]: '类别',
             },
             feed: '动态',
             withdrawalType: {
@@ -6738,6 +6739,7 @@ ${reportName}
             allMatchingItemsSelected: '已选择所有匹配的项目',
         },
         topSpenders: '最高支出者',
+        topCategories: '热门类别',
     },
     genericErrorPage: {
         title: '哎呀，出错了！',

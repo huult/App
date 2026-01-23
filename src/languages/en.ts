@@ -6706,6 +6706,7 @@ const translations = {
         unapprovedCard: 'Unapproved card',
         reconciliation: 'Reconciliation',
         topSpenders: 'Top spenders',
+        topCategories: 'Top categories',
         saveSearch: 'Save search',
         deleteSavedSearch: 'Delete saved search',
         deleteSavedSearchConfirm: 'Are you sure you want to delete this search?',
@@ -6770,6 +6771,7 @@ const translations = {
                 [CONST.SEARCH.GROUP_BY.FROM]: 'From',
                 [CONST.SEARCH.GROUP_BY.CARD]: 'Card',
                 [CONST.SEARCH.GROUP_BY.WITHDRAWAL_ID]: 'Withdrawal ID',
+                [CONST.SEARCH.GROUP_BY.CATEGORY]: 'Category',
             },
             feed: 'Feed',
             withdrawalType: {

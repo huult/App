@@ -631,6 +631,32 @@ function getSuggestedSearches(
                 return this.searchQueryJSON?.similarSearchHash ?? CONST.DEFAULT_NUMBER_ID;
             },
         },
+        [CONST.SEARCH.SEARCH_KEYS.TOP_CATEGORIES]: {
+            key: CONST.SEARCH.SEARCH_KEYS.TOP_CATEGORIES,
+            translationPath: 'search.topCategories',
+            type: CONST.SEARCH.DATA_TYPES.EXPENSE,
+            icon: Expensicons.Folder,
+            searchQuery: `${buildQueryStringFromFilterFormValues(
+                {
+                    type: CONST.SEARCH.DATA_TYPES.EXPENSE,
+                    groupBy: CONST.SEARCH.GROUP_BY.CATEGORY,
+                    dateOn: CONST.SEARCH.DATE_PRESETS.LAST_MONTH,
+                },
+                {
+                    sortBy: CONST.SEARCH.TABLE_COLUMNS.GROUP_TOTAL,
+                    sortOrder: CONST.SEARCH.SORT_ORDER.DESC,
+                },
+            )} limit:10`,
+            get searchQueryJSON() {
+                return buildSearchQueryJSON(this.searchQuery);
+            },
+            get hash() {
+                return this.searchQueryJSON?.hash ?? CONST.DEFAULT_NUMBER_ID;
+            },
+            get similarSearchHash() {
+                return this.searchQueryJSON?.similarSearchHash ?? CONST.DEFAULT_NUMBER_ID;
+            },
+        },
     };
 }
 
@@ -653,6 +679,7 @@ function getSuggestedSearchesVisibility(
     let shouldShowUnapprovedCardSuggestion = false;
     let shouldShowReconciliationSuggestion = false;
     let shouldShowTopSpendersSuggestion = false;
+    let shouldShowTopCategoriesSuggestion = false;
 
     const hasCardFeed = Object.values(cardFeedsByPolicy ?? {}).some((feeds) => feeds.length > 0);
 
@@ -689,6 +716,7 @@ function getSuggestedSearchesVisibility(
         const isEligibleForReconciliationSuggestion = isPaidPolicy && isAdmin && ((isPaymentEnabled && hasVBBA && hasReimburser) || isECardEnabled);
         const isAuditor = policy.role === CONST.POLICY.ROLE.AUDITOR;
         const isEligibleForTopSpendersSuggestion = isPaidPolicy && (isAdmin || isAuditor || isApprover);
+        const isEligibleForTopCategoriesSuggestion = true; // Show for all accounts with at least one workspace
 
         shouldShowSubmitSuggestion ||= isEligibleForSubmitSuggestion;
         shouldShowPaySuggestion ||= isEligibleForPaySuggestion;
@@ -699,6 +727,7 @@ function getSuggestedSearchesVisibility(
         shouldShowUnapprovedCardSuggestion ||= isEligibleForUnapprovedCardSuggestion;
         shouldShowReconciliationSuggestion ||= isEligibleForReconciliationSuggestion;
         shouldShowTopSpendersSuggestion ||= isEligibleForTopSpendersSuggestion;
+        shouldShowTopCategoriesSuggestion ||= isEligibleForTopCategoriesSuggestion;
 
         // We don't need to check the rest of the policies if we already determined that all suggestions should be displayed
         return (
@@ -710,7 +739,8 @@ function getSuggestedSearchesVisibility(
             shouldShowUnapprovedCashSuggestion &&
             shouldShowUnapprovedCardSuggestion &&
             shouldShowReconciliationSuggestion &&
-            shouldShowTopSpendersSuggestion
+            shouldShowTopSpendersSuggestion &&
+            shouldShowTopCategoriesSuggestion
         );
     });
 
@@ -727,6 +757,7 @@ function getSuggestedSearchesVisibility(
         [CONST.SEARCH.SEARCH_KEYS.UNAPPROVED_CARD]: shouldShowUnapprovedCardSuggestion,
         [CONST.SEARCH.SEARCH_KEYS.RECONCILIATION]: shouldShowReconciliationSuggestion,
         [CONST.SEARCH.SEARCH_KEYS.TOP_SPENDERS]: shouldShowTopSpendersSuggestion,
+        [CONST.SEARCH.SEARCH_KEYS.TOP_CATEGORIES]: shouldShowTopCategoriesSuggestion,
     };
 }
 
@@ -2070,6 +2101,35 @@ function getWithdrawalIDSections(data: OnyxTypes.SearchResults['data'], queryJSO
 }
 
 /**
+ * @private
+ * Organizes data into List Sections grouped by category for display, for the TransactionGroupListItemType of Search Results.
+ *
+ * Do not use directly, use only via `getSections()` facade.
+ */
+function getCategorySections(data: OnyxTypes.SearchResults['data'], queryJSON: SearchQueryJSON | undefined): [TransactionGroupListItemType[], number] {
+    const categorySections: Record<string, TransactionGroupListItemType> = {};
+
+    for (const key in data) {
+        if (isGroupEntry(key)) {
+            const categoryGroup = data[key] as Record<string, unknown>;
+            const categoryName = (categoryGroup.category as string) || '';
+
+            categorySections[key] = {
+                groupedBy: CONST.SEARCH.GROUP_BY.CATEGORY,
+                transactions: [],
+                transactionsQueryJSON: queryJSON,
+                keyForList: key,
+                ...categoryGroup,
+                category: categoryName,
+            } as TransactionGroupListItemType;
+        }
+    }
+
+    const categorySectionsValues = Object.values(categorySections);
+    return [categorySectionsValues, categorySectionsValues.length];
+}
+
+/**
  * Returns the appropriate list item component based on the type and status of the search data.
  */
 function getListItem(type: SearchDataTypes, status: SearchStatus, groupBy?: SearchGroupBy): ListItemType<typeof type, typeof status> {
@@ -2143,6 +2203,8 @@ function getSections({
                 return getCardSections(data, queryJSON, translate, cardFeeds);
             case CONST.SEARCH.GROUP_BY.WITHDRAWAL_ID:
                 return getWithdrawalIDSections(data, queryJSON);
+            case CONST.SEARCH.GROUP_BY.CATEGORY:
+                return getCategorySections(data, queryJSON);
         }
     }
 
@@ -2182,6 +2244,8 @@ function getSortedSections(
                 return getSortedCardData(data as TransactionCardGroupListItemType[], localeCompare, sortBy, sortOrder);
             case CONST.SEARCH.GROUP_BY.WITHDRAWAL_ID:
                 return getSortedWithdrawalIDData(data as TransactionWithdrawalIDGroupListItemType[], localeCompare, sortBy, sortOrder);
+            case CONST.SEARCH.GROUP_BY.CATEGORY:
+                return getSortedMemberData(data as TransactionMemberGroupListItemType[], localeCompare, sortBy, sortOrder);
         }
     }
 
@@ -2608,6 +2672,8 @@ function getCustomColumns(value?: SearchDataTypes | SearchGroupBy): SearchCustom
             return Object.values(CONST.SEARCH.GROUP_CUSTOM_COLUMNS.FROM);
         case CONST.SEARCH.GROUP_BY.WITHDRAWAL_ID:
             return Object.values(CONST.SEARCH.GROUP_CUSTOM_COLUMNS.WITHDRAWAL_ID);
+        case CONST.SEARCH.GROUP_BY.CATEGORY:
+            return Object.values(CONST.SEARCH.GROUP_CUSTOM_COLUMNS.CATEGORY);
         default:
             return [];
     }
@@ -2633,6 +2699,8 @@ function getCustomColumnDefault(value?: SearchDataTypes | SearchGroupBy): Search
             return CONST.SEARCH.GROUP_DEFAULT_COLUMNS.FROM;
         case CONST.SEARCH.GROUP_BY.WITHDRAWAL_ID:
             return CONST.SEARCH.GROUP_DEFAULT_COLUMNS.WITHDRAWAL_ID;
+        case CONST.SEARCH.GROUP_BY.CATEGORY:
+            return CONST.SEARCH.GROUP_DEFAULT_COLUMNS.CATEGORY;
         default:
             return [];
     }
@@ -2715,6 +2783,8 @@ function getSearchColumnTranslationKey(columnId: SearchCustomColumnIds): Transla
             return 'search.filters.withdrawn';
         case CONST.SEARCH.TABLE_COLUMNS.GROUP_FEED:
             return 'search.filters.feed';
+        case CONST.SEARCH.TABLE_COLUMNS.GROUP_CATEGORY:
+            return 'common.category';
         case CONST.SEARCH.TABLE_COLUMNS.EXPORTED_TO:
             return 'search.exportedTo';
     }
@@ -2934,6 +3004,16 @@ function createTypeMenuSections(
         if (suggestedSearchesVisibility[CONST.SEARCH.SEARCH_KEYS.TOP_SPENDERS]) {
             insightsSection.menuItems.push({
                 ...suggestedSearches[CONST.SEARCH.SEARCH_KEYS.TOP_SPENDERS],
+                emptyState: {
+                    title: 'search.searchResults.emptyResults.title',
+                    subtitle: 'search.searchResults.emptyResults.subtitle',
+                },
+            });
+        }
+
+        if (suggestedSearchesVisibility[CONST.SEARCH.SEARCH_KEYS.TOP_CATEGORIES]) {
+            insightsSection.menuItems.push({
+                ...suggestedSearches[CONST.SEARCH.SEARCH_KEYS.TOP_CATEGORIES],
                 emptyState: {
                     title: 'search.searchResults.emptyResults.title',
                     subtitle: 'search.searchResults.emptyResults.subtitle',
@@ -3174,15 +3254,17 @@ function getColumnsToShow(
             [CONST.SEARCH.GROUP_BY.CARD]: CONST.SEARCH.GROUP_CUSTOM_COLUMNS.CARD,
             [CONST.SEARCH.GROUP_BY.FROM]: CONST.SEARCH.GROUP_CUSTOM_COLUMNS.FROM,
             [CONST.SEARCH.GROUP_BY.WITHDRAWAL_ID]: CONST.SEARCH.GROUP_CUSTOM_COLUMNS.WITHDRAWAL_ID,
+            [CONST.SEARCH.GROUP_BY.CATEGORY]: CONST.SEARCH.GROUP_CUSTOM_COLUMNS.CATEGORY,
         }[groupBy];
 
         const defaultCustomColumns = {
             [CONST.SEARCH.GROUP_BY.CARD]: CONST.SEARCH.GROUP_DEFAULT_COLUMNS.CARD,
             [CONST.SEARCH.GROUP_BY.FROM]: CONST.SEARCH.GROUP_DEFAULT_COLUMNS.FROM,
             [CONST.SEARCH.GROUP_BY.WITHDRAWAL_ID]: CONST.SEARCH.GROUP_DEFAULT_COLUMNS.WITHDRAWAL_ID,
+            [CONST.SEARCH.GROUP_BY.CATEGORY]: CONST.SEARCH.GROUP_DEFAULT_COLUMNS.CATEGORY,
         }[groupBy];
 
-        const filteredVisibleColumns = visibleColumns.filter((column) => Object.values(customColumns).includes(column as ValueOf<typeof customColumns>));
+        const filteredVisibleColumns = visibleColumns.filter((column) => Object.values(customColumns ?? {}).includes(column as ValueOf<typeof customColumns>));
         const columnsToShow = filteredVisibleColumns.length ? filteredVisibleColumns : defaultCustomColumns;
 
         if (groupBy === CONST.SEARCH.GROUP_BY.FROM) {
@@ -3190,7 +3272,7 @@ function getColumnsToShow(
             const result: SearchColumnType[] = [];
 
             for (const col of requiredColumns) {
-                if (!columnsToShow.includes(col as SearchCustomColumnIds)) {
+                if (!(columnsToShow as SearchCustomColumnIds[]).includes(col as SearchCustomColumnIds)) {
                     result.push(col);
                 }
             }
@@ -3207,7 +3289,7 @@ function getColumnsToShow(
             const result: SearchColumnType[] = [];
 
             for (const col of requiredColumns) {
-                if (!columnsToShow.includes(col as SearchCustomColumnIds)) {
+                if (!(columnsToShow as SearchCustomColumnIds[]).includes(col as SearchCustomColumnIds)) {
                     result.push(col);
                 }
             }
@@ -3224,12 +3306,30 @@ function getColumnsToShow(
             const result: SearchColumnType[] = [];
 
             for (const col of requiredColumns) {
-                if (!columnsToShow.includes(col as SearchCustomColumnIds)) {
+                if (!(columnsToShow as SearchCustomColumnIds[]).includes(col as SearchCustomColumnIds)) {
                     result.push(col);
                 }
             }
 
             for (const col of columnsToShow) {
+                result.push(col);
+            }
+
+            return result;
+        }
+
+        if (groupBy === CONST.SEARCH.GROUP_BY.CATEGORY) {
+            const result: SearchColumnType[] = [];
+
+            // Add required columns that aren't in the user's selection
+            const requiredColumns = new Set<SearchColumnType>([CONST.SEARCH.TABLE_COLUMNS.GROUP_CATEGORY, CONST.SEARCH.TABLE_COLUMNS.GROUP_TOTAL]);
+            for (const col of requiredColumns) {
+                if (!(columnsToShow as SearchCustomColumnIds[])?.includes(col as SearchCustomColumnIds)) {
+                    result.push(col);
+                }
+            }
+
+            for (const col of columnsToShow ?? []) {
                 result.push(col);
             }
 

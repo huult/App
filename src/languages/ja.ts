@@ -6818,6 +6818,7 @@ ${reportName}
                 [CONST.SEARCH.GROUP_BY.FROM]: '差出人',
                 [CONST.SEARCH.GROUP_BY.CARD]: 'カード',
                 [CONST.SEARCH.GROUP_BY.WITHDRAWAL_ID]: '出金ID',
+                [CONST.SEARCH.GROUP_BY.CATEGORY]: 'カテゴリー',
             },
             feed: 'フィード',
             withdrawalType: {
@@ -6857,6 +6858,7 @@ ${reportName}
             allMatchingItemsSelected: '一致する項目をすべて選択済み',
         },
         topSpenders: 'トップ支出者',
+        topCategories: 'トップカテゴリ',
     },
     genericErrorPage: {
         title: 'おっと、問題が発生しました！',

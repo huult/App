@@ -114,6 +114,7 @@ import type ScheduleCallDraft from './ScheduleCallDraft';
 import type ScreenShareRequest from './ScreenShareRequest';
 import type SearchContext from './SearchContext';
 import type SearchResults from './SearchResults';
+import type {SearchCardGroup, SearchCategoryGroup, SearchMemberGroup, SearchWithdrawalIDGroup} from './SearchResults';
 import type SecurityGroup from './SecurityGroup';
 import type SelectedTabRequest from './SelectedTabRequest';
 import type Session from './Session';
@@ -276,6 +277,10 @@ export type {
     PolicyJoinMember,
     CapturedLogs,
     SearchResults,
+    SearchCategoryGroup,
+    SearchCardGroup,
+    SearchMemberGroup,
+    SearchWithdrawalIDGroup,
     ReviewDuplicates,
     PrivateSubscription,
     BillingGraceEndPeriod,
