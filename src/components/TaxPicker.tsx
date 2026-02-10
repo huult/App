@@ -125,16 +125,16 @@ function TaxPicker({selectedTaxRate = '', policyID, transactionID, onSubmit, act
         headerMessage: getHeaderMessageForNonUserList((sections.at(0)?.data?.length ?? 0) > 0, searchValue),
     };
 
+    const updatedSections = deletedTaxOption
+        ? sections.map((section) => ({
+              ...section,
+              data: [...section.data.map((item) => (item.code === deletedTaxOption.code ? {...item, isSelected: false} : item)), deletedTaxOption],
+          }))
+        : sections;
+
     return (
         <SelectionList
-            sections={
-                deletedTaxOption
-                    ? sections.map((section) => ({
-                          ...section,
-                          data: [...section.data, deletedTaxOption],
-                      }))
-                    : sections
-            }
+            sections={updatedSections}
             shouldShowTextInput={shouldShowTextInput}
             textInputOptions={textInputOptions}
             onSelectRow={handleSelectRow}
