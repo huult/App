@@ -1,7 +1,7 @@
-import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
-import * as ConciergeReasoningStore from '@libs/ConciergeReasoningStore';
+import {useCallback, useEffect, useMemo, useState, useSyncExternalStore} from 'react';
+import {getReasoningHistory, subscribe} from '@libs/ConciergeReasoningStore';
 import type {ReasoningEntry} from '@libs/ConciergeReasoningStore';
-import * as Report from '@userActions/Report';
+import {subscribeToReportReasoningEvents, unsubscribeFromReportReasoningChannel} from '@userActions/Report';
 import ONYXKEYS from '@src/ONYXKEYS';
 import useLocalize from './useLocalize';
 import useOnyx from './useOnyx';
@@ -25,19 +25,14 @@ function useAgentZeroStatusIndicator(reportID: string, isConciergeChat: boolean)
     const {translate} = useLocalize();
     const [reportNameValuePairs] = useOnyx(`${ONYXKEYS.COLLECTION.REPORT_NAME_VALUE_PAIRS}${reportID}`, {canBeMissing: true});
     const serverLabel = reportNameValuePairs?.agentZeroProcessingRequestIndicator?.trim();
-    const [optimisticLabel, setOptimisticLabel] = useState<string>();
-    const [reasoningHistory, setReasoningHistory] = useState<ReasoningEntry[]>([]);
-    const isWaitingForServerRef = useRef(false);
-    const previousServerLabelRef = useRef<string | undefined>(serverLabel);
+    const [kickoffTimestamp, setKickoffTimestamp] = useState(0);
 
-    // Subscribe to ConciergeReasoningStore changes for real-time reasoning updates
-    useEffect(() => {
-        const unsubscribe = ConciergeReasoningStore.subscribe(() => {
-            setReasoningHistory(ConciergeReasoningStore.getReasoningHistory(reportID));
-        });
-
-        return unsubscribe;
-    }, [reportID]);
+    // Subscribe to ConciergeReasoningStore for real-time reasoning updates using useSyncExternalStore
+    const reasoningHistory = useSyncExternalStore(
+        subscribe,
+        () => getReasoningHistory(reportID),
+        () => [], // Server snapshot (empty for client-only store)
+    );
 
     // Subscribe to Pusher reasoning events for Concierge chats
     useEffect(() => {
@@ -45,23 +40,12 @@ function useAgentZeroStatusIndicator(reportID: string, isConciergeChat: boolean)
             return;
         }
 
-        Report.subscribeToReportReasoningEvents(reportID);
+        subscribeToReportReasoningEvents(reportID);
 
         return () => {
-            Report.unsubscribeFromReportReasoningChannel(reportID);
+            unsubscribeFromReportReasoningChannel(reportID);
         };
     }, [isConciergeChat, reportID]);
-
-    // Clear optimistic label when server label appears or changes
-    useEffect(() => {
-        const serverLabelChanged = serverLabel !== previousServerLabelRef.current;
-        previousServerLabelRef.current = serverLabel;
-
-        if (serverLabelChanged && serverLabel && isWaitingForServerRef.current) {
-            setOptimisticLabel(undefined);
-            isWaitingForServerRef.current = false;
-        }
-    }, [serverLabel]);
 
     // Optimistically show "Thinking..." when user sends a message
     const kickoffWaitingIndicator = useCallback(() => {
@@ -69,11 +53,12 @@ function useAgentZeroStatusIndicator(reportID: string, isConciergeChat: boolean)
             return;
         }
 
-        setOptimisticLabel(translate('common.thinking'));
-        isWaitingForServerRef.current = true;
-    }, [isConciergeChat, serverLabel, translate]);
+        setKickoffTimestamp(Date.now());
+    }, [isConciergeChat, serverLabel]);
 
-    // Determine the current display label
+    // Derive optimistic label: show if we kicked off AND server hasn't responded yet
+    const shouldShowOptimistic = kickoffTimestamp > 0 && !serverLabel;
+    const optimisticLabel = shouldShowOptimistic ? translate('common.thinking') : undefined;
     const displayLabel = isConciergeChat ? (optimisticLabel ?? serverLabel ?? '') : '';
     const isProcessing = !!displayLabel;
 

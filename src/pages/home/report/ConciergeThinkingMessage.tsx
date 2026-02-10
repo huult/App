@@ -69,7 +69,7 @@ function ConciergeThinkingMessage({reasoningHistory = [], statusLabel = ''}: Con
                         <View style={[styles.mt2, styles.gap2]}>
                             {reasoningHistory.map((entry, index) => (
                                 <View
-                                    // eslint-disable-next-line react/no-array-index-key
+                                    // eslint-disable-next-line react/no-array-index-key -- Index is stable since reasoning entries are append-only and never reordered
                                     key={`reasoning-${entry.timestamp}-${index}`}
                                     style={[styles.pl3, styles.borderLeft, styles.gap1]}
                                 >

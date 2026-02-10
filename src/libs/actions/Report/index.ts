@@ -63,7 +63,7 @@ import {READ_COMMANDS, SIDE_EFFECT_REQUEST_COMMANDS, WRITE_COMMANDS} from '@libs
 import * as ApiUtils from '@libs/ApiUtils';
 import * as Browser from '@libs/Browser';
 import * as CollectionUtils from '@libs/CollectionUtils';
-import * as ConciergeReasoningStore from '@libs/ConciergeReasoningStore';
+import {addReasoning, clearReasoning} from '@libs/ConciergeReasoningStore';
 import type {CustomRNImageManipulatorResult} from '@libs/cropOrRotateImage/types';
 import DateUtils from '@libs/DateUtils';
 import * as EmojiUtils from '@libs/EmojiUtils';
@@ -573,7 +573,7 @@ function subscribeToReportReasoningEvents(reportID: string) {
 
     const pusherChannelName = getReportChannelName(reportID);
     Pusher.subscribe(pusherChannelName, Pusher.TYPE.CONCIERGE_REASONING, (data: ConciergeReasoningEvent) => {
-        ConciergeReasoningStore.addReasoning(reportID, data);
+        addReasoning(reportID, data);
     }).catch((error: ReportError) => {
         Log.hmmm('[Report] Failed to subscribe to Concierge reasoning Pusher channel', {errorType: error.type, pusherChannelName});
         reasoningSubscriptions.delete(reportID);
@@ -590,7 +590,7 @@ function unsubscribeFromReportReasoningChannel(reportID: string) {
     }
 
     const pusherChannelName = getReportChannelName(reportID);
-    ConciergeReasoningStore.clearReasoning(reportID);
+    clearReasoning(reportID);
     Pusher.unsubscribe(pusherChannelName, Pusher.TYPE.CONCIERGE_REASONING);
     reasoningSubscriptions.delete(reportID);
 }
