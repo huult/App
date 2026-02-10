@@ -80,6 +80,7 @@ const translations: TranslationDeepObject<typeof en> = {
         lastName: 'Apellidos',
         scanning: 'Escaneando',
         analyzing: 'Analizando...',
+        thinking: 'Pensando...',
         phone: 'Teléfono',
         phoneNumber: 'Número de teléfono',
         phoneNumberPlaceholder: '(xxx) xxx-xxxx',

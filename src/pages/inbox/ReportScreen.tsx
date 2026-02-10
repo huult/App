@@ -22,6 +22,7 @@ import ScreenWrapper from '@components/ScreenWrapper';
 import ScrollView from '@components/ScrollView';
 import useShowWideRHPVersion from '@components/WideRHPContextProvider/useShowWideRHPVersion';
 import WideRHPOverlayWrapper from '@components/WideRHPOverlayWrapper';
+import useAgentZeroStatusIndicator from '@hooks/useAgentZeroStatusIndicator';
 import useAppFocusEvent from '@hooks/useAppFocusEvent';
 import useArchivedReportsIdSet from '@hooks/useArchivedReportsIdSet';
 import {useCurrentReportIDState} from '@hooks/useCurrentReportID';
@@ -186,6 +187,9 @@ function ReportScreen({route, navigation, isInSidePanel = false}: ReportScreenPr
     const [introSelected] = useOnyx(ONYXKEYS.NVP_INTRO_SELECTED, {canBeMissing: true});
     const [onboarding] = useOnyx(ONYXKEYS.NVP_ONBOARDING, {canBeMissing: true});
     const [conciergeReportID] = useOnyx(ONYXKEYS.CONCIERGE_REPORT_ID, {canBeMissing: true});
+
+    const isConciergeChat = reportIDFromRoute === conciergeReportID;
+    const {isProcessing, reasoningHistory, statusLabel, kickoffWaitingIndicator} = useAgentZeroStatusIndicator(reportIDFromRoute ?? '', isConciergeChat);
 
     const archivedReportsIdSet = useArchivedReportsIdSet();
 
@@ -1109,6 +1113,9 @@ function ReportScreen({route, navigation, isInSidePanel = false}: ReportScreenPr
                                                 parentReportAction={parentReportAction}
                                                 transactionThreadReportID={transactionThreadReportID}
                                                 isReportTransactionThread={isTransactionThreadView}
+                                                isConciergeChatProcessing={isProcessing}
+                                                conciergeReasoningHistory={reasoningHistory}
+                                                conciergeStatusLabel={statusLabel}
                                             />
                                         ) : null}
                                         {!!report && shouldDisplayMoneyRequestActionsList && !shouldWaitForTransactions ? (
@@ -1138,6 +1145,7 @@ function ReportScreen({route, navigation, isInSidePanel = false}: ReportScreenPr
                                                 // If the report is from the 'Send Money' flow, we add the comment to the `iou` report because for these we don't combine reportActions even if there is a single transaction (they always have a single transaction)
                                                 transactionThreadReportID={isSentMoneyReport ? undefined : transactionThreadReportID}
                                                 isInSidePanel={isInSidePanel}
+                                                kickoffWaitingIndicator={kickoffWaitingIndicator}
                                             />
                                         ) : null}
                                     </View>

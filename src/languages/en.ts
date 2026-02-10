@@ -273,6 +273,7 @@ const translations = {
         lastName: 'Last name',
         scanning: 'Scanning',
         analyzing: 'Analyzing...',
+        thinking: 'Thinking...',
         addCardTermsOfService: 'Expensify Terms of Service',
         perPerson: 'per person',
         phone: 'Phone',

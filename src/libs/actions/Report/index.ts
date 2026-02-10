@@ -63,6 +63,7 @@ import {READ_COMMANDS, SIDE_EFFECT_REQUEST_COMMANDS, WRITE_COMMANDS} from '@libs
 import * as ApiUtils from '@libs/ApiUtils';
 import * as Browser from '@libs/Browser';
 import * as CollectionUtils from '@libs/CollectionUtils';
+import * as ConciergeReasoningStore from '@libs/ConciergeReasoningStore';
 import type {CustomRNImageManipulatorResult} from '@libs/cropOrRotateImage/types';
 import DateUtils from '@libs/DateUtils';
 import * as EmojiUtils from '@libs/EmojiUtils';
@@ -101,7 +102,7 @@ import {
 } from '@libs/PolicyUtils';
 import processReportIDDeeplink from '@libs/processReportIDDeeplink';
 import Pusher from '@libs/Pusher';
-import type {UserIsLeavingRoomEvent, UserIsTypingEvent} from '@libs/Pusher/types';
+import type {ConciergeReasoningEvent, UserIsLeavingRoomEvent, UserIsTypingEvent} from '@libs/Pusher/types';
 import * as ReportActionsFollowupUtils from '@libs/ReportActionFollowupUtils';
 import * as ReportActionsUtils from '@libs/ReportActionsUtils';
 import {updateTitleFieldToMatchPolicy} from '@libs/ReportTitleUtils';
@@ -549,6 +550,49 @@ function unsubscribeFromLeavingRoomReportChannel(reportID: string | undefined) {
     const pusherChannelName = getReportChannelName(reportID);
     Onyx.set(`${ONYXKEYS.COLLECTION.REPORT_USER_IS_LEAVING_ROOM}${reportID}`, false);
     Pusher.unsubscribe(pusherChannelName, Pusher.TYPE.USER_IS_LEAVING_ROOM);
+}
+
+// Track reasoning event subscriptions to avoid duplicates
+const reasoningSubscriptions = new Set<string>();
+
+/**
+ * Subscribe to Concierge reasoning events for a report.
+ * Tracks subscriptions to avoid duplicates.
+ */
+function subscribeToReportReasoningEvents(reportID: string) {
+    if (!reportID) {
+        return;
+    }
+
+    // Avoid duplicate subscriptions
+    if (reasoningSubscriptions.has(reportID)) {
+        return;
+    }
+
+    reasoningSubscriptions.add(reportID);
+
+    const pusherChannelName = getReportChannelName(reportID);
+    Pusher.subscribe(pusherChannelName, Pusher.TYPE.CONCIERGE_REASONING, (data: ConciergeReasoningEvent) => {
+        ConciergeReasoningStore.addReasoning(reportID, data);
+    }).catch((error: ReportError) => {
+        Log.hmmm('[Report] Failed to subscribe to Concierge reasoning Pusher channel', {errorType: error.type, pusherChannelName});
+        reasoningSubscriptions.delete(reportID);
+    });
+}
+
+/**
+ * Unsubscribe from Concierge reasoning events for a report.
+ * Clears reasoning state and removes from tracking set.
+ */
+function unsubscribeFromReportReasoningChannel(reportID: string) {
+    if (!reportID) {
+        return;
+    }
+
+    const pusherChannelName = getReportChannelName(reportID);
+    ConciergeReasoningStore.clearReasoning(reportID);
+    Pusher.unsubscribe(pusherChannelName, Pusher.TYPE.CONCIERGE_REASONING);
+    reasoningSubscriptions.delete(reportID);
 }
 
 // New action subscriber array for report pages
@@ -6755,6 +6799,8 @@ export {
     subscribeToNewActionEvent,
     subscribeToReportLeavingEvents,
     subscribeToReportTypingEvents,
+    subscribeToReportReasoningEvents,
+    unsubscribeFromReportReasoningChannel,
     toggleEmojiReaction,
     togglePinnedState,
     toggleSubscribeToChildReport,
