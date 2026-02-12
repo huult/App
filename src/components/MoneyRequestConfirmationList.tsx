@@ -607,7 +607,7 @@ function MoneyRequestConfirmationList({
             text = translate('iou.createExpenses', expensesNumber);
         } else if (isTypeInvoice) {
             if (hasInvoicingDetails(policy)) {
-                text = translate('iou.sendInvoice', {amount: formattedAmount});
+                text = translate('iou.sendInvoice', formattedAmount);
             } else {
                 text = translate('common.next');
             }
