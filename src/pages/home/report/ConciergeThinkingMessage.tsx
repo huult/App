@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useMemo, useState} from 'react';
 import {View} from 'react-native';
 import type {OnyxEntry} from 'react-native-onyx';
 import Icon from '@components/Icon';
@@ -35,16 +35,17 @@ type ConciergeThinkingMessageProps = {
     statusLabel?: string;
 };
 
-function ConciergeThinkingMessage({report, action, reasoningHistory, statusLabel = 'Thinking...'}: ConciergeThinkingMessageProps) {
+function ConciergeThinkingMessage({report, action, reasoningHistory, statusLabel}: ConciergeThinkingMessageProps) {
     const styles = useThemeStyles();
     const theme = useTheme();
     const StyleUtils = useStyleUtils();
-    const {datetimeToCalendarTime} = useLocalize();
+    const {datetimeToCalendarTime, translate} = useLocalize();
     const icons = useMemoizedLazyExpensifyIcons(['UpArrow', 'DownArrow']);
     const [isExpanded, setIsExpanded] = useState(false);
     const [isHovered, setIsHovered] = useState(false);
+    const historyLength = (reasoningHistory ?? [])?.length;
 
-    const hasReasoningHistory = !!reasoningHistory && reasoningHistory.length > 0;
+    const hasReasoningHistory = useMemo(() => !!reasoningHistory && reasoningHistory.length > 0, [reasoningHistory]);
     const currentTimestamp = DateUtils.getDBTime();
 
     // Get avatar data from report/action using the hook
@@ -59,9 +60,9 @@ function ConciergeThinkingMessage({report, action, reasoningHistory, statusLabel
 
     const getAccessibilityLabel = () => {
         if (!hasReasoningHistory) {
-            return statusLabel;
+            return translate('common.thinking');
         }
-        return isExpanded ? 'Collapse reasoning' : 'Expand reasoning';
+        return isExpanded ? translate('concierge.collapseReasoning') : translate('concierge.expandReasoning');
     };
 
     return (
@@ -98,7 +99,7 @@ function ConciergeThinkingMessage({report, action, reasoningHistory, statusLabel
                         accountID={details.accountID ?? CONST.ACCOUNT_ID.CONCIERGE}
                         icon={avatars.at(0)}
                     >
-                        <Text style={[styles.chatItemMessageHeaderSender, styles.flexShrink1, styles.mr1]}>{details.displayName ?? 'Concierge'}</Text>
+                        <Text style={[styles.chatItemMessageHeaderSender, styles.flexShrink1, styles.mr1]}>{details.displayName ?? CONST.CONCIERGE_DISPLAY_NAME}</Text>
                     </UserDetailsTooltip>
                     <Text style={[styles.chatItemMessageHeaderTimestamp]}>{datetimeToCalendarTime(currentTimestamp, false, false)}</Text>
                 </View>
@@ -110,6 +111,7 @@ function ConciergeThinkingMessage({report, action, reasoningHistory, statusLabel
                     accessibilityRole={hasReasoningHistory ? CONST.ROLE.BUTTON : undefined}
                     accessibilityLabel={getAccessibilityLabel()}
                     sentryLabel="ConciergeThinkingMessage-ToggleReasoning"
+                    accessible
                 >
                     <View style={[styles.flexRow, styles.alignItemsCenter]}>
                         <Text style={[styles.chatItemMessage, styles.colorMuted]}>{statusLabel}</Text>
@@ -129,11 +131,11 @@ function ConciergeThinkingMessage({report, action, reasoningHistory, statusLabel
                 {/* Expanded Reasoning History */}
                 {isExpanded && hasReasoningHistory && (
                     <View style={[styles.mt4, styles.borderLeft, styles.pl4, styles.ml1, {borderLeftWidth: 2}]}>
-                        {reasoningHistory.map((entry, index) => {
+                        {reasoningHistory?.map((entry, index) => {
                             return (
                                 <View
                                     key={`reasoning-${entry.timestamp}-${entry.loopCount}`}
-                                    style={[index < reasoningHistory.length - 1 ? styles.mb4 : styles.mb0]}
+                                    style={[index < historyLength - 1 ? styles.mb4 : styles.mb0]}
                                 >
                                     <RenderHTML html={`<comment><muted-text>${Parser.replace(entry.reasoning)}</muted-text></comment>`} />
                                 </View>

@@ -574,6 +574,10 @@ const translations: TranslationDeepObject<typeof en> = {
         year: '年份',
         quarter: '季度',
     },
+    concierge: {
+        collapseReasoning: '收起推理',
+        expandReasoning: '展开推理',
+    },
     supportalNoAccess: {
         title: '先别急',
         descriptionWithCommand: ({

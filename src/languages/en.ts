@@ -598,6 +598,10 @@ const translations = {
         year: 'Year',
         quarter: 'Quarter',
     },
+    concierge: {
+        collapseReasoning: 'Collapse reasoning',
+        expandReasoning: 'Expand reasoning',
+    },
     supportalNoAccess: {
         title: 'Not so fast',
         descriptionWithCommand: ({command}: {command?: string} = {}) =>

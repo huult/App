@@ -562,11 +562,13 @@ function subscribeToReportReasoningEvents(reportID: string) {
             agentZeroRequestID: eventData.agentZeroRequestID,
             loopCount: eventData.loopCount,
         });
-    }).catch((error: ReportError) => {
-        Log.hmmm('[Report] Failed to subscribe to Pusher concierge reasoning events', {errorType: error.type, pusherChannelName, reportID});
-    });
-
-    reasoningSubscriptions.add(reportID);
+    })
+        .then(() => {
+            reasoningSubscriptions.add(reportID);
+        })
+        .catch((error: ReportError) => {
+            Log.hmmm('[Report] Failed to subscribe to Pusher concierge reasoning events', {errorType: error.type, pusherChannelName, reportID});
+        });
 }
 
 /**

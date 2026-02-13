@@ -578,6 +578,10 @@ const translations: TranslationDeepObject<typeof en> = {
         year: 'Jahr',
         quarter: 'Quartal',
     },
+    concierge: {
+        collapseReasoning: 'Begründung einklappen',
+        expandReasoning: 'Begründung erweitern',
+    },
     supportalNoAccess: {
         title: 'Nicht so schnell',
         descriptionWithCommand: ({

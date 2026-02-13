@@ -77,9 +77,6 @@ type ReportFooterProps = {
 
     /** Whether the report screen is being displayed in the side panel */
     isInSidePanel?: boolean;
-
-    /** Function to kickoff waiting indicator when message is submitted */
-    kickoffWaitingIndicator?: () => void;
 };
 
 function ReportFooter({
@@ -94,7 +91,6 @@ function ReportFooter({
     reportTransactions,
     transactionThreadReportID,
     isInSidePanel,
-    kickoffWaitingIndicator,
 }: ReportFooterProps) {
     const styles = useThemeStyles();
     const {isOffline} = useNetwork();
@@ -275,7 +271,6 @@ function ReportFooter({
                             reportTransactions={reportTransactions}
                             transactionThreadReportID={transactionThreadReportID}
                             isInSidePanel={isInSidePanel}
-                            kickoffWaitingIndicator={kickoffWaitingIndicator}
                         />
                     </SwipeableView>
                 </View>

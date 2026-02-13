@@ -578,6 +578,10 @@ const translations: TranslationDeepObject<typeof en> = {
         year: '年',
         quarter: '四半期',
     },
+    concierge: {
+        collapseReasoning: '推論を折りたたむ',
+        expandReasoning: '推論を展開',
+    },
     supportalNoAccess: {
         title: 'ちょっと待ってください',
         descriptionWithCommand: ({

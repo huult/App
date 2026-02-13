@@ -21,7 +21,7 @@ function useAgentZeroStatusIndicator(reportID: string, isConciergeChat: boolean)
     const [reportNameValuePairs] = useOnyx(`${ONYXKEYS.COLLECTION.REPORT_NAME_VALUE_PAIRS}${reportID}`, {canBeMissing: true});
     const serverLabel = reportNameValuePairs?.agentZeroProcessingRequestIndicator?.trim() ?? '';
 
-    const [optimisticWaiting, setOptimisticWaiting] = useState(false);
+    const [optimisticStartTime, setOptimisticStartTime] = useState<number | null>(null);
     const [reasoningHistory, setReasoningHistory] = useState<ReasoningEntry[]>([]);
     const {translate} = useLocalize();
 
@@ -49,32 +49,26 @@ function useAgentZeroStatusIndicator(reportID: string, isConciergeChat: boolean)
 
         subscribeToReportReasoningEvents(reportID);
 
-        // Cleanup: unsubscribe from Pusher and clear reasoning history
+        // Cleanup: unsubscribeFromReportReasoningChannel handles Pusher unsubscription,
+        // clearing reasoning history from ConciergeReasoningStore, and subscription tracking
         return () => {
             unsubscribeFromReportReasoningChannel(reportID);
         };
     }, [isConciergeChat, reportID]);
-
-    useEffect(() => {
-        if (!serverLabel || !optimisticWaiting) {
-            return;
-        }
-        setOptimisticWaiting(false);
-    }, [serverLabel, optimisticWaiting]);
 
     // Optimistically trigger processing state when user sends a message
     const kickoffWaitingIndicator = useCallback(() => {
         if (!isConciergeChat || serverLabel) {
             return;
         }
-        setOptimisticWaiting(true);
+        setOptimisticStartTime(Date.now());
     }, [isConciergeChat, serverLabel]);
 
     // Determine if Concierge is currently processing
-    const isProcessing = isConciergeChat && (!!serverLabel || optimisticWaiting);
+    const isProcessing = isConciergeChat && (!!serverLabel || !!optimisticStartTime);
 
     // Determine the display label
-    const statusLabel = optimisticWaiting && !serverLabel ? translate('common.thinking') : serverLabel;
+    const statusLabel = optimisticStartTime && !serverLabel ? translate('common.thinking') : serverLabel;
 
     return useMemo(
         () => ({

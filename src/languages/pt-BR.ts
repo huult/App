@@ -577,6 +577,10 @@ const translations: TranslationDeepObject<typeof en> = {
         year: 'Ano',
         quarter: 'Trimestre',
     },
+    concierge: {
+        collapseReasoning: 'Recolher raciocínio',
+        expandReasoning: 'Expandir raciocínio',
+    },
     supportalNoAccess: {
         title: 'Calma aí',
         descriptionWithCommand: ({

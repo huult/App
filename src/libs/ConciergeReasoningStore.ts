@@ -66,13 +66,21 @@ function addReasoning(reportID: string, data: ReasoningData) {
     const isDuplicate = state.entries.some((entry) => entry.loopCount === data.loopCount && entry.reasoning === data.reasoning);
 
     if (!isDuplicate) {
-        state.entries.push({
-            reasoning: data.reasoning,
-            loopCount: data.loopCount,
-            timestamp: Date.now(),
-        });
-        store.set(reportID, state);
-        notifyListeners(reportID, state.entries);
+        const timestamp = Date.now();
+        const newEntries = [
+            ...state.entries,
+            {
+                reasoning: data.reasoning,
+                loopCount: data.loopCount,
+                timestamp,
+            },
+        ];
+        const newState = {
+            agentZeroRequestID: state.agentZeroRequestID,
+            entries: newEntries,
+        };
+        store.set(reportID, newState);
+        notifyListeners(reportID, newEntries);
     }
 }
 

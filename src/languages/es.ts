@@ -402,6 +402,10 @@ const translations: TranslationDeepObject<typeof en> = {
         year: 'Año',
         quarter: 'Trimestre',
     },
+    concierge: {
+        collapseReasoning: 'Contraer razonamiento',
+        expandReasoning: 'Expandir razonamiento',
+    },
     supportalNoAccess: {
         title: 'No tan rápido',
         descriptionWithCommand: ({command} = {}) =>

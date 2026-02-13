@@ -3,6 +3,7 @@ import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {InteractionManager} from 'react-native';
 import type {OnyxEntry} from 'react-native-onyx';
 import ReportActionsSkeletonView from '@components/ReportActionsSkeletonView';
+import useAgentZeroStatusIndicator from '@hooks/useAgentZeroStatusIndicator';
 import useCopySelectionHelper from '@hooks/useCopySelectionHelper';
 import useLoadReportActions from '@hooks/useLoadReportActions';
 import useNetwork from '@hooks/useNetwork';
@@ -13,7 +14,6 @@ import useResponsiveLayout from '@hooks/useResponsiveLayout';
 import useTransactionsAndViolationsForReport from '@hooks/useTransactionsAndViolationsForReport';
 import {getReportPreviewAction} from '@libs/actions/IOU';
 import {updateLoadingInitialReportAction} from '@libs/actions/Report';
-import type {ReasoningEntry} from '@libs/ConciergeReasoningStore';
 import DateUtils from '@libs/DateUtils';
 import getIsReportFullyVisible from '@libs/getIsReportFullyVisible';
 import {getAllNonDeletedTransactions} from '@libs/MoneyRequestReportUtils';
@@ -32,7 +32,7 @@ import {
     isMoneyRequestAction,
     shouldReportActionBeVisible,
 } from '@libs/ReportActionsUtils';
-import {buildOptimisticCreatedReportAction, buildOptimisticIOUReportAction, canUserPerformWriteAction, isInvoiceReport, isMoneyRequestReport} from '@libs/ReportUtils';
+import {buildOptimisticCreatedReportAction, buildOptimisticIOUReportAction, canUserPerformWriteAction, isConciergeChatReport, isInvoiceReport, isMoneyRequestReport} from '@libs/ReportUtils';
 import markOpenReportEnd from '@libs/telemetry/markOpenReportEnd';
 import CONST from '@src/CONST';
 import ONYXKEYS from '@src/ONYXKEYS';
@@ -67,15 +67,6 @@ type ReportActionsViewProps = {
 
     /** If the report is a transaction thread report */
     isReportTransactionThread?: boolean;
-
-    /** If concierge is currently processing a request */
-    isConciergeProcessing?: boolean;
-
-    /** Concierge reasoning history for display */
-    conciergeReasoningHistory?: ReasoningEntry[];
-
-    /** Concierge status label */
-    conciergeStatusLabel?: string;
 };
 
 let listOldID = Math.round(Math.random() * 100);
@@ -89,14 +80,18 @@ function ReportActionsView({
     hasNewerActions,
     hasOlderActions,
     isReportTransactionThread,
-    isConciergeProcessing = false,
-    conciergeReasoningHistory,
-    conciergeStatusLabel,
 }: ReportActionsViewProps) {
     useCopySelectionHelper();
     const route = useRoute<PlatformStackRouteProp<ReportsSplitNavigatorParamList, typeof SCREENS.REPORT>>();
     const isReportArchived = useReportIsArchived(report?.reportID);
     const canPerformWriteAction = useMemo(() => canUserPerformWriteAction(report, isReportArchived), [report, isReportArchived]);
+
+    const isConciergeChat = isConciergeChatReport(report);
+    const {
+        isProcessing: isConciergeProcessing,
+        reasoningHistory: conciergeReasoningHistory,
+        statusLabel: conciergeStatusLabel,
+    } = useAgentZeroStatusIndicator(report?.reportID ?? '', isConciergeChat);
 
     const getTransactionThreadReportActions = useCallback(
         (reportActions: OnyxEntry<OnyxTypes.ReportActions>): OnyxTypes.ReportAction[] => {
