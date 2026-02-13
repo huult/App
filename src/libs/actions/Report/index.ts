@@ -555,10 +555,7 @@ function subscribeToReportReasoningEvents(reportID: string) {
     const pusherChannelName = getReportChannelName(reportID);
 
     Pusher.subscribe(pusherChannelName, Pusher.TYPE.CONCIERGE_REASONING, (data: Record<string, unknown>) => {
-        const eventData = data as {reportID: string; reasoning: string; agentZeroRequestID: string; loopCount: number};
-        if (eventData.reportID !== reportID) {
-            return;
-        }
+        const eventData = data as {reasoning: string; agentZeroRequestID: string; loopCount: number};
 
         ConciergeReasoningStore.addReasoning(reportID, {
             reasoning: eventData.reasoning,

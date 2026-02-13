@@ -3,6 +3,7 @@ import {subscribeToReportReasoningEvents, unsubscribeFromReportReasoningChannel}
 import ConciergeReasoningStore from '@libs/ConciergeReasoningStore';
 import type {ReasoningEntry} from '@libs/ConciergeReasoningStore';
 import ONYXKEYS from '@src/ONYXKEYS';
+import useLocalize from './useLocalize';
 import useOnyx from './useOnyx';
 
 type AgentZeroStatusState = {
@@ -11,8 +12,6 @@ type AgentZeroStatusState = {
     statusLabel: string; // Server-driven status label (from reportNameValuePairs)
     kickoffWaitingIndicator: () => void; // Optimistic processing state trigger
 };
-
-const WAITING_LABEL = 'Concierge is waiting for you to finish...';
 
 /**
  * Hook to manage AgentZero status indicator for Concierge chats.
@@ -24,9 +23,8 @@ function useAgentZeroStatusIndicator(reportID: string, isConciergeChat: boolean)
 
     const [optimisticWaiting, setOptimisticWaiting] = useState(false);
     const [reasoningHistory, setReasoningHistory] = useState<ReasoningEntry[]>([]);
+    const {translate} = useLocalize();
 
-    // Initialize reasoning history on reportID change
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => {
         setReasoningHistory(ConciergeReasoningStore.getReasoningHistory(reportID));
     }, [reportID]);
@@ -57,8 +55,6 @@ function useAgentZeroStatusIndicator(reportID: string, isConciergeChat: boolean)
         };
     }, [isConciergeChat, reportID]);
 
-    // Clear optimistic waiting state when server label arrives
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => {
         if (!serverLabel || !optimisticWaiting) {
             return;
@@ -78,7 +74,7 @@ function useAgentZeroStatusIndicator(reportID: string, isConciergeChat: boolean)
     const isProcessing = isConciergeChat && (!!serverLabel || optimisticWaiting);
 
     // Determine the display label
-    const statusLabel = optimisticWaiting && !serverLabel ? WAITING_LABEL : serverLabel;
+    const statusLabel = optimisticWaiting && !serverLabel ? translate('common.thinking') : serverLabel;
 
     return useMemo(
         () => ({
