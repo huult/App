@@ -252,6 +252,7 @@ const translations: TranslationDeepObject<typeof en> = {
         lastName: 'Cognome',
         scanning: 'Scansione',
         analyzing: 'Analisi in corso...',
+        thinking: 'Pensando...',
         addCardTermsOfService: 'Termini di servizio di Expensify',
         perPerson: 'per persona',
         phone: 'Telefono',
