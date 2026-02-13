@@ -62,6 +62,7 @@ import {
 } from '@libs/ReportUtils';
 import Visibility from '@libs/Visibility';
 import type {ReportsSplitNavigatorParamList} from '@navigation/types';
+import ConciergeThinkingMessage from '@pages/home/report/ConciergeThinkingMessage';
 import variables from '@styles/variables';
 import {openReport, readNewestAction, subscribeToNewActionEvent} from '@userActions/Report';
 import CONST from '@src/CONST';
@@ -69,7 +70,6 @@ import ONYXKEYS from '@src/ONYXKEYS';
 import ROUTES from '@src/ROUTES';
 import type SCREENS from '@src/SCREENS';
 import type * as OnyxTypes from '@src/types/onyx';
-import ConciergeThinkingMessage from '../../home/report/ConciergeThinkingMessage';
 import FloatingMessageCounter from './FloatingMessageCounter';
 import getInitialNumToRender from './getInitialNumReportActionsToRender';
 import ListBoundaryLoader from './ListBoundaryLoader';
@@ -826,7 +826,7 @@ function ReportActionsList({
                 />
             </>
         );
-    }, [canShowHeader, isConciergeProcessing, report, conciergeReasoningHistory, retryLoadNewerChatsError]);
+    }, [canShowHeader, isConciergeProcessing, report, conciergeReasoningHistory, conciergeStatusLabel, retryLoadNewerChatsError]);
 
     const shouldShowSkeleton = useMemo(
         () => (isOffline || !reportMetadata?.hasOnceLoadedReportActions) && !sortedVisibleReportActions.some((action) => action.actionName === CONST.REPORT.ACTIONS.TYPE.CREATED),

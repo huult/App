@@ -1,7 +1,7 @@
 import {act, renderHook} from '@testing-library/react-native';
 import Onyx from 'react-native-onyx';
 import useAgentZeroStatusIndicator from '@hooks/useAgentZeroStatusIndicator';
-import * as Report from '@libs/actions/Report';
+import {subscribeToReportReasoningEvents, unsubscribeFromReportReasoningChannel} from '@libs/actions/Report';
 import ConciergeReasoningStore from '@libs/ConciergeReasoningStore';
 import type {ReasoningEntry} from '@libs/ConciergeReasoningStore';
 import ONYXKEYS from '@src/ONYXKEYS';
@@ -10,7 +10,8 @@ import waitForBatchedUpdates from '../utils/waitForBatchedUpdates';
 jest.mock('@libs/actions/Report');
 jest.mock('@libs/ConciergeReasoningStore');
 
-const mockReport = Report as jest.Mocked<typeof Report>;
+const mockSubscribeToReportReasoningEvents = subscribeToReportReasoningEvents as jest.MockedFunction<typeof subscribeToReportReasoningEvents>;
+const mockUnsubscribeFromReportReasoningChannel = unsubscribeFromReportReasoningChannel as jest.MockedFunction<typeof unsubscribeFromReportReasoningChannel>;
 const mockConciergeReasoningStore = ConciergeReasoningStore as jest.Mocked<typeof ConciergeReasoningStore>;
 
 describe('useAgentZeroStatusIndicator', () => {
@@ -23,8 +24,6 @@ describe('useAgentZeroStatusIndicator', () => {
         Onyx.clear();
 
         // Setup default mocks
-        mockReport.subscribeToReportReasoningEvents = jest.fn();
-        mockReport.unsubscribeFromReportReasoningChannel = jest.fn();
         mockConciergeReasoningStore.subscribe = jest.fn().mockReturnValue(() => {});
         mockConciergeReasoningStore.getReasoningHistory = jest.fn().mockReturnValue([]);
         mockConciergeReasoningStore.addReasoning = jest.fn();
@@ -263,8 +262,8 @@ describe('useAgentZeroStatusIndicator', () => {
             await waitForBatchedUpdates();
 
             // Then it should subscribe to reasoning events
-            expect(mockReport.subscribeToReportReasoningEvents).toHaveBeenCalledTimes(1);
-            expect(mockReport.subscribeToReportReasoningEvents).toHaveBeenCalledWith(reportID);
+            expect(mockSubscribeToReportReasoningEvents).toHaveBeenCalledTimes(1);
+            expect(mockSubscribeToReportReasoningEvents).toHaveBeenCalledWith(reportID);
         });
 
         it('should not subscribe to Pusher for non-Concierge chat', async () => {
@@ -276,7 +275,7 @@ describe('useAgentZeroStatusIndicator', () => {
             await waitForBatchedUpdates();
 
             // Then it should not subscribe
-            expect(mockReport.subscribeToReportReasoningEvents).not.toHaveBeenCalled();
+            expect(mockSubscribeToReportReasoningEvents).not.toHaveBeenCalled();
         });
 
         it('should unsubscribe from Pusher on unmount', async () => {
@@ -291,8 +290,8 @@ describe('useAgentZeroStatusIndicator', () => {
 
             // Then it should unsubscribe from reasoning events
             await waitForBatchedUpdates();
-            expect(mockReport.unsubscribeFromReportReasoningChannel).toHaveBeenCalledTimes(1);
-            expect(mockReport.unsubscribeFromReportReasoningChannel).toHaveBeenCalledWith(reportID);
+            expect(mockUnsubscribeFromReportReasoningChannel).toHaveBeenCalledTimes(1);
+            expect(mockUnsubscribeFromReportReasoningChannel).toHaveBeenCalledWith(reportID);
         });
     });
     describe('report switching', () => {
@@ -314,8 +313,8 @@ describe('useAgentZeroStatusIndicator', () => {
 
             // Then it should unsubscribe from the old report and subscribe to the new report
             await waitForBatchedUpdates();
-            expect(mockReport.unsubscribeFromReportReasoningChannel).toHaveBeenCalledWith(reportID);
-            expect(mockReport.subscribeToReportReasoningEvents).toHaveBeenCalledWith(newReportID);
+            expect(mockUnsubscribeFromReportReasoningChannel).toHaveBeenCalledWith(reportID);
+            expect(mockSubscribeToReportReasoningEvents).toHaveBeenCalledWith(newReportID);
         });
 
         it('should unsubscribe when switching from Concierge to non-Concierge chat', async () => {
@@ -333,7 +332,7 @@ describe('useAgentZeroStatusIndicator', () => {
 
             // Then it should unsubscribe
             await waitForBatchedUpdates();
-            expect(mockReport.unsubscribeFromReportReasoningChannel).toHaveBeenCalledTimes(1);
+            expect(mockUnsubscribeFromReportReasoningChannel).toHaveBeenCalledTimes(1);
         });
 
         it('should subscribe when switching from non-Concierge to Concierge chat', async () => {
@@ -348,8 +347,8 @@ describe('useAgentZeroStatusIndicator', () => {
 
             // Then it should subscribe to reasoning events
             await waitForBatchedUpdates();
-            expect(mockReport.subscribeToReportReasoningEvents).toHaveBeenCalledTimes(1);
-            expect(mockReport.subscribeToReportReasoningEvents).toHaveBeenCalledWith(reportID);
+            expect(mockSubscribeToReportReasoningEvents).toHaveBeenCalledTimes(1);
+            expect(mockSubscribeToReportReasoningEvents).toHaveBeenCalledWith(reportID);
         });
     });
 });

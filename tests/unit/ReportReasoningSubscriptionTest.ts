@@ -1,5 +1,5 @@
 import Onyx from 'react-native-onyx';
-import * as Report from '@libs/actions/Report';
+import {subscribeToReportReasoningEvents, unsubscribeFromReportReasoningChannel} from '@libs/actions/Report';
 import ConciergeReasoningStore from '@libs/ConciergeReasoningStore';
 import Pusher from '@libs/Pusher';
 import ONYXKEYS from '@src/ONYXKEYS';
@@ -23,8 +23,8 @@ describe('Report Reasoning Subscription', () => {
         Onyx.clear();
 
         // Unsubscribe from any previous subscriptions to ensure clean state
-        Report.unsubscribeFromReportReasoningChannel(reportID1);
-        Report.unsubscribeFromReportReasoningChannel(reportID2);
+        unsubscribeFromReportReasoningChannel(reportID1);
+        unsubscribeFromReportReasoningChannel(reportID2);
 
         // Clear mocks again after cleanup
         jest.clearAllMocks();
@@ -39,14 +39,14 @@ describe('Report Reasoning Subscription', () => {
     afterEach(() => {
         jest.clearAllTimers();
         // Clean up subscriptions after each test
-        Report.unsubscribeFromReportReasoningChannel(reportID1);
-        Report.unsubscribeFromReportReasoningChannel(reportID2);
+        unsubscribeFromReportReasoningChannel(reportID1);
+        unsubscribeFromReportReasoningChannel(reportID2);
     });
 
     describe('subscribeToReportReasoningEvents', () => {
         it('should subscribe to Pusher concierge reasoning events', async () => {
             // When subscribing to reasoning events for a report
-            Report.subscribeToReportReasoningEvents(reportID1);
+            subscribeToReportReasoningEvents(reportID1);
             await waitForBatchedUpdates();
 
             // Then it should subscribe to Pusher
@@ -56,8 +56,8 @@ describe('Report Reasoning Subscription', () => {
 
         it('should not subscribe twice to the same report', async () => {
             // When subscribing to the same report twice
-            Report.subscribeToReportReasoningEvents(reportID1);
-            Report.subscribeToReportReasoningEvents(reportID1);
+            subscribeToReportReasoningEvents(reportID1);
+            subscribeToReportReasoningEvents(reportID1);
             await waitForBatchedUpdates();
 
             // Then it should only subscribe once
@@ -66,8 +66,8 @@ describe('Report Reasoning Subscription', () => {
 
         it('should allow subscriptions to different reports', async () => {
             // When subscribing to different reports
-            Report.subscribeToReportReasoningEvents(reportID1);
-            Report.subscribeToReportReasoningEvents(reportID2);
+            subscribeToReportReasoningEvents(reportID1);
+            subscribeToReportReasoningEvents(reportID2);
             await waitForBatchedUpdates();
 
             // Then it should subscribe to both
@@ -76,7 +76,7 @@ describe('Report Reasoning Subscription', () => {
 
         it('should handle empty reportID gracefully', async () => {
             // When subscribing with empty reportID
-            Report.subscribeToReportReasoningEvents('');
+            subscribeToReportReasoningEvents('');
             await waitForBatchedUpdates();
 
             // Then it should not subscribe
@@ -92,7 +92,7 @@ describe('Report Reasoning Subscription', () => {
                 return Promise.resolve();
             });
 
-            Report.subscribeToReportReasoningEvents(reportID1);
+            subscribeToReportReasoningEvents(reportID1);
             await waitForBatchedUpdates();
 
             // When a Pusher reasoning event arrives
@@ -125,7 +125,7 @@ describe('Report Reasoning Subscription', () => {
                 return Promise.resolve();
             });
 
-            Report.subscribeToReportReasoningEvents(reportID1);
+            subscribeToReportReasoningEvents(reportID1);
             await waitForBatchedUpdates();
 
             // When a Pusher event arrives for reportID2
@@ -151,7 +151,7 @@ describe('Report Reasoning Subscription', () => {
             mockPusher.subscribe = jest.fn().mockRejectedValue(subscriptionError);
 
             // When subscribing to reasoning events
-            Report.subscribeToReportReasoningEvents(reportID1);
+            subscribeToReportReasoningEvents(reportID1);
             await waitForBatchedUpdates();
 
             // Then it should not throw and should have attempted to subscribe
@@ -162,11 +162,11 @@ describe('Report Reasoning Subscription', () => {
     describe('unsubscribeFromReportReasoningChannel', () => {
         it('should unsubscribe from Pusher and clear reasoning state', async () => {
             // Given an active subscription
-            Report.subscribeToReportReasoningEvents(reportID1);
+            subscribeToReportReasoningEvents(reportID1);
             await waitForBatchedUpdates();
 
             // When unsubscribing
-            Report.unsubscribeFromReportReasoningChannel(reportID1);
+            unsubscribeFromReportReasoningChannel(reportID1);
             await waitForBatchedUpdates();
 
             // Then it should unsubscribe from Pusher and clear reasoning
@@ -177,7 +177,7 @@ describe('Report Reasoning Subscription', () => {
 
         it('should not unsubscribe if not previously subscribed', async () => {
             // When unsubscribing without a prior subscription
-            Report.unsubscribeFromReportReasoningChannel(reportID1);
+            unsubscribeFromReportReasoningChannel(reportID1);
             await waitForBatchedUpdates();
 
             // Then it should not attempt to unsubscribe
@@ -187,15 +187,15 @@ describe('Report Reasoning Subscription', () => {
 
         it('should allow resubscription after unsubscribing', async () => {
             // Given a subscription that was unsubscribed
-            Report.subscribeToReportReasoningEvents(reportID1);
+            subscribeToReportReasoningEvents(reportID1);
             await waitForBatchedUpdates();
-            Report.unsubscribeFromReportReasoningChannel(reportID1);
+            unsubscribeFromReportReasoningChannel(reportID1);
             await waitForBatchedUpdates();
 
             jest.clearAllMocks();
 
             // When subscribing again
-            Report.subscribeToReportReasoningEvents(reportID1);
+            subscribeToReportReasoningEvents(reportID1);
             await waitForBatchedUpdates();
 
             // Then it should subscribe again
@@ -204,7 +204,7 @@ describe('Report Reasoning Subscription', () => {
 
         it('should handle empty reportID gracefully', async () => {
             // When unsubscribing with empty reportID
-            Report.unsubscribeFromReportReasoningChannel('');
+            unsubscribeFromReportReasoningChannel('');
             await waitForBatchedUpdates();
 
             // Then it should not attempt to unsubscribe
@@ -214,14 +214,14 @@ describe('Report Reasoning Subscription', () => {
 
         it('should only affect the specific report when unsubscribing', async () => {
             // Given subscriptions to multiple reports
-            Report.subscribeToReportReasoningEvents(reportID1);
-            Report.subscribeToReportReasoningEvents(reportID2);
+            subscribeToReportReasoningEvents(reportID1);
+            subscribeToReportReasoningEvents(reportID2);
             await waitForBatchedUpdates();
 
             jest.clearAllMocks();
 
             // When unsubscribing from one report
-            Report.unsubscribeFromReportReasoningChannel(reportID1);
+            unsubscribeFromReportReasoningChannel(reportID1);
             await waitForBatchedUpdates();
 
             // Then it should only unsubscribe from that report
@@ -231,7 +231,7 @@ describe('Report Reasoning Subscription', () => {
 
             // And the other subscription should still be active
             jest.clearAllMocks();
-            Report.subscribeToReportReasoningEvents(reportID2);
+            subscribeToReportReasoningEvents(reportID2);
             expect(mockPusher.subscribe).not.toHaveBeenCalled(); // Already subscribed
         });
     });
@@ -239,27 +239,27 @@ describe('Report Reasoning Subscription', () => {
     describe('subscription tracking', () => {
         it('should track subscriptions correctly across multiple operations', async () => {
             // Subscribe to first report
-            Report.subscribeToReportReasoningEvents(reportID1);
+            subscribeToReportReasoningEvents(reportID1);
             await waitForBatchedUpdates();
             expect(mockPusher.subscribe).toHaveBeenCalledTimes(1);
 
             // Try to subscribe again - should be ignored
-            Report.subscribeToReportReasoningEvents(reportID1);
+            subscribeToReportReasoningEvents(reportID1);
             await waitForBatchedUpdates();
             expect(mockPusher.subscribe).toHaveBeenCalledTimes(1);
 
             // Subscribe to second report
-            Report.subscribeToReportReasoningEvents(reportID2);
+            subscribeToReportReasoningEvents(reportID2);
             await waitForBatchedUpdates();
             expect(mockPusher.subscribe).toHaveBeenCalledTimes(2);
 
             // Unsubscribe from first report
-            Report.unsubscribeFromReportReasoningChannel(reportID1);
+            unsubscribeFromReportReasoningChannel(reportID1);
             await waitForBatchedUpdates();
             expect(mockPusher.unsubscribe).toHaveBeenCalledTimes(1);
 
             // Resubscribe to first report - should work now
-            Report.subscribeToReportReasoningEvents(reportID1);
+            subscribeToReportReasoningEvents(reportID1);
             await waitForBatchedUpdates();
             expect(mockPusher.subscribe).toHaveBeenCalledTimes(3);
         });

@@ -109,6 +109,7 @@ function ConciergeThinkingMessage({report, action, reasoningHistory, statusLabel
                     disabled={!hasReasoningHistory}
                     accessibilityRole={hasReasoningHistory ? CONST.ROLE.BUTTON : undefined}
                     accessibilityLabel={getAccessibilityLabel()}
+                    sentryLabel="ConciergeThinkingMessage-ToggleReasoning"
                 >
                     <View style={[styles.flexRow, styles.alignItemsCenter]}>
                         <Text style={[styles.chatItemMessage, styles.colorMuted]}>{statusLabel}</Text>
