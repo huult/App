@@ -91,7 +91,7 @@ function ReportActionsView({
         isProcessing: isConciergeProcessing,
         reasoningHistory: conciergeReasoningHistory,
         statusLabel: conciergeStatusLabel,
-    } = useAgentZeroStatusIndicator(report?.reportID ?? '', isConciergeChat);
+    } = useAgentZeroStatusIndicator(report?.reportID ?? CONST.DEFAULT_NUMBER_ID, isConciergeChat);
 
     const getTransactionThreadReportActions = useCallback(
         (reportActions: OnyxEntry<OnyxTypes.ReportActions>): OnyxTypes.ReportAction[] => {

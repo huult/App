@@ -7,6 +7,21 @@ import type {ReasoningEntry} from '@libs/ConciergeReasoningStore';
 import ONYXKEYS from '@src/ONYXKEYS';
 import waitForBatchedUpdates from '../utils/waitForBatchedUpdates';
 
+const mockTranslate = jest.fn((key: string) => {
+    if (key === 'common.thinking') {
+        return 'Thinking...';
+    }
+    return key;
+});
+
+jest.mock('@hooks/useLocalize', () => ({
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    __esModule: true,
+    default: () => ({
+        translate: mockTranslate,
+    }),
+}));
+
 jest.mock('@libs/actions/Report');
 jest.mock('@libs/ConciergeReasoningStore');
 
@@ -108,7 +123,7 @@ describe('useAgentZeroStatusIndicator', () => {
             // Then it should show optimistic processing state with waiting label
             await waitForBatchedUpdates();
             expect(result.current.isProcessing).toBe(true);
-            expect(result.current.statusLabel).toBe('Concierge is waiting for you to finish...');
+            expect(result.current.statusLabel).toBe('Thinking...');
         });
 
         it('should not trigger waiting state if server label already exists', async () => {
@@ -166,7 +181,7 @@ describe('useAgentZeroStatusIndicator', () => {
             });
             await waitForBatchedUpdates();
 
-            expect(result.current.statusLabel).toBe('Concierge is waiting for you to finish...');
+            expect(result.current.statusLabel).toBe('Thinking...');
 
             // When a server label arrives
             const serverLabel = 'Concierge is looking up categories...';

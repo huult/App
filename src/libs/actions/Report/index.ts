@@ -554,6 +554,9 @@ function subscribeToReportReasoningEvents(reportID: string) {
 
     const pusherChannelName = getReportChannelName(reportID);
 
+    // Add to subscriptions immediately to prevent duplicate subscriptions
+    reasoningSubscriptions.add(reportID);
+
     Pusher.subscribe(pusherChannelName, Pusher.TYPE.CONCIERGE_REASONING, (data: Record<string, unknown>) => {
         const eventData = data as {reasoning: string; agentZeroRequestID: string; loopCount: number};
 
@@ -562,13 +565,11 @@ function subscribeToReportReasoningEvents(reportID: string) {
             agentZeroRequestID: eventData.agentZeroRequestID,
             loopCount: eventData.loopCount,
         });
-    })
-        .then(() => {
-            reasoningSubscriptions.add(reportID);
-        })
-        .catch((error: ReportError) => {
-            Log.hmmm('[Report] Failed to subscribe to Pusher concierge reasoning events', {errorType: error.type, pusherChannelName, reportID});
-        });
+    }).catch((error: ReportError) => {
+        Log.hmmm('[Report] Failed to subscribe to Pusher concierge reasoning events', {errorType: error.type, pusherChannelName, reportID});
+        // Remove from subscriptions if subscription failed
+        reasoningSubscriptions.delete(reportID);
+    });
 }
 
 /**

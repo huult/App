@@ -49,7 +49,7 @@ function useAgentZeroStatusIndicator(reportID: string, isConciergeChat: boolean)
 
         subscribeToReportReasoningEvents(reportID);
 
-        // Cleanup: unsubscribeFromReportReasoningChannel handles Pusher unsubscription,
+        // Cleanup: unsubscribeFromReportReasoningChannel handles Pusher unsubscribing,
         // clearing reasoning history from ConciergeReasoningStore, and subscription tracking
         return () => {
             unsubscribeFromReportReasoningChannel(reportID);

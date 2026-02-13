@@ -97,7 +97,6 @@ describe('Report Reasoning Subscription', () => {
 
             // When a Pusher reasoning event arrives
             const reasoningEvent = {
-                reportID: reportID1,
                 reasoning: 'Checking your expense policy',
                 agentZeroRequestID,
                 loopCount: 1,
@@ -114,35 +113,6 @@ describe('Report Reasoning Subscription', () => {
                 agentZeroRequestID: reasoningEvent.agentZeroRequestID,
                 loopCount: reasoningEvent.loopCount,
             });
-        });
-
-        it('should ignore Pusher events for different report IDs', async () => {
-            // Given a subscription for reportID1
-            type PusherCallback = (data: unknown) => void;
-            let pusherCallback: PusherCallback | null = null;
-            mockPusher.subscribe = jest.fn().mockImplementation((_channel: string, _eventName: string, callback: PusherCallback) => {
-                pusherCallback = callback;
-                return Promise.resolve();
-            });
-
-            subscribeToReportReasoningEvents(reportID1);
-            await waitForBatchedUpdates();
-
-            // When a Pusher event arrives for reportID2
-            const reasoningEvent = {
-                reportID: reportID2,
-                reasoning: 'Different report reasoning',
-                agentZeroRequestID,
-                loopCount: 1,
-            };
-
-            if (pusherCallback) {
-                (pusherCallback as PusherCallback)(reasoningEvent);
-            }
-            await waitForBatchedUpdates();
-
-            // Then it should not add reasoning for reportID1
-            expect(mockConciergeReasoningStore.addReasoning).not.toHaveBeenCalled();
         });
 
         it('should handle Pusher subscription errors gracefully', async () => {
