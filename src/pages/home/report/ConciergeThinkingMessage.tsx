@@ -7,9 +7,8 @@ import OfflineWithFeedback from '@components/OfflineWithFeedback';
 import {PressableWithoutFeedback} from '@components/Pressable';
 import RenderHTML from '@components/RenderHTML';
 import ReportActionAvatars from '@components/ReportActionAvatars';
-import useReportActionAvatars from '@components/ReportActionAvatars/useReportActionAvatars';
 import Text from '@components/Text';
-import UserDetailsTooltip from '@components/UserDetailsTooltip';
+import ReportActionItemMessageHeaderSender from '@pages/inbox/report/ReportActionItemMessageHeaderSender';
 import {useMemoizedLazyExpensifyIcons} from '@hooks/useLazyAsset';
 import useLocalize from '@hooks/useLocalize';
 import useStyleUtils from '@hooks/useStyleUtils';
@@ -17,10 +16,13 @@ import useTheme from '@hooks/useTheme';
 import useThemeStyles from '@hooks/useThemeStyles';
 import type {ReasoningEntry} from '@libs/ConciergeReasoningStore';
 import DateUtils from '@libs/DateUtils';
+import {getDisplayNameOrDefault} from '@libs/PersonalDetailsUtils';
 import Parser from '@libs/Parser';
 import variables from '@styles/variables';
 import CONST from '@src/CONST';
+import ONYXKEYS from '@src/ONYXKEYS';
 import type {Report, ReportAction} from '@src/types/onyx';
+import useOnyx from '@hooks/useOnyx';
 
 type ConciergeThinkingMessageProps = {
     /** The report for this thinking message */
@@ -89,8 +91,10 @@ function ConciergeThinkingMessage({report, action, reasoningHistory, statusLabel
         opacity: statusLabelOpacity.get(),
     }));
 
-    // Get avatar data from report/action using the hook
-    const {avatars, details} = useReportActionAvatars({report, action});
+    const [personalDetails] = useOnyx(ONYXKEYS.PERSONAL_DETAILS_LIST);
+    const accountID = action?.actorAccountID ?? CONST.ACCOUNT_ID.CONCIERGE;
+    const displayName = action?.person?.[0]?.text ?? getDisplayNameOrDefault(personalDetails?.[accountID]) ?? CONST.CONCIERGE_DISPLAY_NAME;
+    const actorIcon = personalDetails?.[accountID]?.avatar ? {source: personalDetails[accountID].avatar, name: displayName, type: CONST.ICON_TYPE_AVATAR} : undefined;
 
     const handleToggle = () => {
         if (!hasReasoningHistory) {
@@ -114,7 +118,7 @@ function ConciergeThinkingMessage({report, action, reasoningHistory, statusLabel
                 onMouseEnter={() => setIsHovered(true)}
                 onMouseLeave={() => setIsHovered(false)}
             >
-                <OfflineWithFeedback pendingAction={details.pendingFields?.avatar ?? undefined}>
+                <OfflineWithFeedback pendingAction={personalDetails?.[accountID]?.pendingFields?.avatar ?? undefined}>
                     <ReportActionAvatars
                         singleAvatarContainerStyle={[styles.actionAvatar]}
                         subscriptAvatarBorderColor={theme.appBG}
@@ -136,12 +140,15 @@ function ConciergeThinkingMessage({report, action, reasoningHistory, statusLabel
             <View style={[styles.chatItemRight]}>
                 {/* Message Header */}
                 <View style={[styles.chatItemMessageHeader]}>
-                    <UserDetailsTooltip
-                        accountID={details.accountID ?? CONST.ACCOUNT_ID.CONCIERGE}
-                        icon={avatars.at(0)}
-                    >
-                        <Text style={[styles.chatItemMessageHeaderSender, styles.flexShrink1, styles.mr1]}>{details.displayName ?? CONST.CONCIERGE_DISPLAY_NAME}</Text>
-                    </UserDetailsTooltip>
+                    <View style={[styles.flexShrink1, styles.mr1]}>
+                        <ReportActionItemMessageHeaderSender
+                            accountID={accountID}
+                            actorIcon={actorIcon}
+                            fragmentText={displayName}
+                            isSingleLine
+                            shouldShowTooltip
+                        />
+                    </View>
                     <Text style={[styles.chatItemMessageHeaderTimestamp]}>{datetimeToCalendarTime(currentTimestamp, false, false)}</Text>
                 </View>
 
@@ -182,12 +189,13 @@ function ConciergeThinkingMessage({report, action, reasoningHistory, statusLabel
                         >
                             <View style={[styles.mt4, styles.borderLeft, styles.pl4, styles.ml1, {borderLeftWidth: 2}]}>
                                 {reasoningHistory?.map((entry, index) => {
+                                    const reasoning = Parser.replace(entry.reasoning).replaceAll(/\*(.*?)\*/g, '<strong>$1</strong>');
                                     return (
                                         <View
                                             key={`reasoning-${entry.timestamp}-${entry.loopCount}`}
                                             style={[index < historyLength - 1 ? styles.mb4 : styles.mb0]}
                                         >
-                                            <RenderHTML html={`<comment><muted-text>${Parser.replace(entry.reasoning)}</muted-text></comment>`} />
+                                            <RenderHTML html={`<comment><muted-text>${reasoning}</muted-text></comment>`} />
                                         </View>
                                     );
                                 })}
