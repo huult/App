@@ -366,4 +366,87 @@ describe('useAgentZeroStatusIndicator', () => {
             expect(mockSubscribeToReportReasoningEvents).toHaveBeenCalledWith(reportID);
         });
     });
+
+    describe('final response handling', () => {
+        it('should clear optimistic state and reasoning history when final response arrives', async () => {
+            // Given a Concierge chat with reasoning history in the store
+            const isConciergeChat = true;
+            const mockReasoningHistory: ReasoningEntry[] = [
+                {reasoning: 'Analyzing request', loopCount: 1, timestamp: Date.now()},
+                {reasoning: 'Fetching data', loopCount: 2, timestamp: Date.now()},
+            ];
+
+            let subscriberCallback: ((reportID: string, entries: ReasoningEntry[]) => void) | null = null;
+            mockConciergeReasoningStore.subscribe = jest.fn().mockImplementation((callback: (reportID: string, entries: ReasoningEntry[]) => void) => {
+                subscriberCallback = callback;
+                return () => {};
+            });
+            mockConciergeReasoningStore.getReasoningHistory = jest.fn().mockReturnValue([]);
+
+            // Set initial server label (processing)
+            const serverLabel = 'Concierge is looking up categories...';
+            await Onyx.merge(`${ONYXKEYS.COLLECTION.REPORT_NAME_VALUE_PAIRS}${reportID}`, {
+                agentZeroProcessingRequestIndicator: serverLabel,
+            });
+
+            const {result} = renderHook(() => useAgentZeroStatusIndicator(reportID, isConciergeChat));
+            await waitForBatchedUpdates();
+
+            // Simulate reasoning history arriving
+            act(() => {
+                subscriberCallback?.(reportID, mockReasoningHistory);
+            });
+            await waitForBatchedUpdates();
+
+            // Verify processing state is active with reasoning history
+            expect(result.current.isProcessing).toBe(true);
+            expect(result.current.statusLabel).toBe(serverLabel);
+            expect(result.current.reasoningHistory).toEqual(mockReasoningHistory);
+
+            // When the final Concierge response arrives, the backend clears the processing indicator
+            await Onyx.merge(`${ONYXKEYS.COLLECTION.REPORT_NAME_VALUE_PAIRS}${reportID}`, {
+                agentZeroProcessingRequestIndicator: '',
+            });
+
+            // Then step 7: processing indicator clears → reasoning state clears
+            await waitForBatchedUpdates();
+            expect(result.current.isProcessing).toBe(false);
+            expect(result.current.statusLabel).toBe('');
+            expect(mockConciergeReasoningStore.clearReasoning).toHaveBeenCalledWith(reportID);
+        });
+
+        it('should clear optimistic state when server completes after kickoff', async () => {
+            // Given a Concierge chat where user triggered optimistic waiting
+            const isConciergeChat = true;
+
+            const {result} = renderHook(() => useAgentZeroStatusIndicator(reportID, isConciergeChat));
+            await waitForBatchedUpdates();
+
+            // User sends message → optimistic waiting state
+            act(() => {
+                result.current.kickoffWaitingIndicator();
+            });
+            await waitForBatchedUpdates();
+            expect(result.current.isProcessing).toBe(true);
+            expect(result.current.statusLabel).toBe('Thinking...');
+
+            // Backend starts processing → server label arrives
+            const serverLabel = 'Processing your request...';
+            await Onyx.merge(`${ONYXKEYS.COLLECTION.REPORT_NAME_VALUE_PAIRS}${reportID}`, {
+                agentZeroProcessingRequestIndicator: serverLabel,
+            });
+            await waitForBatchedUpdates();
+            expect(result.current.statusLabel).toBe(serverLabel);
+
+            // When the final response arrives → backend clears indicator
+            await Onyx.merge(`${ONYXKEYS.COLLECTION.REPORT_NAME_VALUE_PAIRS}${reportID}`, {
+                agentZeroProcessingRequestIndicator: '',
+            });
+
+            // Then all processing state should be cleared
+            await waitForBatchedUpdates();
+            expect(result.current.isProcessing).toBe(false);
+            expect(result.current.statusLabel).toBe('');
+        });
+    });
 });

@@ -1,6 +1,7 @@
-import React, {useMemo, useState} from 'react';
+import React, {useEffect, useMemo, useState} from 'react';
 import {View} from 'react-native';
 import type {OnyxEntry} from 'react-native-onyx';
+import Animated, {Easing, useAnimatedStyle, useDerivedValue, useSharedValue, withTiming} from 'react-native-reanimated';
 import Icon from '@components/Icon';
 import OfflineWithFeedback from '@components/OfflineWithFeedback';
 import {PressableWithoutFeedback} from '@components/Pressable';
@@ -41,12 +42,52 @@ function ConciergeThinkingMessage({report, action, reasoningHistory, statusLabel
     const StyleUtils = useStyleUtils();
     const {datetimeToCalendarTime, translate} = useLocalize();
     const icons = useMemoizedLazyExpensifyIcons(['UpArrow', 'DownArrow']);
-    const [isExpanded, setIsExpanded] = useState(false);
+    const hasReasoningHistory = useMemo(() => !!reasoningHistory && reasoningHistory.length > 0, [reasoningHistory]);
+    const [manuallyCollapsed, setManuallyCollapsed] = useState(false);
+    const isExpanded = hasReasoningHistory && !manuallyCollapsed;
     const [isHovered, setIsHovered] = useState(false);
     const historyLength = (reasoningHistory ?? [])?.length;
 
-    const hasReasoningHistory = useMemo(() => !!reasoningHistory && reasoningHistory.length > 0, [reasoningHistory]);
     const currentTimestamp = DateUtils.getDBTime();
+
+    const contentHeight = useSharedValue(0);
+    const hasExpanded = useSharedValue(isExpanded);
+    const animationDuration = 300;
+    const statusLabelOpacity = useSharedValue(1);
+
+    useEffect(() => {
+        hasExpanded.set(isExpanded);
+    }, [isExpanded, hasExpanded]);
+
+    useEffect(() => {
+        statusLabelOpacity.set(0.3);
+        statusLabelOpacity.set(withTiming(1, {duration: 100, easing: Easing.inOut(Easing.ease)}));
+    }, [statusLabel, statusLabelOpacity]);
+
+    const animatedHeight = useDerivedValue(() => {
+        if (!contentHeight.get()) {
+            return 0;
+        }
+        const target = hasExpanded.get() ? contentHeight.get() : 0;
+        return withTiming(target, {duration: animationDuration, easing: Easing.inOut(Easing.quad)});
+    });
+
+    const animatedOpacity = useDerivedValue(() => {
+        if (!contentHeight.get()) {
+            return 0;
+        }
+        return withTiming(hasExpanded.get() ? 1 : 0, {duration: animationDuration, easing: Easing.inOut(Easing.quad)});
+    });
+
+    const animatedStyle = useAnimatedStyle(() => ({
+        height: animatedHeight.get(),
+        opacity: animatedOpacity.get(),
+        overflow: 'hidden',
+    }));
+
+    const statusLabelAnimatedStyle = useAnimatedStyle(() => ({
+        opacity: statusLabelOpacity.get(),
+    }));
 
     // Get avatar data from report/action using the hook
     const {avatars, details} = useReportActionAvatars({report, action});
@@ -55,7 +96,7 @@ function ConciergeThinkingMessage({report, action, reasoningHistory, statusLabel
         if (!hasReasoningHistory) {
             return;
         }
-        setIsExpanded(!isExpanded);
+        setManuallyCollapsed(!manuallyCollapsed);
     };
 
     const getAccessibilityLabel = () => {
@@ -66,7 +107,7 @@ function ConciergeThinkingMessage({report, action, reasoningHistory, statusLabel
     };
 
     return (
-        <View style={[styles.chatItem, styles.mb3]}>
+        <View style={[styles.chatItem]}>
             {/* Avatar */}
             <View
                 style={[styles.alignSelfStart, styles.mr3]}
@@ -114,35 +155,46 @@ function ConciergeThinkingMessage({report, action, reasoningHistory, statusLabel
                     accessible
                 >
                     <View style={[styles.flexRow, styles.alignItemsCenter]}>
-                        <Text style={[styles.chatItemMessage, styles.colorMuted]}>{statusLabel}</Text>
-                        {hasReasoningHistory && (
-                            <View style={styles.ml2}>
-                                <Icon
-                                    src={isExpanded ? icons.DownArrow : icons.UpArrow}
-                                    fill={theme.icon}
-                                    width={variables.iconSizeXXSmall}
-                                    height={variables.iconSizeXXSmall}
-                                />
-                            </View>
-                        )}
+                        <Animated.Text style={[styles.chatItemMessage, styles.colorMuted, statusLabelAnimatedStyle]}>{statusLabel}</Animated.Text>
+
+                        <View style={styles.ml2}>
+                            <Icon
+                                src={isExpanded ? icons.DownArrow : icons.UpArrow}
+                                fill={theme.icon}
+                                width={variables.iconSizeXXSmall}
+                                height={variables.iconSizeXXSmall}
+                            />
+                        </View>
                     </View>
                 </PressableWithoutFeedback>
 
                 {/* Expanded Reasoning History */}
-                {isExpanded && hasReasoningHistory && (
-                    <View style={[styles.mt4, styles.borderLeft, styles.pl4, styles.ml1, {borderLeftWidth: 2}]}>
-                        {reasoningHistory?.map((entry, index) => {
-                            return (
-                                <View
-                                    key={`reasoning-${entry.timestamp}-${entry.loopCount}`}
-                                    style={[index < historyLength - 1 ? styles.mb4 : styles.mb0]}
-                                >
-                                    <RenderHTML html={`<comment><muted-text>${Parser.replace(entry.reasoning)}</muted-text></comment>`} />
-                                </View>
-                            );
-                        })}
-                    </View>
-                )}
+                <Animated.View style={animatedStyle}>
+                    {(isExpanded || contentHeight.get() > 0) && (
+                        <View
+                            style={styles.pAbsolute}
+                            onLayout={(e) => {
+                                const height = e.nativeEvent.layout.height;
+                                if (height && height !== contentHeight.get()) {
+                                    contentHeight.set(height);
+                                }
+                            }}
+                        >
+                            <View style={[styles.mt4, styles.borderLeft, styles.pl4, styles.ml1, {borderLeftWidth: 2}]}>
+                                {reasoningHistory?.map((entry, index) => {
+                                    return (
+                                        <View
+                                            key={`reasoning-${entry.timestamp}-${entry.loopCount}`}
+                                            style={[index < historyLength - 1 ? styles.mb4 : styles.mb0]}
+                                        >
+                                            <RenderHTML html={`<comment><muted-text>${Parser.replace(entry.reasoning)}</muted-text></comment>`} />
+                                        </View>
+                                    );
+                                })}
+                            </View>
+                        </View>
+                    )}
+                </Animated.View>
             </View>
         </View>
     );

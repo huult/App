@@ -1,4 +1,4 @@
-import {useCallback, useEffect, useMemo, useState} from 'react';
+import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {subscribeToReportReasoningEvents, unsubscribeFromReportReasoningChannel} from '@libs/actions/Report';
 import ConciergeReasoningStore from '@libs/ConciergeReasoningStore';
 import type {ReasoningEntry} from '@libs/ConciergeReasoningStore';
@@ -7,10 +7,10 @@ import useLocalize from './useLocalize';
 import useOnyx from './useOnyx';
 
 type AgentZeroStatusState = {
-    isProcessing: boolean; // Whether Concierge is currently working
-    reasoningHistory: ReasoningEntry[]; // Real-time reasoning summaries
-    statusLabel: string; // Server-driven status label (from reportNameValuePairs)
-    kickoffWaitingIndicator: () => void; // Optimistic processing state trigger
+    isProcessing: boolean;
+    reasoningHistory: ReasoningEntry[];
+    statusLabel: string;
+    kickoffWaitingIndicator: () => void;
 };
 
 /**
@@ -24,6 +24,7 @@ function useAgentZeroStatusIndicator(reportID: string, isConciergeChat: boolean)
     const [optimisticStartTime, setOptimisticStartTime] = useState<number | null>(null);
     const [reasoningHistory, setReasoningHistory] = useState<ReasoningEntry[]>([]);
     const {translate} = useLocalize();
+    const prevServerLabelRef = useRef<string>(serverLabel);
 
     useEffect(() => {
         setReasoningHistory(ConciergeReasoningStore.getReasoningHistory(reportID));
@@ -56,13 +57,28 @@ function useAgentZeroStatusIndicator(reportID: string, isConciergeChat: boolean)
         };
     }, [isConciergeChat, reportID]);
 
+    useEffect(() => {
+        const hadServerLabel = !!prevServerLabelRef.current;
+        const hasServerLabel = !!serverLabel;
+
+        if (hadServerLabel && !hasServerLabel) {
+            setOptimisticStartTime(null);
+
+            if (reasoningHistory.length > 0) {
+                ConciergeReasoningStore.clearReasoning(reportID);
+            }
+        }
+
+        prevServerLabelRef.current = serverLabel;
+    }, [serverLabel, reasoningHistory.length, reportID]);
+
     // Optimistically trigger processing state when user sends a message
     const kickoffWaitingIndicator = useCallback(() => {
-        if (!isConciergeChat || serverLabel) {
+        if (!isConciergeChat) {
             return;
         }
         setOptimisticStartTime(Date.now());
-    }, [isConciergeChat, serverLabel]);
+    }, [isConciergeChat]);
 
     // Determine if Concierge is currently processing
     const isProcessing = isConciergeChat && (!!serverLabel || !!optimisticStartTime);
