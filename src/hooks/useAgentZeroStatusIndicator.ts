@@ -2,7 +2,7 @@ import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {subscribeToReportReasoningEvents, unsubscribeFromReportReasoningChannel} from '@libs/actions/Report';
 import ConciergeReasoningStore from '@libs/ConciergeReasoningStore';
 import type {ReasoningEntry} from '@libs/ConciergeReasoningStore';
-import * as ReportActionsUtils from '@libs/ReportActionsUtils';
+import {getLastVisibleAction} from '@libs/ReportActionsUtils';
 import CONST from '@src/CONST';
 import ONYXKEYS from '@src/ONYXKEYS';
 import useLocalize from './useLocalize';
@@ -39,7 +39,7 @@ function useAgentZeroStatusIndicator(reportID: string, isConciergeChat: boolean)
             return false;
         }
 
-        const lastVisibleAction = ReportActionsUtils.getLastVisibleAction(reportID, undefined, reportActions);
+        const lastVisibleAction = getLastVisibleAction(reportID, undefined, reportActions);
         return lastVisibleAction?.actorAccountID === currentUserAccountID && lastVisibleAction?.pendingAction === CONST.RED_BRICK_ROAD_PENDING_ACTION.ADD;
     }, [isConciergeChat, reportActions, reportID, currentUserAccountID]);
 
