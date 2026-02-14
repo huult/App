@@ -377,7 +377,7 @@ function ReportScreen({route, navigation, isInSidePanel = false}: ReportScreenPr
         reasoningHistory: conciergeReasoningHistory,
         statusLabel: conciergeStatusLabel,
         kickoffWaitingIndicator,
-    } = useAgentZeroStatusIndicator(String(report?.reportID ?? ''), isConciergeChat);
+    } = useAgentZeroStatusIndicator(String(report?.reportID ?? CONST.DEFAULT_NUMBER_ID), isConciergeChat);
 
     const {closeSidePanel} = useSidePanelActions();
 

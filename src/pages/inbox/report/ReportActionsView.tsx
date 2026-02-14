@@ -69,13 +69,13 @@ type ReportActionsViewProps = {
     isReportTransactionThread?: boolean;
 
     /** Whether Concierge is currently processing */
-    isConciergeProcessing: boolean;
+    isConciergeProcessing?: boolean;
 
     /** Concierge reasoning history */
     conciergeReasoningHistory?: ReasoningEntry[];
 
     /** Concierge status label */
-    conciergeStatusLabel: string;
+    conciergeStatusLabel?: string;
 };
 
 let listOldID = Math.round(Math.random() * 100);
