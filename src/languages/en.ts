@@ -775,6 +775,7 @@ const translations = {
         nameEmailOrPhoneNumber: 'Name, email, or phone number',
         findMember: 'Find a member',
         searchForSomeone: 'Search for someone',
+        userSelected: (username: string) => `${username} selected`,
     },
     customApprovalWorkflow: {
         title: 'Custom approval workflow',
@@ -1529,7 +1530,7 @@ const translations = {
             ratePreview: (rate: string) => `${rate} / hour`,
             amountTooLargeError: 'The total amount is too large. Lower the hours or reduce the rate.',
         },
-        correctDistanceRateError: 'Fix the distance rate error and try again.',
+        correctRateError: 'Fix the rate error and try again.',
         AskToExplain: `. <a href="${CONST.CONCIERGE_EXPLAIN_LINK_PATH}"><strong>Explain</strong></a> &#x2728;`,
         policyRulesModifiedFields: {
             reimbursable: (value: boolean) => (value ? 'marked the expense as "reimbursable"' : 'marked the expense as "non-reimbursable"'),
@@ -2443,7 +2444,7 @@ const translations = {
     },
     expenseRulesPage: {
         title: 'Expense rules',
-        subtitle: 'These rules will apply to your expenses. If you submit to a workspace, then the workspace rules may override them.',
+        subtitle: 'These rules will apply to your expenses.',
         findRule: 'Find rule',
         emptyRules: {
             title: "You haven't created any rules",
@@ -3064,6 +3065,7 @@ const translations = {
     newChatPage: {
         startGroup: 'Start group',
         addToGroup: 'Add to group',
+        addUserToGroup: (username: string) => `Add ${username} to group`,
     },
     yearPickerPage: {
         year: 'Year',
@@ -5356,8 +5358,8 @@ const translations = {
             findTag: 'Find tag',
             subtitle: 'Tags add more detailed ways to classify costs.',
             // TODO: Add a actual link to the help article https://github.com/Expensify/App/issues/63612
-            dependentMultiLevelTagsSubtitle: (importSpreadsheetLink: string) =>
-                `<muted-text>You are using <a href="${CONST.IMPORT_TAGS_EXPENSIFY_URL_DEPENDENT_TAGS}">dependent tags</a>. You can <a href="${importSpreadsheetLink}">reimport a spreadsheet</a> to update your tags.</muted-text>`,
+            subtitleWithDependentTags: (importSpreadsheetLink: string) =>
+                `<muted-text>Tags add more detailed ways to classify costs. You are using <a href="${CONST.IMPORT_TAGS_EXPENSIFY_URL_DEPENDENT_TAGS}">dependent tags</a>. You can <a href="${importSpreadsheetLink}">reimport a spreadsheet</a> to update your tags.</muted-text>`,
             emptyTags: {
                 title: "You haven't created any tags",
                 //  We need to remove the subtitle and use the below one when we remove the canUseMultiLevelTags beta
@@ -6411,6 +6413,7 @@ const translations = {
         onboardingHelp: 'Onboarding help',
     },
     emojiPicker: {
+        emojiNotSelected: 'Emoji not selected',
         skinTonePickerLabel: 'Change default skin tone',
         headers: {
             frequentlyUsed: 'Frequently Used',
