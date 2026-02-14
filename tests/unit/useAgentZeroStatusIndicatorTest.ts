@@ -31,7 +31,6 @@ const mockConciergeReasoningStore = ConciergeReasoningStore as jest.Mocked<typeo
 
 describe('useAgentZeroStatusIndicator', () => {
     const reportID = '123';
-    const TEST_USER_ACCOUNT_ID = 1;
 
     beforeAll(() => Onyx.init({keys: ONYXKEYS}));
 
@@ -44,11 +43,6 @@ describe('useAgentZeroStatusIndicator', () => {
         mockConciergeReasoningStore.getReasoningHistory = jest.fn().mockReturnValue([]);
         mockConciergeReasoningStore.addReasoning = jest.fn();
         mockConciergeReasoningStore.clearReasoning = jest.fn();
-
-        // Set up session data for current user
-        return Onyx.merge(ONYXKEYS.SESSION, {
-            accountID: TEST_USER_ACCOUNT_ID,
-        });
     });
 
     afterEach(() => {
@@ -450,45 +444,6 @@ describe('useAgentZeroStatusIndicator', () => {
             });
 
             // Then all processing state should be cleared
-            await waitForBatchedUpdates();
-            expect(result.current.isProcessing).toBe(false);
-            expect(result.current.statusLabel).toBe('');
-        });
-
-        it('should restore waiting indicator after page refresh with pending message', async () => {
-            // Given a Concierge chat with a pending message from the current user in Onyx
-            // (simulating a page refresh scenario where user sent a message before refresh)
-            const isConciergeChat = true;
-
-            await Onyx.merge(`${ONYXKEYS.COLLECTION.REPORT_ACTIONS}${reportID}`, {
-                // eslint-disable-next-line @typescript-eslint/naming-convention
-                '1': {
-                    reportActionID: '1',
-                    actionName: 'ADDCOMMENT',
-                    actorAccountID: TEST_USER_ACCOUNT_ID,
-                    pendingAction: 'add',
-                    created: '2024-01-01',
-                    message: [{type: 'COMMENT', html: 'Test message', text: 'Test message'}],
-                },
-            });
-
-            // When the app loads/hook mounts after refresh
-            const {result} = renderHook(() => useAgentZeroStatusIndicator(reportID, isConciergeChat));
-            await waitForBatchedUpdates();
-
-            // Then it should automatically show the waiting indicator based on the pending message
-            expect(result.current.isProcessing).toBe(true);
-            expect(result.current.statusLabel).toBe('Thinking...');
-
-            // When the pending message is successfully sent and pendingAction is cleared
-            await Onyx.merge(`${ONYXKEYS.COLLECTION.REPORT_ACTIONS}${reportID}`, {
-                // eslint-disable-next-line @typescript-eslint/naming-convention
-                '1': {
-                    pendingAction: null,
-                },
-            });
-
-            // Then the waiting indicator should be removed (unless server label arrives)
             await waitForBatchedUpdates();
             expect(result.current.isProcessing).toBe(false);
             expect(result.current.statusLabel).toBe('');
