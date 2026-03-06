@@ -2162,7 +2162,6 @@ const config: LinkingOptions<RootNavigatorParamList>['config'] = {
                     path: ROUTES.SETTINGS_PREFERENCES,
                     // exact: true,
                 },
-                [SCREENS.SETTINGS.SUBSCRIPTION.ROOT]: ROUTES.SETTINGS_SUBSCRIPTION.route,
             },
         },
 

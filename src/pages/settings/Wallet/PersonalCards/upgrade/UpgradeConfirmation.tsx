@@ -5,8 +5,9 @@ import RenderHTML from '@components/RenderHTML';
 import useEnvironment from '@hooks/useEnvironment';
 import useLocalize from '@hooks/useLocalize';
 import useThemeStyles from '@hooks/useThemeStyles';
+import createDynamicRoute from '@libs/Navigation/helpers/createDynamicRoute';
 import Navigation from '@libs/Navigation/Navigation';
-import ROUTES from '@src/ROUTES';
+import {DYNAMIC_ROUTES} from '@src/ROUTES';
 
 function UpgradeConfirmation({addCompanyCard, addPersonalCard}: {addCompanyCard: () => void; addPersonalCard: () => void}) {
     const {translate} = useLocalize();
@@ -15,8 +16,7 @@ function UpgradeConfirmation({addCompanyCard, addPersonalCard}: {addCompanyCard:
     const [subscriptionLink, setSubscriptionLink] = useState('');
 
     const updateSubscriptionLink = useCallback(() => {
-        const backTo = Navigation.getActiveRoute();
-        setSubscriptionLink(`${environmentURL}/${ROUTES.SETTINGS_SUBSCRIPTION.getRoute(backTo)}`);
+        setSubscriptionLink(`${environmentURL}/${createDynamicRoute(DYNAMIC_ROUTES.SUBSCRIPTION.path)}`);
     }, [environmentURL]);
 
     useEffect(() => {

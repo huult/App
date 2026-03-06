@@ -4,10 +4,11 @@ import {useMemoizedLazyExpensifyIcons} from '@hooks/useLazyAsset';
 import useLocalize from '@hooks/useLocalize';
 import useTheme from '@hooks/useTheme';
 import DateUtils from '@libs/DateUtils';
+import createDynamicRoute from '@libs/Navigation/helpers/createDynamicRoute';
 import Navigation from '@libs/Navigation/Navigation';
 import {getEarlyDiscountInfo} from '@libs/SubscriptionUtils';
 import CONST from '@src/CONST';
-import ROUTES from '@src/ROUTES';
+import {DYNAMIC_ROUTES} from '@src/ROUTES';
 
 type Offer50offProps = {
     /** The start date (yyyy-MM-dd HH:mm:ss) of the workspace owner’s free trial period. */
@@ -45,7 +46,7 @@ function Offer50off({firstDayFreeTrial}: Offer50offProps) {
             title={translate('homePage.timeSensitiveSection.offer50off.title')}
             subtitle={subtitle}
             ctaText={translate('homePage.timeSensitiveSection.cta')}
-            onCtaPress={() => Navigation.navigate(ROUTES.SETTINGS_SUBSCRIPTION.getRoute(ROUTES.HOME))}
+            onCtaPress={() => Navigation.navigate(createDynamicRoute(DYNAMIC_ROUTES.SUBSCRIPTION.path))}
             buttonProps={{success: true}}
         />
     );

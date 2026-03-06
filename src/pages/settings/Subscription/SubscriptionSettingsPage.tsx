@@ -4,6 +4,7 @@ import FullScreenLoadingIndicator from '@components/FullscreenLoadingIndicator';
 import HeaderWithBackButton from '@components/HeaderWithBackButton';
 import ScreenWrapper from '@components/ScreenWrapper';
 import ScrollView from '@components/ScrollView';
+import useDynamicBackPath from '@hooks/useDynamicBackPath';
 import {useMemoizedLazyIllustrations} from '@hooks/useLazyAsset';
 import useLocalize from '@hooks/useLocalize';
 import useOnyx from '@hooks/useOnyx';
@@ -12,17 +13,14 @@ import useSubscriptionPlan from '@hooks/useSubscriptionPlan';
 import useThemeStyles from '@hooks/useThemeStyles';
 import {openSubscriptionPage} from '@libs/actions/Subscription';
 import Navigation from '@libs/Navigation/Navigation';
-import type {PlatformStackScreenProps} from '@libs/Navigation/PlatformStackNavigation/types';
-import type {SettingsSplitNavigatorParamList} from '@libs/Navigation/types';
 import ONYXKEYS from '@src/ONYXKEYS';
+import {DYNAMIC_ROUTES} from '@src/ROUTES';
 import SCREENS from '@src/SCREENS';
 import CardSection from './CardSection/CardSection';
 import SubscriptionPlan from './SubscriptionPlan';
 
-type SubscriptionSettingsPageProps = PlatformStackScreenProps<SettingsSplitNavigatorParamList, typeof SCREENS.SETTINGS.SUBSCRIPTION.ROOT>;
-
-function SubscriptionSettingsPage({route}: SubscriptionSettingsPageProps) {
-    const backTo = route?.params?.backTo;
+function SubscriptionSettingsPage() {
+    const backPath = useDynamicBackPath(DYNAMIC_ROUTES.ADD_BANK_ACCOUNT_VERIFY_ACCOUNT.path);
     const {shouldUseNarrowLayout} = useResponsiveLayout();
     const {translate} = useLocalize();
     const styles = useThemeStyles();
@@ -56,8 +54,8 @@ function SubscriptionSettingsPage({route}: SubscriptionSettingsPageProps) {
             <HeaderWithBackButton
                 title={translate('workspace.common.subscription')}
                 onBackButtonPress={() => {
-                    if (backTo) {
-                        Navigation.goBack(backTo);
+                    if (backPath) {
+                        Navigation.goBack(backPath);
                         return;
                     }
                     Navigation.goBack();

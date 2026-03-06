@@ -15,6 +15,7 @@ import {useSidebarOrderedReportsState} from '@hooks/useSidebarOrderedReports';
 import useStyleUtils from '@hooks/useStyleUtils';
 import useTheme from '@hooks/useTheme';
 import useThemeStyles from '@hooks/useThemeStyles';
+import createDynamicRoute from '@libs/Navigation/helpers/createDynamicRoute';
 import Navigation from '@libs/Navigation/Navigation';
 import {getRouteForCurrentStep as getReimbursementAccountRouteForCurrentStep} from '@libs/ReimbursementAccountUtils';
 import type {BrickRoad} from '@libs/WorkspacesSettingsUtils';
@@ -23,7 +24,7 @@ import CONST from '@src/CONST';
 import type {TranslationPaths} from '@src/languages/types';
 import ONYXKEYS from '@src/ONYXKEYS';
 import type {Route} from '@src/ROUTES';
-import ROUTES from '@src/ROUTES';
+import ROUTES, {DYNAMIC_ROUTES} from '@src/ROUTES';
 import type {ReimbursementAccount} from '@src/types/onyx';
 import NAVIGATION_TABS from './NavigationTabBar/NAVIGATION_TABS';
 
@@ -85,9 +86,9 @@ function getSettingsRoute(status: IndicatorStatus | undefined, reimbursementAcco
                 stepToOpen: getReimbursementAccountRouteForCurrentStep(reimbursementAccount?.achData?.currentStep ?? CONST.BANK_ACCOUNT.STEP.BANK_ACCOUNT),
             });
         case CONST.INDICATOR_STATUS.HAS_SUBSCRIPTION_ERRORS:
-            return ROUTES.SETTINGS_SUBSCRIPTION.route;
+            return createDynamicRoute(DYNAMIC_ROUTES.SUBSCRIPTION.path);
         case CONST.INDICATOR_STATUS.HAS_SUBSCRIPTION_INFO:
-            return ROUTES.SETTINGS_SUBSCRIPTION.route;
+            return createDynamicRoute(DYNAMIC_ROUTES.SUBSCRIPTION.path);
         case CONST.INDICATOR_STATUS.HAS_SYNC_ERRORS:
             return ROUTES.WORKSPACE_ACCOUNTING.getRoute(policyIDWithErrors);
         case CONST.INDICATOR_STATUS.HAS_USER_WALLET_ERRORS:

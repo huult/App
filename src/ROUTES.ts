@@ -97,6 +97,17 @@ const DYNAMIC_ROUTES = {
         path: 'owner-selector',
         entryScreens: [],
     },
+    SUBSCRIPTION: {
+        path: 'setting/subscription',
+        entryScreens: [
+            SCREENS.WORKSPACE.UPGRADE,
+            SCREENS.WORKSPACE.PLAN,
+            SCREENS.SETTINGS.SUBSCRIPTION.ROOT,
+            SCREENS.RIGHT_MODAL.RESTRICTED_ACTION,
+            SCREENS.MONEY_REQUEST.STEP_UPGRADE,
+            SCREENS.TRAVEL.UPGRADE,
+        ],
+    },
 } as const satisfies DynamicRoutes;
 
 const ROUTES = {
@@ -300,12 +311,7 @@ const ROUTES = {
     SETTINGS_TIMEZONE_SELECT: 'settings/profile/timezone/select',
     SETTINGS_PRONOUNS: 'settings/profile/pronouns',
     SETTINGS_PREFERENCES: 'settings/preferences',
-    SETTINGS_SUBSCRIPTION: {
-        route: 'settings/subscription',
-
-        // eslint-disable-next-line no-restricted-syntax -- Legacy route generation
-        getRoute: (backTo?: string) => getUrlWithBackToParam('settings/subscription', backTo),
-    },
+    SETTINGS_SUBSCRIPTION: 'settings/subscription',
     SETTINGS_SUBSCRIPTION_SIZE: {
         route: 'settings/subscription/subscription-size/:subPage',
         getRoute: (subPage: string) => `settings/subscription/subscription-size/${subPage}` as const,

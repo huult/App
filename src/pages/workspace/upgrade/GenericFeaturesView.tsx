@@ -12,9 +12,9 @@ import {useMemoizedLazyAsset} from '@hooks/useLazyAsset';
 import useLocalize from '@hooks/useLocalize';
 import useResponsiveLayout from '@hooks/useResponsiveLayout';
 import useThemeStyles from '@hooks/useThemeStyles';
+import createDynamicRoute from '@libs/Navigation/helpers/createDynamicRoute';
 import Navigation from '@libs/Navigation/Navigation';
-import ROUTES from '@src/ROUTES';
-import type {Route} from '@src/ROUTES';
+import ROUTES, {DYNAMIC_ROUTES} from '@src/ROUTES';
 
 type GenericFeaturesViewProps = {
     buttonDisabled?: boolean;
@@ -22,14 +22,14 @@ type GenericFeaturesViewProps = {
     onUpgrade: () => void;
     formattedPrice: string;
     policyID?: string;
-    backTo?: Route;
+    backTo?: string;
 };
 
 function GenericFeaturesView({onUpgrade, buttonDisabled, loading, formattedPrice, backTo, policyID}: GenericFeaturesViewProps) {
     const styles = useThemeStyles();
     const {translate} = useLocalize();
     const {environmentURL} = useEnvironment();
-    const learnMoreMethodsRoute = `${environmentURL}/${ROUTES.SETTINGS_SUBSCRIPTION.getRoute(Navigation.getActiveRoute())}`;
+    const learnMoreMethodsRoute = `${environmentURL}/${createDynamicRoute(DYNAMIC_ROUTES.SUBSCRIPTION.path)}`;
     const {asset: ShieldYellow} = useMemoizedLazyAsset(() => loadIllustration('ShieldYellow' as IllustrationName));
     const {isExtraSmallScreenWidth} = useResponsiveLayout();
     const hasTeam2025Pricing = useHasTeam2025Pricing();

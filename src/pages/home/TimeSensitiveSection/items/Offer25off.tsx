@@ -3,8 +3,9 @@ import BaseWidgetItem from '@components/BaseWidgetItem';
 import {useMemoizedLazyExpensifyIcons} from '@hooks/useLazyAsset';
 import useLocalize from '@hooks/useLocalize';
 import useTheme from '@hooks/useTheme';
+import createDynamicRoute from '@libs/Navigation/helpers/createDynamicRoute';
 import Navigation from '@libs/Navigation/Navigation';
-import ROUTES from '@src/ROUTES';
+import {DYNAMIC_ROUTES} from '@src/ROUTES';
 
 type Offer25offProps = {
     /** The number of days remaining until the offer expires */
@@ -26,7 +27,7 @@ function Offer25off({days}: Offer25offProps) {
             title={translate('homePage.timeSensitiveSection.offer25off.title')}
             subtitle={subtitle}
             ctaText={translate('homePage.timeSensitiveSection.cta')}
-            onCtaPress={() => Navigation.navigate(ROUTES.SETTINGS_SUBSCRIPTION.getRoute(ROUTES.HOME))}
+            onCtaPress={() => Navigation.navigate(createDynamicRoute(DYNAMIC_ROUTES.SUBSCRIPTION.path))}
             buttonProps={{success: true}}
         />
     );
