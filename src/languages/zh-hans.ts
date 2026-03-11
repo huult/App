@@ -1227,6 +1227,8 @@ const translations: TranslationDeepObject<typeof en> = {
         movedFromReport: (reportName: string) => `已移动一笔报销${reportName ? `来自${reportName}` : ''}`,
         movedTransactionTo: (reportUrl: string, reportName?: string) => `已移动此报销${reportName ? `到 <a href="${reportUrl}">${reportName}</a>` : ''}`,
         movedTransactionFrom: (reportUrl: string, reportName?: string) => `已移动此报销${reportName ? `来自 <a href="${reportUrl}">${reportName}</a>` : ''}`,
+        movedTransactionFromPendingCardMatch: (reportUrl: string, reportName?: string) =>
+            `moved this expense${reportName ? ` from <a href="${reportUrl}">${reportName}</a>` : ''} pending a match with a credit card transaction`,
         unreportedTransaction: (reportUrl: string) => `已将此报销移动到你的<a href="${reportUrl}">个人空间</a>`,
         movedAction: (shouldHideMovedReportUrl: boolean, movedReportUrl: string, newParentReportUrl: string, toPolicyName: string) => {
             if (shouldHideMovedReportUrl) {
@@ -1238,6 +1240,10 @@ const translations: TranslationDeepObject<typeof en> = {
         pendingMatch: '待匹配',
         pendingMatchWithCreditCardDescription: '收据正在等待与卡片交易匹配。将其标记为现金以取消。',
         markAsCash: '标记为现金',
+        submitReport: 'Submit report',
+        submitReportPendingRTERWarning: 'Some expenses are awaiting a match with a credit card transaction. Do you want to mark them as cash?',
+        submitReportMarkAsCash: 'Yes, mark as cash',
+        submitReportAsIs: 'No, submit as is',
         routePending: '路由处理中…',
         automaticallyEnterExpenseDetails: 'Concierge 将自动为您输入费用详情，或者您可以手动添加。',
         receiptScanning: () => ({

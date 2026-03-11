@@ -1252,6 +1252,8 @@ const translations: TranslationDeepObject<typeof en> = {
         movedFromReport: (reportName: string) => `ha spostato una spesa${reportName ? `da ${reportName}` : ''}`,
         movedTransactionTo: (reportUrl: string, reportName?: string) => `ha spostato questa spesa${reportName ? `a <a href="${reportUrl}">${reportName}</a>` : ''}`,
         movedTransactionFrom: (reportUrl: string, reportName?: string) => `ha spostato questa spesa${reportName ? `da <a href="${reportUrl}">${reportName}</a>` : ''}`,
+        movedTransactionFromPendingCardMatch: (reportUrl: string, reportName?: string) =>
+            `moved this expense${reportName ? ` from <a href="${reportUrl}">${reportName}</a>` : ''} pending a match with a credit card transaction`,
         unreportedTransaction: (reportUrl: string) => `ha spostato questa spesa nel tuo <a href="${reportUrl}">spazio personale</a>`,
         movedAction: (shouldHideMovedReportUrl: boolean, movedReportUrl: string, newParentReportUrl: string, toPolicyName: string) => {
             if (shouldHideMovedReportUrl) {
@@ -1263,6 +1265,10 @@ const translations: TranslationDeepObject<typeof en> = {
         pendingMatch: 'Corrispondenza in sospeso',
         pendingMatchWithCreditCardDescription: 'Ricevuta in attesa di abbinamento con la transazione della carta. Contrassegna come contante per annullare.',
         markAsCash: 'Segna come contante',
+        submitReport: 'Submit report',
+        submitReportPendingRTERWarning: 'Some expenses are awaiting a match with a credit card transaction. Do you want to mark them as cash?',
+        submitReportMarkAsCash: 'Yes, mark as cash',
+        submitReportAsIs: 'No, submit as is',
         routePending: 'Instradamento in sospeso...',
         automaticallyEnterExpenseDetails: 'Concierge inserirà automaticamente i dettagli della spesa per te, oppure puoi aggiungerli manualmente.',
         receiptScanning: () => ({

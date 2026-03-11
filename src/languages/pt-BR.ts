@@ -1250,6 +1250,8 @@ const translations: TranslationDeepObject<typeof en> = {
         movedFromReport: (reportName: string) => `moveu uma despesa${reportName ? `de ${reportName}` : ''}`,
         movedTransactionTo: (reportUrl: string, reportName?: string) => `moveu esta despesa${reportName ? `para <a href="${reportUrl}">${reportName}</a>` : ''}`,
         movedTransactionFrom: (reportUrl: string, reportName?: string) => `moveu esta despesa${reportName ? `de <a href="${reportUrl}">${reportName}</a>` : ''}`,
+        movedTransactionFromPendingCardMatch: (reportUrl: string, reportName?: string) =>
+            `moved this expense${reportName ? ` from <a href="${reportUrl}">${reportName}</a>` : ''} pending a match with a credit card transaction`,
         unreportedTransaction: (reportUrl: string) => `moveu esta despesa para o seu <a href="${reportUrl}">espaço pessoal</a>`,
         movedAction: (shouldHideMovedReportUrl: boolean, movedReportUrl: string, newParentReportUrl: string, toPolicyName: string) => {
             if (shouldHideMovedReportUrl) {
@@ -1261,6 +1263,10 @@ const translations: TranslationDeepObject<typeof en> = {
         pendingMatch: 'Correspondência pendente',
         pendingMatchWithCreditCardDescription: 'Recibo aguardando correspondência com transação do cartão. Marque como dinheiro para cancelar.',
         markAsCash: 'Marcar como dinheiro',
+        submitReport: 'Submit report',
+        submitReportPendingRTERWarning: 'Some expenses are awaiting a match with a credit card transaction. Do you want to mark them as cash?',
+        submitReportMarkAsCash: 'Yes, mark as cash',
+        submitReportAsIs: 'No, submit as is',
         routePending: 'Rota pendente...',
         automaticallyEnterExpenseDetails: 'O Concierge inserirá automaticamente os detalhes da despesa para você, ou você pode adicioná-los manualmente.',
         receiptScanning: () => ({

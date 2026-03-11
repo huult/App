@@ -6882,7 +6882,7 @@ function getDeletedTransactionMessage(translate: LocalizedTranslate, action: Rep
 
 function getMovedTransactionMessage(translate: LocalizedTranslate, action: ReportAction) {
     const movedTransactionOriginalMessage = getOriginalMessage(action) ?? {};
-    const {toReportID, fromReportID} = movedTransactionOriginalMessage as OriginalMessageMovedTransaction;
+    const {toReportID, fromReportID, reasoning} = movedTransactionOriginalMessage as OriginalMessageMovedTransaction;
 
     const toReport = allReports?.[`${ONYXKEYS.COLLECTION.REPORT}${toReportID}`];
     const fromReport = allReports?.[`${ONYXKEYS.COLLECTION.REPORT}${fromReportID}`];
@@ -6893,9 +6893,18 @@ function getMovedTransactionMessage(translate: LocalizedTranslate, action: Repor
     // eslint-disable-next-line @typescript-eslint/no-deprecated
     const reportName = Parser.htmlToText(getReportName({report}) ?? report?.reportName ?? '');
     const reportUrl = getReportURLForCurrentContext(report?.reportID);
+
+    // Check if the move was due to pending card match (RTER hold)
+    const isPendingCardMatch = reasoning?.includes('pendingCardMatch');
+
     if (typeof fromReportID === 'undefined') {
         return translate('iou.movedTransactionTo', reportUrl, reportName);
     }
+
+    if (isPendingCardMatch) {
+        return translate('iou.movedTransactionFromPendingCardMatch', reportUrl, reportName);
+    }
+
     return translate('iou.movedTransactionFrom', reportUrl, reportName);
 }
 

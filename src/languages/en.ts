@@ -1279,6 +1279,8 @@ const translations = {
         movedFromReport: (reportName: string) => `moved an expense${reportName ? ` from ${reportName}` : ''}`,
         movedTransactionTo: (reportUrl: string, reportName?: string) => `moved this expense${reportName ? ` to <a href="${reportUrl}">${reportName}</a>` : ''}`,
         movedTransactionFrom: (reportUrl: string, reportName?: string) => `moved this expense${reportName ? ` from <a href="${reportUrl}">${reportName}</a>` : ''}`,
+        movedTransactionFromPendingCardMatch: (reportUrl: string, reportName?: string) =>
+            `moved this expense${reportName ? ` from <a href="${reportUrl}">${reportName}</a>` : ''} pending a match with a credit card transaction`,
         unreportedTransaction: (reportUrl: string) => `moved this expense to your <a href="${reportUrl}">personal space</a>`,
         movedAction: (shouldHideMovedReportUrl: boolean, movedReportUrl: string, newParentReportUrl: string, toPolicyName: string) => {
             if (shouldHideMovedReportUrl) {
@@ -1290,6 +1292,10 @@ const translations = {
         pendingMatch: 'Pending match',
         pendingMatchWithCreditCardDescription: 'Receipt pending match with card transaction. Mark as cash to cancel.',
         markAsCash: 'Mark as cash',
+        submitReport: 'Submit report',
+        submitReportPendingRTERWarning: 'Some expenses are awaiting a match with a credit card transaction. Do you want to mark them as cash?',
+        submitReportMarkAsCash: 'Yes, mark as cash',
+        submitReportAsIs: 'No, submit as is',
         routePending: 'Route pending...',
         automaticallyEnterExpenseDetails: 'Concierge will automatically enter the expense details for you, or you can add them manually.',
         receiptScanning: () => ({

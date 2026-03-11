@@ -1244,6 +1244,8 @@ const translations: TranslationDeepObject<typeof en> = {
         movedFromReport: (reportName: string) => `経費${reportName ? `${reportName} から` : ''}を移動しました`,
         movedTransactionTo: (reportUrl: string, reportName?: string) => `この経費を移動しました${reportName ? `<a href="${reportUrl}">${reportName}</a>へ` : ''}`,
         movedTransactionFrom: (reportUrl: string, reportName?: string) => `この経費を移動しました${reportName ? `<a href="${reportUrl}">${reportName}</a> から` : ''}`,
+        movedTransactionFromPendingCardMatch: (reportUrl: string, reportName?: string) =>
+            `この経費を移動しました${reportName ? `<a href="${reportUrl}">${reportName}</a> から` : ''}クレジットカード取引との照合待ち`,
         unreportedTransaction: (reportUrl: string) => `この経費をあなたの<a href="${reportUrl}">個人スペース</a>に移動しました`,
         movedAction: (shouldHideMovedReportUrl: boolean, movedReportUrl: string, newParentReportUrl: string, toPolicyName: string) => {
             if (shouldHideMovedReportUrl) {
@@ -1255,6 +1257,10 @@ const translations: TranslationDeepObject<typeof en> = {
         pendingMatch: '保留中の照合',
         pendingMatchWithCreditCardDescription: 'レシートはカード取引との照合待ちです。現金としてマークしてキャンセルします。',
         markAsCash: '現金としてマーク',
+        submitReport: 'レポートを提出',
+        submitReportPendingRTERWarning: 'クレジットカード取引との照合を待機している経費があります。現金としてマークしますか？',
+        submitReportMarkAsCash: 'はい、現金としてマーク',
+        submitReportAsIs: 'いいえ、そのまま提出',
         routePending: 'ルート保留中…',
         automaticallyEnterExpenseDetails: 'コンシェルジュが自動的に経費の詳細を入力するか、手動で追加することができます。',
         receiptScanning: () => ({

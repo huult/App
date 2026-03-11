@@ -548,6 +548,17 @@ function getTransactionThreadPrimaryAction(
     return '';
 }
 
+/**
+ * Get transactions with pending RTER violations (7-day hold)
+ * Excludes broken connection violations
+ */
+function getTransactionsWithPendingRTER(reportTransactions: Transaction[], violations: OnyxCollection<TransactionViolation[]>): Transaction[] {
+    return reportTransactions?.filter((transaction) => {
+        const transactionViolations = violations?.[`${ONYXKEYS.COLLECTION.TRANSACTION_VIOLATIONS}${transaction.transactionID}`];
+        return hasPendingRTERViolationTransactionUtils(transactionViolations);
+    });
+}
+
 export {
     getReportPrimaryAction,
     getTransactionThreadPrimaryAction,
@@ -561,4 +572,5 @@ export {
     getAllExpensesToHoldIfApplicable,
     isReviewDuplicatesAction,
     isMarkAsCashActionForTransaction,
+    getTransactionsWithPendingRTER,
 };

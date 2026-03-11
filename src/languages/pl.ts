@@ -1251,6 +1251,8 @@ const translations: TranslationDeepObject<typeof en> = {
         movedFromReport: (reportName: string) => `przeniesiono wydatek${reportName ? `z ${reportName}` : ''}`,
         movedTransactionTo: (reportUrl: string, reportName?: string) => `przeniósł ten wydatek${reportName ? `do <a href="${reportUrl}">${reportName}</a>` : ''}`,
         movedTransactionFrom: (reportUrl: string, reportName?: string) => `przeniósł(-ę) ten wydatek${reportName ? `z <a href="${reportUrl}">${reportName}</a>` : ''}`,
+        movedTransactionFromPendingCardMatch: (reportUrl: string, reportName?: string) =>
+            `przeniósł(-ę) ten wydatek${reportName ? ` z <a href="${reportUrl}">${reportName}</a>` : ''} oczekujący na dopasowanie do transakcji kartą kredytową`,
         unreportedTransaction: (reportUrl: string) => `przeniósł ten wydatek do Twojej <a href="${reportUrl}">przestrzeni osobistej</a>`,
         movedAction: (shouldHideMovedReportUrl: boolean, movedReportUrl: string, newParentReportUrl: string, toPolicyName: string) => {
             if (shouldHideMovedReportUrl) {
@@ -1262,6 +1264,10 @@ const translations: TranslationDeepObject<typeof en> = {
         pendingMatch: 'Oczekujące dopasowanie',
         pendingMatchWithCreditCardDescription: 'Oczekuje na dopasowanie paragonu do transakcji kartą. Oznacz jako gotówkę, aby anulować.',
         markAsCash: 'Oznacz jako gotówkę',
+        submitReport: 'Prześlij raport',
+        submitReportPendingRTERWarning: 'Niektóre wydatki oczekują na dopasowanie do transakcji kartą kredytową. Czy chcesz oznaczyć je jako gotówkę?',
+        submitReportMarkAsCash: 'Tak, oznacz jako gotówkę',
+        submitReportAsIs: 'Nie, prześlij bez zmian',
         routePending: 'Trasa w toku…',
         automaticallyEnterExpenseDetails: 'Concierge automatycznie wprowadzi szczegóły wydatku za Ciebie lub możesz dodać je ręcznie.',
         receiptScanning: () => ({

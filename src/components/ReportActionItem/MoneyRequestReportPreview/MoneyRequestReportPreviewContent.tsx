@@ -45,12 +45,13 @@ import useThemeStyles from '@hooks/useThemeStyles';
 import ControlSelection from '@libs/ControlSelection';
 import {convertToDisplayString} from '@libs/CurrencyUtils';
 import {canUseTouchScreen} from '@libs/DeviceCapabilities';
-import {getTotalAmountForIOUReportPreviewButton} from '@libs/MoneyRequestReportUtils';
+import {getThreadReportIDsForTransactions, getTotalAmountForIOUReportPreviewButton} from '@libs/MoneyRequestReportUtils';
 import Navigation from '@libs/Navigation/Navigation';
 import {getConnectedIntegration, hasDynamicExternalWorkflow} from '@libs/PolicyUtils';
-import {hasPendingDEWSubmit} from '@libs/ReportActionsUtils';
+import {getAllReportActions, hasPendingDEWSubmit} from '@libs/ReportActionsUtils';
 import {getInvoicePayerName} from '@libs/ReportNameUtils';
 import getReportPreviewAction from '@libs/ReportPreviewActionUtils';
+import {getTransactionsWithPendingRTER} from '@libs/ReportPrimaryActionUtils';
 import {
     areAllRequestsBeingSmartScanned as areAllRequestsBeingSmartScannedReportUtils,
     canSubmitAndIsAwaitingForCurrentUser,
@@ -84,6 +85,7 @@ import colors from '@styles/theme/colors';
 import variables from '@styles/variables';
 import {approveMoneyRequest, canIOUBePaid as canIOUBePaidIOUActions, payInvoice, payMoneyRequest, submitReport} from '@userActions/IOU';
 import {openOldDotLink} from '@userActions/Link';
+import {markAsCash as markAsCashAction} from '@userActions/Transaction';
 import CONST from '@src/CONST';
 import type {TranslationPaths} from '@src/languages/types';
 import ONYXKEYS from '@src/ONYXKEYS';
@@ -730,6 +732,62 @@ function MoneyRequestReportPreviewContent({
         ],
     );
 
+    console.log('****** transactions ******', transactions);
+
+    const handleSubmitReport = useCallback(async () => {
+        if (!iouReport) {
+            return;
+        }
+
+        console.log('****** transactions ******', transactions);
+
+        const transactionsWithPendingRTER = getTransactionsWithPendingRTER(transactions, transactionViolations);
+
+        if (transactionsWithPendingRTER.length > 0) {
+            const result = await showConfirmModal({
+                title: translate('iou.submitReport'),
+                prompt: translate('iou.submitReportPendingRTERWarning'),
+                confirmText: translate('iou.submitReportMarkAsCash'),
+                cancelText: translate('iou.submitReportAsIs'),
+            });
+
+            if (result.action === ModalActions.CONFIRM) {
+                // Mark all pending RTER transactions as cash
+                // Get all report actions for the chat report to find the corresponding IOU action
+                const allActions = getAllReportActions(chatReportID ?? '');
+                const threadReportIDs = getThreadReportIDsForTransactions(Object.values(allActions), transactionsWithPendingRTER);
+
+                for (let i = 0; i < transactionsWithPendingRTER.length; i++) {
+                    const transaction = transactionsWithPendingRTER.at(i);
+                    const transactionID = transaction?.transactionID;
+                    const threadReportID = threadReportIDs.at(i);
+                    const transactionViolationsList = transactionViolations?.[`${ONYXKEYS.COLLECTION.TRANSACTION_VIOLATIONS}${transactionID}`];
+                    if (transactionID && threadReportID && transactionViolationsList) {
+                        markAsCashAction(transactionID, threadReportID, transactionViolationsList);
+                    }
+                }
+            }
+        }
+
+        // Submit the report
+        submitReport(iouReport, policy, currentUserAccountID, currentUserEmail, hasViolations, isASAPSubmitBetaEnabled, iouReportNextStep, userBillingGraceEndPeriods, amountOwed);
+    }, [
+        iouReport,
+        transactions,
+        transactionViolations,
+        showConfirmModal,
+        translate,
+        policy,
+        currentUserAccountID,
+        currentUserEmail,
+        hasViolations,
+        isASAPSubmitBetaEnabled,
+        iouReportNextStep,
+        userBillingGraceEndPeriods,
+        amountOwed,
+        chatReportID,
+    ]);
+
     const isReportDeleted = action?.pendingAction === CONST.RED_BRICK_ROAD_PENDING_ACTION.DELETE;
     const formattedAmount = getTotalAmountForIOUReportPreviewButton(iouReport, policy, reportPreviewAction);
 
@@ -744,17 +802,7 @@ function MoneyRequestReportPreviewContent({
                         return;
                     }
                     startSubmittingAnimation();
-                    submitReport(
-                        iouReport,
-                        policy,
-                        currentUserAccountID,
-                        currentUserEmail,
-                        hasViolations,
-                        isASAPSubmitBetaEnabled,
-                        iouReportNextStep,
-                        userBillingGraceEndPeriods,
-                        amountOwed,
-                    );
+                    handleSubmitReport();
                 }}
                 isSubmittingAnimationRunning={isSubmittingAnimationRunning}
                 onAnimationFinish={stopAnimation}

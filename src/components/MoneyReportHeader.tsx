@@ -63,7 +63,7 @@ import type {KYCFlowEvent, TriggerKYCFlow} from '@libs/PaymentUtils';
 import {selectPaymentType} from '@libs/PaymentUtils';
 import {getConnectedIntegration, getValidConnectedIntegration, hasDynamicExternalWorkflow} from '@libs/PolicyUtils';
 import {getIOUActionForReportID, getOriginalMessage, getReportAction, hasPendingDEWApprove, hasPendingDEWSubmit, isMoneyRequestAction} from '@libs/ReportActionsUtils';
-import {getAllExpensesToHoldIfApplicable, getReportPrimaryAction, isMarkAsResolvedAction} from '@libs/ReportPrimaryActionUtils';
+import {getAllExpensesToHoldIfApplicable, getReportPrimaryAction, getTransactionsWithPendingRTER, isMarkAsResolvedAction} from '@libs/ReportPrimaryActionUtils';
 import {getSecondaryExportReportActions, getSecondaryReportActions} from '@libs/ReportSecondaryActionUtils';
 import {
     changeMoneyRequestHoldStatus,
@@ -769,6 +769,58 @@ function MoneyReportHeader({
         }
         markAsCashAction(iouTransactionID, reportID, transactionViolations);
     }, [iouTransactionID, requestParentReportAction, transactionThreadReport?.reportID, transactionViolations]);
+    console.log('****** reportTransactions ******', reportTransactions);
+    const handleSubmitReport = useCallback(async () => {
+        if (!moneyRequestReport) {
+            return;
+        }
+
+        console.log('****** reportTransactions ******', reportTransactions);
+        console.log('****** violations ******', violations);
+
+        const transactionsWithPendingRTER = getTransactionsWithPendingRTER(Object.values(reportTransactions), violations);
+
+        console.log('****** transactionsWithPendingRTER ******', transactionsWithPendingRTER);
+
+        if (transactionsWithPendingRTER.length > 0) {
+            const result = await showConfirmModal({
+                title: translate('iou.submitReport'),
+                prompt: translate('iou.submitReportPendingRTERWarning'),
+                confirmText: translate('iou.submitReportMarkAsCash'),
+                cancelText: translate('iou.submitReportAsIs'),
+            });
+
+            if (result.action === ModalActions.CONFIRM) {
+                // Mark all pending RTER transactions as cash
+                for (const transaction1 of transactionsWithPendingRTER) {
+                    const transactionID = transaction1.transactionID;
+                    const threadReportID = getThreadReportIDsForTransactions(reportActions ?? [], [transaction1]).at(0);
+                    const transactionViolationsList = violations?.[`${ONYXKEYS.COLLECTION.TRANSACTION_VIOLATIONS}${transactionID}`];
+                    if (transactionID && threadReportID && transactionViolationsList) {
+                        markAsCashAction(transactionID, threadReportID, transactionViolationsList);
+                    }
+                }
+            }
+        }
+
+        // Submit the report
+        submitReport(moneyRequestReport, policy, accountID, email ?? '', hasViolations, isASAPSubmitBetaEnabled, nextStep, userBillingGraceEndPeriods, amountOwed);
+    }, [
+        moneyRequestReport,
+        reportTransactions,
+        violations,
+        showConfirmModal,
+        translate,
+        policy,
+        accountID,
+        email,
+        hasViolations,
+        isASAPSubmitBetaEnabled,
+        nextStep,
+        userBillingGraceEndPeriods,
+        amountOwed,
+        reportActions,
+    ]);
 
     const [allPolicyTags] = useOnyx(ONYXKEYS.COLLECTION.POLICY_TAGS);
     const targetPolicyTags = defaultExpensePolicy ? (allPolicyTags?.[`${ONYXKEYS.COLLECTION.POLICY_TAGS}${defaultExpensePolicy.id}`] ?? {}) : {};
@@ -1007,6 +1059,7 @@ function MoneyReportHeader({
         accountID,
         bankAccountList,
     ]);
+    console.log('****** primaryAction ******', primaryAction);
 
     const confirmExport = useCallback(() => {
         setExportModalStatus(null);
@@ -1168,7 +1221,7 @@ function MoneyReportHeader({
                         return;
                     }
                     startSubmittingAnimation();
-                    submitReport(moneyRequestReport, policy, accountID, email ?? '', hasViolations, isASAPSubmitBetaEnabled, nextStep, userBillingGraceEndPeriods, amountOwed);
+                    handleSubmitReport();
                     if (currentSearchQueryJSON && !isOffline) {
                         search({
                             searchKey: currentSearchKey,
@@ -1444,7 +1497,7 @@ function MoneyReportHeader({
                     showDWEModal();
                     return;
                 }
-                submitReport(moneyRequestReport, policy, accountID, email ?? '', hasViolations, isASAPSubmitBetaEnabled, nextStep, userBillingGraceEndPeriods, amountOwed);
+                handleSubmitReport();
             },
         },
         [CONST.REPORT.SECONDARY_ACTIONS.APPROVE]: {
