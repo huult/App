@@ -9,6 +9,7 @@ import useAutoFocusInput from '@hooks/useAutoFocusInput';
 import useLocalize from '@hooks/useLocalize';
 import useOnyx from '@hooks/useOnyx';
 import useThemeStyles from '@hooks/useThemeStyles';
+import splitPathAndQuery from '@libs/Navigation/helpers/dynamicRoutesUtils/splitPathAndQuery';
 import Navigation from '@libs/Navigation/Navigation';
 import type {PlatformStackScreenProps} from '@libs/Navigation/PlatformStackNavigation/types';
 import type {SettingsNavigatorParamList} from '@navigation/types';
@@ -16,7 +17,8 @@ import AccessOrNotFoundWrapper from '@pages/workspace/AccessOrNotFoundWrapper';
 import {setPolicyCategoryGLCode} from '@userActions/Policy/Category';
 import CONST from '@src/CONST';
 import ONYXKEYS from '@src/ONYXKEYS';
-import ROUTES from '@src/ROUTES';
+import type {Route} from '@src/ROUTES';
+import ROUTES, {DYNAMIC_ROUTES} from '@src/ROUTES';
 import SCREENS from '@src/SCREENS';
 import INPUT_IDS from '@src/types/form/WorkspaceCategoryForm';
 
@@ -35,6 +37,19 @@ function CategoryGLCodePage({route}: EditCategoryPageProps) {
     const glCode = policyCategories?.[categoryName]?.['GL Code'];
     const {inputCallbackRef} = useAutoFocusInput();
     const isQuickSettingsFlow = route.name === SCREENS.SETTINGS_CATEGORIES.SETTINGS_CATEGORY_GL_CODE;
+    const quickSettingsCategoryRoute: Route = (() => {
+        const baseRoute = ROUTES.SETTINGS_CATEGORIES_ROOT.getRoute(policyID, backTo);
+        const [basePath, baseQuery] = splitPathAndQuery(baseRoute);
+        const dynamicRoute = DYNAMIC_ROUTES.SETTINGS_CATEGORY_SETTINGS.getRoute(categoryName);
+        const [dynamicPath, dynamicQuery] = splitPathAndQuery(dynamicRoute);
+        const mergedParams = new URLSearchParams(baseQuery);
+        const dynamicParams = new URLSearchParams(dynamicQuery);
+        for (const [key, value] of dynamicParams.entries()) {
+            mergedParams.set(key, value);
+        }
+        const query = mergedParams.toString();
+        return `${basePath}/${dynamicPath}${query ? `?${query}` : ''}` as Route;
+    })();
 
     const validate = useCallback(
         (values: FormOnyxValues<typeof ONYXKEYS.FORMS.WORKSPACE_CATEGORY_FORM>) => {
@@ -56,11 +71,9 @@ function CategoryGLCodePage({route}: EditCategoryPageProps) {
             if (newGLCode !== glCode) {
                 setPolicyCategoryGLCode(policyID, categoryName, newGLCode, policyCategories);
             }
-            Navigation.goBack(
-                isQuickSettingsFlow ? ROUTES.SETTINGS_CATEGORY_SETTINGS.getRoute(policyID, categoryName, backTo) : ROUTES.WORKSPACE_CATEGORY_SETTINGS.getRoute(policyID, categoryName),
-            );
+            Navigation.goBack((isQuickSettingsFlow ? quickSettingsCategoryRoute : ROUTES.WORKSPACE_CATEGORY_SETTINGS.getRoute(policyID, categoryName)) as Route);
         },
-        [glCode, isQuickSettingsFlow, policyID, categoryName, backTo, policyCategories],
+        [glCode, isQuickSettingsFlow, policyID, categoryName, policyCategories, quickSettingsCategoryRoute],
     );
 
     return (
@@ -79,9 +92,7 @@ function CategoryGLCodePage({route}: EditCategoryPageProps) {
                     title={translate('workspace.categories.glCode')}
                     onBackButtonPress={() =>
                         Navigation.goBack(
-                            isQuickSettingsFlow
-                                ? ROUTES.SETTINGS_CATEGORY_SETTINGS.getRoute(route.params.policyID, route.params.categoryName, backTo)
-                                : ROUTES.WORKSPACE_CATEGORY_SETTINGS.getRoute(route.params.policyID, route.params.categoryName),
+                            (isQuickSettingsFlow ? quickSettingsCategoryRoute : ROUTES.WORKSPACE_CATEGORY_SETTINGS.getRoute(route.params.policyID, route.params.categoryName)) as Route,
                         )
                     }
                 />
