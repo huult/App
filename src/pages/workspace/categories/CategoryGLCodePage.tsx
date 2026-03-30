@@ -28,7 +28,6 @@ function CategoryGLCodePage({route}: EditCategoryPageProps) {
     const styles = useThemeStyles();
     const {translate} = useLocalize();
     const policyID = route.params.policyID;
-    const backTo = route.params.backTo;
     const [policyCategories] = useOnyx(`${ONYXKEYS.COLLECTION.POLICY_CATEGORIES}${policyID}`);
 
     const categoryName = route.params.categoryName;
@@ -56,11 +55,10 @@ function CategoryGLCodePage({route}: EditCategoryPageProps) {
             if (newGLCode !== glCode) {
                 setPolicyCategoryGLCode(policyID, categoryName, newGLCode, policyCategories);
             }
-            Navigation.goBack(
-                isQuickSettingsFlow ? ROUTES.SETTINGS_CATEGORY_SETTINGS.getRoute(policyID, categoryName, backTo) : ROUTES.WORKSPACE_CATEGORY_SETTINGS.getRoute(policyID, categoryName),
-            );
+
+            Navigation.goBack(isQuickSettingsFlow ? undefined : ROUTES.WORKSPACE_CATEGORY_SETTINGS.getRoute(policyID, categoryName));
         },
-        [glCode, isQuickSettingsFlow, policyID, categoryName, backTo, policyCategories],
+        [glCode, isQuickSettingsFlow, policyID, categoryName, policyCategories],
     );
 
     return (
@@ -78,11 +76,7 @@ function CategoryGLCodePage({route}: EditCategoryPageProps) {
                 <HeaderWithBackButton
                     title={translate('workspace.categories.glCode')}
                     onBackButtonPress={() =>
-                        Navigation.goBack(
-                            isQuickSettingsFlow
-                                ? ROUTES.SETTINGS_CATEGORY_SETTINGS.getRoute(route.params.policyID, route.params.categoryName, backTo)
-                                : ROUTES.WORKSPACE_CATEGORY_SETTINGS.getRoute(route.params.policyID, route.params.categoryName),
-                        )
+                        Navigation.goBack(isQuickSettingsFlow ? undefined : ROUTES.WORKSPACE_CATEGORY_SETTINGS.getRoute(route.params.policyID, route.params.categoryName))
                     }
                 />
                 <FormProvider

@@ -42,11 +42,9 @@ function CategoryPayrollCodePage({route}: EditCategoryPageProps) {
             if (newPayrollCode !== payrollCode) {
                 setPolicyCategoryPayrollCode(policyID, categoryName, newPayrollCode, policyCategories);
             }
-            Navigation.goBack(
-                isQuickSettingsFlow ? ROUTES.SETTINGS_CATEGORY_SETTINGS.getRoute(policyID, categoryName, backTo) : ROUTES.WORKSPACE_CATEGORY_SETTINGS.getRoute(policyID, categoryName),
-            );
+            Navigation.goBack(isQuickSettingsFlow ? undefined : ROUTES.WORKSPACE_CATEGORY_SETTINGS.getRoute(policyID, categoryName));
         },
-        [payrollCode, isQuickSettingsFlow, policyID, categoryName, backTo, policyCategories],
+        [payrollCode, isQuickSettingsFlow, policyID, categoryName, policyCategories],
     );
 
     const validate = useCallback(
@@ -77,13 +75,7 @@ function CategoryPayrollCodePage({route}: EditCategoryPageProps) {
             >
                 <HeaderWithBackButton
                     title={translate('workspace.categories.payrollCode')}
-                    onBackButtonPress={() =>
-                        Navigation.goBack(
-                            isQuickSettingsFlow
-                                ? ROUTES.SETTINGS_CATEGORY_SETTINGS.getRoute(route.params.policyID, categoryName, backTo)
-                                : ROUTES.WORKSPACE_CATEGORY_SETTINGS.getRoute(route.params.policyID, categoryName),
-                        )
-                    }
+                    onBackButtonPress={() => Navigation.goBack(isQuickSettingsFlow ? undefined : ROUTES.WORKSPACE_CATEGORY_SETTINGS.getRoute(route.params.policyID, categoryName))}
                 />
                 <FormProvider
                     formID={ONYXKEYS.FORMS.WORKSPACE_CATEGORY_FORM}
