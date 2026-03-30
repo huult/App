@@ -107,6 +107,14 @@ const DYNAMIC_ROUTES = {
         path: 'visibility',
         entryScreens: [SCREENS.REPORT_SETTINGS.ROOT],
     },
+    WORKSPACE_TAGS_SETTINGS: {
+        path: 'tag-settings',
+        entryScreens: [SCREENS.WORKSPACE.TAGS],
+    },
+    WORKSPACE_TAG_CREATE: {
+        path: 'tag-create',
+        entryScreens: [SCREENS.WORKSPACE.TAGS],
+    },
     ADDRESS_COUNTRY: {
         path: 'country',
         entryScreens: [
@@ -2291,14 +2299,6 @@ const ROUTES = {
             }
             return `workspaces/${policyID}/tags` as const;
         },
-    },
-    WORKSPACE_TAG_CREATE: {
-        route: 'workspaces/:policyID/tags/new',
-        getRoute: (policyID: string) => `workspaces/${policyID}/tags/new` as const,
-    },
-    WORKSPACE_TAGS_SETTINGS: {
-        route: 'workspaces/:policyID/tags/settings',
-        getRoute: (policyID: string) => `workspaces/${policyID}/tags/settings` as const,
     },
     WORKSPACE_EDIT_TAGS: {
         route: 'workspaces/:policyID/tags/:orderWeight/edit',

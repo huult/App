@@ -1070,8 +1070,8 @@ const config: LinkingOptions<RootNavigatorParamList>['config'] = {
                         [SCREENS.WORKSPACE.DISTANCE_RATE_TAX_RATE_EDIT]: {
                             path: ROUTES.WORKSPACE_DISTANCE_RATE_TAX_RATE_EDIT.route,
                         },
-                        [SCREENS.WORKSPACE.TAGS_SETTINGS]: {
-                            path: ROUTES.WORKSPACE_TAGS_SETTINGS.route,
+                        [SCREENS.WORKSPACE.DYNAMIC_TAGS_SETTINGS]: {
+                            path: DYNAMIC_ROUTES.WORKSPACE_TAGS_SETTINGS.path,
                         },
                         [SCREENS.WORKSPACE.TAGS_EDIT]: {
                             path: ROUTES.WORKSPACE_EDIT_TAGS.route,
@@ -1094,8 +1094,8 @@ const config: LinkingOptions<RootNavigatorParamList>['config'] = {
                         [SCREENS.WORKSPACE.TAGS_IMPORTED_MULTI_LEVEL]: {
                             path: ROUTES.WORKSPACE_TAGS_IMPORTED_MULTI_LEVEL.route,
                         },
-                        [SCREENS.WORKSPACE.TAG_CREATE]: {
-                            path: ROUTES.WORKSPACE_TAG_CREATE.route,
+                        [SCREENS.WORKSPACE.DYNAMIC_TAG_CREATE]: {
+                            path: DYNAMIC_ROUTES.WORKSPACE_TAG_CREATE.path,
                         },
                         [SCREENS.WORKSPACE.TAG_EDIT]: {
                             path: ROUTES.WORKSPACE_TAG_EDIT.route,

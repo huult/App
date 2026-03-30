@@ -27,7 +27,7 @@ import SCREENS from '@src/SCREENS';
 import INPUT_IDS from '@src/types/form/WorkspaceTagForm';
 
 type WorkspaceCreateTagPageProps =
-    | PlatformStackScreenProps<SettingsNavigatorParamList, typeof SCREENS.WORKSPACE.TAG_CREATE>
+    | PlatformStackScreenProps<SettingsNavigatorParamList, typeof SCREENS.WORKSPACE.DYNAMIC_TAG_CREATE>
     | PlatformStackScreenProps<SettingsNavigatorParamList, typeof SCREENS.SETTINGS_TAGS.SETTINGS_TAG_CREATE>;
 
 function WorkspaceCreateTagPage({route}: WorkspaceCreateTagPageProps) {
@@ -41,8 +41,8 @@ function WorkspaceCreateTagPage({route}: WorkspaceCreateTagPageProps) {
     const styles = useThemeStyles();
     const {translate} = useLocalize();
     const {inputCallbackRef} = useAutoFocusInput();
-    const backTo = route.params.backTo;
     const isQuickSettingsFlow = route.name === SCREENS.SETTINGS_TAGS.SETTINGS_TAG_CREATE;
+    const backTo = isQuickSettingsFlow ? route.params.backTo : undefined;
 
     const policyHasCustomCategories = hasCustomCategories(policyCategories);
 

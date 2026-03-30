@@ -26,7 +26,7 @@ import SCREENS from '@src/SCREENS';
 import type {Policy} from '@src/types/onyx';
 
 type WorkspaceTagsSettingsPageProps =
-    | PlatformStackScreenProps<SettingsNavigatorParamList, typeof SCREENS.WORKSPACE.TAGS_SETTINGS>
+    | PlatformStackScreenProps<SettingsNavigatorParamList, typeof SCREENS.WORKSPACE.DYNAMIC_TAGS_SETTINGS>
     | PlatformStackScreenProps<SettingsNavigatorParamList, typeof SCREENS.SETTINGS_TAGS.SETTINGS_TAGS_SETTINGS>;
 
 /**
@@ -51,7 +51,8 @@ function toggleBillableExpenses(policy: OnyxEntry<Policy>) {
 
 function WorkspaceTagsSettingsPage({route}: WorkspaceTagsSettingsPageProps) {
     const policyID = route.params.policyID;
-    const backTo = route.params.backTo;
+    const isQuickSettingsFlow = route.name === SCREENS.SETTINGS_TAGS.SETTINGS_TAGS_SETTINGS;
+    const backTo = isQuickSettingsFlow ? route.params.backTo : undefined;
     const styles = useThemeStyles();
     const policyData = usePolicyData(policyID);
     const {tags: policyTags} = policyData;
@@ -66,8 +67,6 @@ function WorkspaceTagsSettingsPage({route}: WorkspaceTagsSettingsPageProps) {
         },
         [policyData],
     );
-    const isQuickSettingsFlow = route.name === SCREENS.SETTINGS_TAGS.SETTINGS_TAGS_SETTINGS;
-
     const getTagsSettings = (policy: OnyxEntry<Policy>) => (
         <View style={styles.flexGrow1}>
             {!isMultiLevelTags && (

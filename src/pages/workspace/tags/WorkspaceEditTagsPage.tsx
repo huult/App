@@ -18,7 +18,7 @@ import AccessOrNotFoundWrapper from '@pages/workspace/AccessOrNotFoundWrapper';
 import {renamePolicyTagList} from '@userActions/Policy/Tag';
 import CONST from '@src/CONST';
 import ONYXKEYS from '@src/ONYXKEYS';
-import ROUTES from '@src/ROUTES';
+import ROUTES, {DYNAMIC_ROUTES} from '@src/ROUTES';
 import SCREENS from '@src/SCREENS';
 import INPUT_IDS from '@src/types/form/PolicyTagNameForm';
 
@@ -58,7 +58,7 @@ function WorkspaceEditTagsPage({route}: WorkspaceEditTagsPageProps) {
         Navigation.goBack(
             isMultiLevelTagsEnabled
                 ? ROUTES.WORKSPACE_TAG_LIST_VIEW.getRoute(route?.params?.policyID, route.params.orderWeight)
-                : ROUTES.WORKSPACE_TAGS_SETTINGS.getRoute(route?.params?.policyID),
+                : `${ROUTES.WORKSPACE_TAGS.getRoute(route?.params?.policyID)}/${DYNAMIC_ROUTES.WORKSPACE_TAGS_SETTINGS.path}`,
         );
     };
 
