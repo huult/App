@@ -34,16 +34,18 @@ import ToggleSettingOptionRow from '@pages/workspace/workflows/ToggleSettingsOpt
 import CONST from '@src/CONST';
 import ONYXKEYS from '@src/ONYXKEYS';
 import ROUTES from '@src/ROUTES';
-import SCREENS from '@src/SCREENS';
+import type SCREENS from '@src/SCREENS';
 import INPUT_IDS from '@src/types/form/EditExpensifyCardLimitTypeForm';
 import type {CardLimitType} from '@src/types/onyx/Card';
 
-type WorkspaceEditCardLimitTypePageProps = PlatformStackScreenProps<
-    SettingsNavigatorParamList,
-    typeof SCREENS.WORKSPACE.EXPENSIFY_CARD_LIMIT_TYPE | typeof SCREENS.EXPENSIFY_CARD.EXPENSIFY_CARD_LIMIT_TYPE
->;
+type WorkspaceEditCardLimitTypePageProps = PlatformStackScreenProps<SettingsNavigatorParamList, typeof SCREENS.EXPENSIFY_CARD.EXPENSIFY_CARD_LIMIT_TYPE>;
 
-function WorkspaceEditCardLimitTypePage({route}: WorkspaceEditCardLimitTypePageProps) {
+type WorkspaceEditCardLimitTypePageOwnProps = {
+    route: WorkspaceEditCardLimitTypePageProps['route'];
+    testID?: string;
+};
+
+function WorkspaceEditCardLimitTypePage({route, testID = 'WorkspaceEditCardLimitTypePage'}: WorkspaceEditCardLimitTypePageOwnProps) {
     const {policyID, cardID, backTo} = route.params;
 
     const {convertToDisplayString} = useCurrencyListActions();
@@ -70,7 +72,6 @@ function WorkspaceEditCardLimitTypePage({route}: WorkspaceEditCardLimitTypePageP
     const [expirationToggle, setExpirationToggle] = useState(!!card?.nameValuePairs?.validFrom);
 
     const currency = useCurrencyForExpensifyCard({policyID});
-    const isWorkspaceRhp = route.name === SCREENS.WORKSPACE.EXPENSIFY_CARD_LIMIT_TYPE;
 
     const personalDetails = usePersonalDetails();
 
@@ -105,7 +106,7 @@ function WorkspaceEditCardLimitTypePage({route}: WorkspaceEditCardLimitTypePageP
             Navigation.goBack(backTo);
             return;
         }
-        Navigation.goBack(isWorkspaceRhp ? ROUTES.WORKSPACE_EXPENSIFY_CARD_DETAILS.getRoute(policyID, cardID) : ROUTES.EXPENSIFY_CARD_DETAILS.getRoute(policyID, cardID));
+        Navigation.goBack(ROUTES.EXPENSIFY_CARD_DETAILS.getRoute(policyID, cardID));
     };
 
     const fetchCardLimitTypeData = () => {
@@ -242,7 +243,7 @@ function WorkspaceEditCardLimitTypePage({route}: WorkspaceEditCardLimitTypePageP
             featureName={CONST.POLICY.MORE_FEATURES.ARE_EXPENSIFY_CARDS_ENABLED}
         >
             <ScreenWrapper
-                testID="WorkspaceEditCardLimitTypePage"
+                testID={testID}
                 shouldEnablePickerAvoiding={false}
                 shouldEnableMaxHeight
             >
