@@ -24,6 +24,7 @@ function SAMLSignInPage() {
     const [SAMLUrl, setSAMLUrl] = useState('');
     const {translate} = useLocalize();
     const hasOpenedAuthSession = useRef(false);
+    const login = credentials?.login ?? account?.primaryLogin;
 
     /**
      * Handles in-app navigation once we get a response back from Expensify
@@ -54,7 +55,7 @@ function SAMLSignInPage() {
                 Log.hmmm('SAMLSignInPage - Failed to parse JSON parameter', {error: parseError});
             }
 
-            if (!account?.isLoading && credentials?.login && shortLivedAuthToken) {
+            if (!account?.isLoading && login && shortLivedAuthToken) {
                 Log.info('SAMLSignInPage - Successfully received shortLivedAuthToken. Signing in...');
                 signInWithShortLivedAuthToken(shortLivedAuthToken, true);
                 return;
@@ -68,7 +69,7 @@ function SAMLSignInPage() {
                 Navigation.navigate(ROUTES.HOME);
             });
         },
-        [credentials?.login, account?.isLoading, translate],
+        [login, account?.isLoading, translate],
     );
 
     useEffect(() => {
@@ -93,7 +94,7 @@ function SAMLSignInPage() {
 
     useEffect(() => {
         // If we don't have a valid login to pass here, direct the user back to a clean sign in state to try again
-        if (!credentials?.login) {
+        if (!login) {
             handleSAMLLoginError(translate('common.error.email'), true);
             return;
         }
@@ -104,7 +105,7 @@ function SAMLSignInPage() {
         }
 
         const body = new FormData();
-        body.append('email', credentials.login);
+        body.append('email', login);
         body.append('referer', CONFIG.EXPENSIFY.EXPENSIFY_CASH_REFERER);
         body.append('platform', getPlatform());
         body.append('useBrowser', 'true');
@@ -119,7 +120,7 @@ function SAMLSignInPage() {
             .catch((error: Error) => {
                 handleSAMLLoginError(error.message ?? translate('common.error.login'), false);
             });
-    }, [credentials?.login, SAMLUrl, translate]);
+    }, [login, SAMLUrl, translate]);
 
     return (
         <ScreenWrapper

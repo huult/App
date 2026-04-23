@@ -8,17 +8,19 @@ import ONYXKEYS from '@src/ONYXKEYS';
 
 function SAMLSignInPage() {
     const {translate} = useLocalize();
+    const [account] = useOnyx(ONYXKEYS.ACCOUNT);
     const [credentials] = useOnyx(ONYXKEYS.CREDENTIALS);
+    const login = credentials?.login ?? account?.primaryLogin;
 
     useEffect(() => {
         // If we don't have a valid login to pass here, direct the user back to a clean sign in state to try again
-        if (!credentials?.login) {
+        if (!login) {
             handleSAMLLoginError(translate('common.error.email'), true);
             return;
         }
 
         const body = new FormData();
-        body.append('email', credentials.login);
+        body.append('email', login);
         body.append('referer', CONFIG.EXPENSIFY.EXPENSIFY_CASH_REFERER);
 
         postSAMLLogin(body)
@@ -32,7 +34,7 @@ function SAMLSignInPage() {
             .catch((error: Error) => {
                 handleSAMLLoginError(error.message ?? translate('common.error.login'), false);
             });
-    }, [credentials?.login, translate]);
+    }, [login, translate]);
 
     return <SAMLLoadingIndicator />;
 }

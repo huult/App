@@ -2,10 +2,12 @@ import HybridAppModule from '@expensify/react-native-hybrid-app';
 import Onyx from 'react-native-onyx';
 import {getMicroSecondOnyxErrorWithMessage} from '@libs/ErrorUtils';
 import {clearSessionStorage} from '@libs/Navigation/helpers/lastVisitedTabPathUtils';
+import Navigation from '@libs/Navigation/Navigation';
 import {getIsOffline} from '@libs/NetworkState';
 import CONFIG from '@src/CONFIG';
 import type {OnyxKey} from '@src/ONYXKEYS';
 import ONYXKEYS from '@src/ONYXKEYS';
+import ROUTES from '@src/ROUTES';
 import {resetSignInFlow} from './HybridApp';
 import {clearAllPolicies} from './Policy/Policy';
 
@@ -42,7 +44,7 @@ Onyx.connectWithoutView({
     },
 });
 
-function clearStorageAndRedirect(errorMessage?: string): Promise<void> {
+function clearStorageAndRedirect(errorMessage?: string, preservedKeys: OnyxKey[] = []): Promise<void> {
     // Under certain conditions, there are key-values we'd like to keep in storage even when a user is logged out.
     // We pass these into the clear() method in order to avoid having to reset them on a delayed tick and getting
     // flashes of unwanted default state.
@@ -56,6 +58,7 @@ function clearStorageAndRedirect(errorMessage?: string): Promise<void> {
     keysToPreserve.push(ONYXKEYS.IS_DEBUG_MODE_ENABLED);
     keysToPreserve.push(ONYXKEYS.COLLECTION.PASSKEY_CREDENTIALS);
     keysToPreserve.push(ONYXKEYS.COLLECTION.DEVICE_BIOMETRICS);
+    keysToPreserve.push(...preservedKeys);
 
     // After signing out, set ourselves as offline if we were offline before logging out and we are not forcing it.
     // If we are forcing offline, ignore it while signed out, otherwise it would require a refresh because there's no way to toggle the switch to go back online while signed out.
@@ -116,4 +119,14 @@ function redirectToSignIn(errorMessage?: string): Promise<void> {
     });
 }
 
+function redirectToSAMLSignIn(): Promise<void> {
+    return clearStorageAndRedirect(undefined, [ONYXKEYS.ACCOUNT, ONYXKEYS.CREDENTIALS]).then(() => {
+        clearSessionStorage();
+        return Navigation.isNavigationReady().then(() => {
+            Navigation.navigate(ROUTES.SAML_SIGN_IN);
+        });
+    });
+}
+
 export default redirectToSignIn;
+export {redirectToSAMLSignIn};
