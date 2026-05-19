@@ -1,7 +1,10 @@
 import Onyx from 'react-native-onyx';
 import type {OnyxMergeInput} from 'react-native-onyx';
+import * as ActiveClientManager from '@libs/ActiveClientManager';
 import * as API from '@libs/API';
 import {READ_COMMANDS, SIDE_EFFECT_REQUEST_COMMANDS, WRITE_COMMANDS} from '@libs/API/types';
+import Pusher from '@libs/Pusher';
+import PusherUtils, {getUserChannelName} from '@libs/PusherUtils';
 import CONST from '@src/CONST';
 import type {OnyxKey} from '@src/ONYXKEYS';
 import ONYXKEYS from '@src/ONYXKEYS';
@@ -952,6 +955,37 @@ describe('actions/User', () => {
 
             // Then redirectToSignIn should be called
             expect(redirectToSignIn).toHaveBeenCalled();
+        });
+    });
+
+    describe('subscribeToUserEvents', () => {
+        const FIRST_ACCOUNT_ID = 1;
+        const SECOND_ACCOUNT_ID = 2;
+        const TEST_EMAIL = 'test@test.com';
+
+        beforeEach(() => {
+            UserActions.resetSubscribedToUserEvents();
+            jest.spyOn(ActiveClientManager, 'isClientTheLeader').mockReturnValue(false);
+            jest.spyOn(PusherUtils, 'subscribeToPrivateUserChannelEvent').mockImplementation(jest.fn());
+            jest.spyOn(PusherUtils, 'subscribeToMultiEvent').mockImplementation(jest.fn());
+            jest.spyOn(Pusher, 'unsubscribe').mockImplementation(jest.fn());
+        });
+
+        it('should unsubscribe previous private user channel and subscribe new account channel', () => {
+            UserActions.subscribeToUserEvents(FIRST_ACCOUNT_ID, TEST_EMAIL, undefined);
+            UserActions.subscribeToUserEvents(SECOND_ACCOUNT_ID, TEST_EMAIL, undefined);
+
+            expect(Pusher.unsubscribe).toHaveBeenCalledWith(getUserChannelName(String(FIRST_ACCOUNT_ID)));
+            expect(PusherUtils.subscribeToPrivateUserChannelEvent).toHaveBeenCalledWith(Pusher.TYPE.MULTIPLE_EVENTS, String(SECOND_ACCOUNT_ID), expect.any(Function));
+        });
+
+        it('should not duplicate subscriptions for the same accountID and email', () => {
+            UserActions.subscribeToUserEvents(FIRST_ACCOUNT_ID, TEST_EMAIL, undefined);
+            UserActions.subscribeToUserEvents(FIRST_ACCOUNT_ID, TEST_EMAIL, undefined);
+
+            expect(PusherUtils.subscribeToPrivateUserChannelEvent).toHaveBeenCalledTimes(1);
+            expect(PusherUtils.subscribeToMultiEvent).toHaveBeenCalledTimes(2);
+            expect(Pusher.unsubscribe).not.toHaveBeenCalled();
         });
     });
 });

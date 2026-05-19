@@ -40,7 +40,7 @@ import * as NumberUtils from '@libs/NumberUtils';
 import * as PersonalDetailsUtils from '@libs/PersonalDetailsUtils';
 import Pusher from '@libs/Pusher';
 import type {PingPongEvent} from '@libs/Pusher/types';
-import PusherUtils from '@libs/PusherUtils';
+import PusherUtils, {getUserChannelName} from '@libs/PusherUtils';
 import * as ReportActionsUtils from '@libs/ReportActionsUtils';
 import * as ReportUtils from '@libs/ReportUtils';
 import playSound, {SOUNDS} from '@libs/Sound';
@@ -883,6 +883,14 @@ function checkForLatePongReplies() {
 
 let pingPusherIntervalID: ReturnType<typeof setInterval>;
 let checkForLatePongRepliesIntervalID: ReturnType<typeof setInterval>;
+let subscribedUserAccountID: number | undefined;
+let subscribedUserEmail: string | undefined;
+
+function resetSubscribedToUserEvents() {
+    subscribedUserAccountID = undefined;
+    subscribedUserEmail = undefined;
+}
+
 function initializePusherPingPong(currentUserAccountID: number) {
     // Only run the ping pong from the leader client
     if (!ActiveClientManager.isClientTheLeader()) {
@@ -926,28 +934,43 @@ function subscribeToUserEvents(currentUserAccountID: number, currentUserEmail: s
         return;
     }
 
+    if (subscribedUserAccountID === currentUserAccountID && subscribedUserEmail === currentUserEmail) {
+        return;
+    }
+
+    // When session account changes (e.g. delegate connect/disconnect), we must stop listening to the old account channel.
+    if (subscribedUserAccountID && subscribedUserAccountID !== currentUserAccountID) {
+        Pusher.unsubscribe(getUserChannelName(subscribedUserAccountID.toString()));
+    }
+
+    const isSubscribingToNewAccount = subscribedUserAccountID !== currentUserAccountID;
+    subscribedUserAccountID = currentUserAccountID;
+    subscribedUserEmail = currentUserEmail;
+
     // Handles the mega multipleEvents from Pusher which contains an array of single events.
     // Each single event is passed to PusherUtils in order to trigger the callbacks for that event
-    PusherUtils.subscribeToPrivateUserChannelEvent(Pusher.TYPE.MULTIPLE_EVENTS, currentUserAccountID.toString(), (pushJSON) => {
-        const pushEventData = pushJSON;
-        // If this is not the main client, we shouldn't process any data received from pusher.
-        if (!ActiveClientManager.isClientTheLeader()) {
-            Log.info('[Pusher] Received updates, but ignoring it since this is not the active client');
-            return;
-        }
-        // The data for the update is an object, containing updateIDs from the server and an array of onyx updates (this array is the same format as the original format above)
-        // Example: {lastUpdateID: 1, previousUpdateID: 0, updates: [{onyxMethod: 'whatever', key: 'foo', value: 'bar'}]}
-        const updates = {
-            type: CONST.ONYX_UPDATE_TYPES.PUSHER,
-            lastUpdateID: Number(pushEventData.lastUpdateID ?? CONST.DEFAULT_NUMBER_ID),
-            // specific key type is not known from the Pusher event data
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            updates: (pushEventData.updates as Array<OnyxUpdateEvent<any>>) ?? [],
-            previousUpdateID: Number(pushJSON.previousUpdateID ?? CONST.DEFAULT_NUMBER_ID),
-        };
-        Log.info('[subscribeToUserEvents] Applying Onyx updates');
-        applyOnyxUpdatesReliably(updates);
-    });
+    if (isSubscribingToNewAccount) {
+        PusherUtils.subscribeToPrivateUserChannelEvent(Pusher.TYPE.MULTIPLE_EVENTS, currentUserAccountID.toString(), (pushJSON) => {
+            const pushEventData = pushJSON;
+            // If this is not the main client, we shouldn't process any data received from pusher.
+            if (!ActiveClientManager.isClientTheLeader()) {
+                Log.info('[Pusher] Received updates, but ignoring it since this is not the active client');
+                return;
+            }
+            // The data for the update is an object, containing updateIDs from the server and an array of onyx updates (this array is the same format as the original format above)
+            // Example: {lastUpdateID: 1, previousUpdateID: 0, updates: [{onyxMethod: 'whatever', key: 'foo', value: 'bar'}]}
+            const updates = {
+                type: CONST.ONYX_UPDATE_TYPES.PUSHER,
+                lastUpdateID: Number(pushEventData.lastUpdateID ?? CONST.DEFAULT_NUMBER_ID),
+                // specific key type is not known from the Pusher event data
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                updates: (pushEventData.updates as Array<OnyxUpdateEvent<any>>) ?? [],
+                previousUpdateID: Number(pushJSON.previousUpdateID ?? CONST.DEFAULT_NUMBER_ID),
+            };
+            Log.info('[subscribeToUserEvents] Applying Onyx updates');
+            applyOnyxUpdatesReliably(updates);
+        });
+    }
 
     // Debounce the playSoundForMessageType function to avoid playing sounds too often, for example when a user comeback after offline and a lot of messages come in
     // See https://github.com/Expensify/App/issues/57961 for more details
@@ -991,7 +1014,9 @@ function subscribeToUserEvents(currentUserAccountID: number, currentUserEmail: s
         return Promise.resolve();
     });
 
-    initializePusherPingPong(currentUserAccountID);
+    if (isSubscribingToNewAccount) {
+        initializePusherPingPong(currentUserAccountID);
+    }
 }
 
 /**
@@ -1913,6 +1938,7 @@ export {
     validateSecondaryLogin,
     isBlockedFromConcierge,
     subscribeToUserEvents,
+    resetSubscribedToUserEvents,
     updatePreferredSkinTone,
     setShouldUseStagingServer,
     togglePlatformMute,

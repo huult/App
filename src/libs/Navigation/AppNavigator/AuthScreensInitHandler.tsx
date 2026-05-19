@@ -72,11 +72,13 @@ function AuthScreensInitHandler() {
     reportAttributesRef.current = reportAttributes;
 
     useEffect(() => {
-        if (!Navigation.isActiveRoute(ROUTES.SIGN_IN_MODAL)) {
+        if (Navigation.isActiveRoute(ROUTES.SIGN_IN_MODAL)) {
+            // This means sign in in RHP was successful, so we should ensure Pusher is initialized.
+            initializePusher(session?.accountID, session?.email, () => reportAttributesRef.current);
             return;
         }
-        // This means sign in in RHP was successful, so we can subscribe to user events
-        initializePusher(session?.accountID, session?.email, () => reportAttributesRef.current);
+
+        User.subscribeToUserEvents(session?.accountID ?? CONST.DEFAULT_NUMBER_ID, session?.email ?? '', () => reportAttributesRef.current);
     }, [session?.accountID, session?.email]);
 
     useEffect(() => {
@@ -87,6 +89,7 @@ function AuthScreensInitHandler() {
         if (isLoggingInAsNewUser && isTransitioning) {
             Session.signOutAndRedirectToSignIn(false, isSupportalTransition);
             return () => {
+                User.resetSubscribedToUserEvents();
                 Session.cleanupSession();
             };
         }
@@ -142,6 +145,7 @@ function AuthScreensInitHandler() {
         Download.clearDownloads();
 
         return () => {
+            User.resetSubscribedToUserEvents();
             Session.cleanupSession();
         };
 

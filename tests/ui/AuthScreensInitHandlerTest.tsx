@@ -22,6 +22,7 @@ import waitForBatchedUpdatesWithAct from '../utils/waitForBatchedUpdatesWithAct'
 import wrapOnyxWithWaitForBatchedUpdates from '../utils/wrapOnyxWithWaitForBatchedUpdates';
 
 const TEST_ACCOUNT_ID = 1;
+const SECOND_TEST_ACCOUNT_ID = 2;
 
 jest.mock('@libs/Pusher', () => ({
     __esModule: true,
@@ -87,6 +88,7 @@ jest.mock('@userActions/Session', () => ({
 
 jest.mock('@userActions/User', () => ({
     subscribeToUserEvents: jest.fn(),
+    resetSubscribedToUserEvents: jest.fn(),
 }));
 
 jest.mock('@libs/telemetry/activeSpans', () => ({
@@ -166,6 +168,23 @@ describe('AuthScreensInitHandler', () => {
         // Both mount effect AND sign-in modal effect fire → 2 calls
         expect(subscribeToUserEvents).toHaveBeenCalledTimes(2);
         expect(subscribeToUserEvents).toHaveBeenCalledWith(TEST_ACCOUNT_ID, 'test@test.com', expect.any(Function));
+    });
+
+    it('calls subscribeToUserEvents when session account changes outside sign-in modal', async () => {
+        mockedIsActiveRoute.mockReturnValue(false);
+
+        await Onyx.merge(ONYXKEYS.SESSION, {accountID: TEST_ACCOUNT_ID, email: 'test@test.com'});
+        await waitForBatchedUpdates();
+
+        renderAuthScreensInitHandler();
+        await waitForBatchedUpdatesWithAct();
+        const initialCallCount = (subscribeToUserEvents as jest.Mock).mock.calls.length;
+
+        await Onyx.merge(ONYXKEYS.SESSION, {accountID: SECOND_TEST_ACCOUNT_ID, email: 'delegate@test.com'});
+        await waitForBatchedUpdatesWithAct();
+
+        expect((subscribeToUserEvents as jest.Mock).mock.calls.length).toBeGreaterThan(initialCallCount);
+        expect(subscribeToUserEvents).toHaveBeenLastCalledWith(SECOND_TEST_ACCOUNT_ID, 'delegate@test.com', expect.any(Function));
     });
 
     it('getter passed to subscribeToUserEvents returns report attributes when available', async () => {
