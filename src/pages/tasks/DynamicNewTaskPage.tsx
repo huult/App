@@ -10,6 +10,7 @@ import ScreenWrapper from '@components/ScreenWrapper';
 import ScrollView from '@components/ScrollView';
 import useAncestors from '@hooks/useAncestors';
 import useCurrentUserPersonalDetails from '@hooks/useCurrentUserPersonalDetails';
+import useDynamicBackPath from '@hooks/useDynamicBackPath';
 import useLocalize from '@hooks/useLocalize';
 import useOnyx from '@hooks/useOnyx';
 import usePolicy from '@hooks/usePolicy';
@@ -17,21 +18,17 @@ import useReportAttributes from '@hooks/useReportAttributes';
 import useSafeAreaPaddings from '@hooks/useSafeAreaPaddings';
 import useThemeStyles from '@hooks/useThemeStyles';
 import {createTaskAndNavigate, dismissModalAndClearOutTaskInfo, getAssignee, getShareDestination, setShareDestinationValue} from '@libs/actions/Task';
+import createDynamicRoute from '@libs/Navigation/helpers/dynamicRoutesUtils/createDynamicRoute';
 import Navigation from '@libs/Navigation/Navigation';
-import type {PlatformStackScreenProps} from '@libs/Navigation/PlatformStackNavigation/types';
-import type {NewTaskNavigatorParamList} from '@libs/Navigation/types';
 import {getPersonalDetailsForAccountIDs} from '@libs/OptionsListUtils';
 import {getDisplayNamesWithTooltips, isAllowedToComment} from '@libs/ReportUtils';
 import CONST from '@src/CONST';
 import ONYXKEYS from '@src/ONYXKEYS';
-import ROUTES from '@src/ROUTES';
-import type SCREENS from '@src/SCREENS';
+import ROUTES, {DYNAMIC_ROUTES} from '@src/ROUTES';
 import {personalDetailsListSelector} from '@src/selectors/PersonalDetails';
 import {isEmptyObject} from '@src/types/utils/EmptyObject';
 
-type NewTaskPageProps = PlatformStackScreenProps<NewTaskNavigatorParamList, typeof SCREENS.NEW_TASK.ROOT>;
-
-function NewTaskPage({route}: NewTaskPageProps) {
+function DynamicNewTaskPage() {
     const [task] = useOnyx(ONYXKEYS.TASK);
     const [parentReport] = useOnyx(`${ONYXKEYS.COLLECTION.REPORT}${task?.shareDestination}`);
     const policy = usePolicy(parentReport?.policyID);
@@ -62,8 +59,7 @@ function NewTaskPage({route}: NewTaskPageProps) {
     const isAllowedToCreateTask = isEmptyObject(parentReport) || isAllowedToComment(parentReport);
 
     const {paddingBottom} = useSafeAreaPaddings();
-
-    const backTo = route.params?.backTo;
+    const entryBackPath = useDynamicBackPath(DYNAMIC_ROUTES.NEW_TASK.path);
     const confirmButtonRef = useRef<View>(null);
 
     useEffect(() => {
@@ -113,7 +109,7 @@ function NewTaskPage({route}: NewTaskPageProps) {
     return (
         <ScreenWrapper
             shouldEnableKeyboardAvoidingView={false}
-            testID="NewTaskPage"
+            testID="DynamicNewTaskPage"
         >
             <FullPageNotFoundView
                 shouldShow={!isAllowedToCreateTask}
@@ -124,7 +120,7 @@ function NewTaskPage({route}: NewTaskPageProps) {
                     title={translate('newTaskPage.confirmTask')}
                     shouldShowBackButton
                     onBackButtonPress={() => {
-                        Navigation.goBack(ROUTES.NEW_TASK_DETAILS.getRoute(backTo));
+                        Navigation.navigate(createDynamicRoute(DYNAMIC_ROUTES.NEW_TASK_DETAILS.path, entryBackPath));
                     }}
                     /** Skip focus of the first interactive element in the header to make sure that Enter key confirms the task instead of navigating back. */
                     shouldSkipFocusAfterTransition
@@ -150,7 +146,7 @@ function NewTaskPage({route}: NewTaskPageProps) {
                             <MenuItemWithTopDescription
                                 description={translate('task.title')}
                                 title={task?.title}
-                                onPress={() => Navigation.navigate(ROUTES.NEW_TASK_TITLE.getRoute(backTo))}
+                                onPress={() => Navigation.navigate(createDynamicRoute(DYNAMIC_ROUTES.NEW_TASK_TITLE.path))}
                                 shouldShowRightIcon
                                 rightLabel={translate('common.required')}
                                 shouldParseTitle
@@ -159,7 +155,7 @@ function NewTaskPage({route}: NewTaskPageProps) {
                             <MenuItemWithTopDescription
                                 description={translate('task.description')}
                                 title={task?.description}
-                                onPress={() => Navigation.navigate(ROUTES.NEW_TASK_DESCRIPTION.getRoute(backTo))}
+                                onPress={() => Navigation.navigate(ROUTES.NEW_TASK_DESCRIPTION.getRoute(entryBackPath))}
                                 shouldShowRightIcon
                                 shouldParseTitle
                                 numberOfLinesTitle={2}
@@ -170,7 +166,7 @@ function NewTaskPage({route}: NewTaskPageProps) {
                                 title={assignee?.displayName ?? ''}
                                 description={assignee?.displayName ? formatPhoneNumber(assignee?.subtitle) : translate('task.assignee')}
                                 iconAccountID={task?.assigneeAccountID}
-                                onPress={() => Navigation.navigate(ROUTES.NEW_TASK_ASSIGNEE.getRoute(backTo))}
+                                onPress={() => Navigation.navigate(createDynamicRoute(DYNAMIC_ROUTES.NEW_TASK_ASSIGNEE.path))}
                                 shouldShowRightIcon
                                 titleWithTooltips={assigneeTooltipDetails}
                             />
@@ -204,4 +200,4 @@ function NewTaskPage({route}: NewTaskPageProps) {
     );
 }
 
-export default NewTaskPage;
+export default DynamicNewTaskPage;

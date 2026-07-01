@@ -2312,20 +2312,17 @@ type PolicyCopySettingsNavigatorParamList = {
 };
 
 type NewTaskNavigatorParamList = {
-    [SCREENS.NEW_TASK.ROOT]: {
-        // eslint-disable-next-line no-restricted-syntax -- `backTo` usages in this file are legacy. Do not add new `backTo` params to screens. See contributingGuides/NAVIGATION.md
-        backTo?: Routes;
-    };
-    [SCREENS.NEW_TASK.TASK_ASSIGNEE_SELECTOR]: {
+    [SCREENS.NEW_TASK.DYNAMIC_ROOT]: undefined;
+    [SCREENS.NEW_TASK.DYNAMIC_ASSIGNEE]: {
         // eslint-disable-next-line no-restricted-syntax -- `backTo` usages in this file are legacy. Do not add new `backTo` params to screens. See contributingGuides/NAVIGATION.md
         backTo?: Routes;
     };
     [SCREENS.NEW_TASK.TASK_SHARE_DESTINATION_SELECTOR]: undefined;
-    [SCREENS.NEW_TASK.DETAILS]: {
+    [SCREENS.NEW_TASK.DYNAMIC_DETAILS]: {
         // eslint-disable-next-line no-restricted-syntax -- `backTo` usages in this file are legacy. Do not add new `backTo` params to screens. See contributingGuides/NAVIGATION.md
         backTo?: Routes;
     };
-    [SCREENS.NEW_TASK.TITLE]: {
+    [SCREENS.NEW_TASK.DYNAMIC_TITLE]: {
         // eslint-disable-next-line no-restricted-syntax -- `backTo` usages in this file are legacy. Do not add new `backTo` params to screens. See contributingGuides/NAVIGATION.md
         backTo?: Routes;
     };

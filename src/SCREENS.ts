@@ -451,11 +451,11 @@ const SCREENS = {
     },
 
     NEW_TASK: {
-        ROOT: 'NewTask_Root',
-        TASK_ASSIGNEE_SELECTOR: 'NewTask_TaskAssigneeSelector',
+        DYNAMIC_ROOT: 'Dynamic_NewTask_Root',
+        DYNAMIC_ASSIGNEE: 'Dynamic_NewTask_Assignee',
         TASK_SHARE_DESTINATION_SELECTOR: 'NewTask_TaskShareDestinationSelector',
-        DETAILS: 'NewTask_Details',
-        TITLE: 'NewTask_Title',
+        DYNAMIC_DETAILS: 'Dynamic_NewTask_Details',
+        DYNAMIC_TITLE: 'Dynamic_NewTask_Title',
         DESCRIPTION: 'NewTask_Description',
     },
 

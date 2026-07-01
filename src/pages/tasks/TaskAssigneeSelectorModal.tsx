@@ -1,4 +1,4 @@
-import {useRoute} from '@react-navigation/native';
+import {useNavigation, useRoute} from '@react-navigation/native';
 import {delegateEmailSelector} from '@selectors/Account';
 import React, {useEffect} from 'react';
 import {View} from 'react-native';
@@ -23,26 +23,36 @@ import {canModifyTask, editTaskAssignee, setAssigneeValue} from '@libs/actions/T
 import {READ_COMMANDS} from '@libs/API/types';
 import HttpUtils from '@libs/HttpUtils';
 import Navigation from '@libs/Navigation/Navigation';
-import type {PlatformStackRouteProp} from '@libs/Navigation/PlatformStackNavigation/types';
+import type {PlatformStackNavigationProp, PlatformStackRouteProp} from '@libs/Navigation/PlatformStackNavigation/types';
 import {getHeaderMessage} from '@libs/PersonalDetailOptionsListUtils';
 import {isOpenTaskReport, isTaskReport} from '@libs/ReportUtils';
 import type {NewTaskNavigatorParamList, TaskDetailsNavigatorParamList} from '@navigation/types';
 import CONST from '@src/CONST';
 import ONYXKEYS from '@src/ONYXKEYS';
-import ROUTES, {DYNAMIC_ROUTES} from '@src/ROUTES';
+import {DYNAMIC_ROUTES} from '@src/ROUTES';
 import type SCREENS from '@src/SCREENS';
 import type {Report} from '@src/types/onyx';
 
 function TaskAssigneeSelectorModal() {
     const styles = useThemeStyles();
+    const navigation = useNavigation<PlatformStackNavigationProp<NewTaskNavigatorParamList, typeof SCREENS.NEW_TASK.DYNAMIC_ASSIGNEE>>();
     const route = useRoute<
         | PlatformStackRouteProp<TaskDetailsNavigatorParamList, typeof SCREENS.DYNAMIC_TASK_ASSIGNEE>
-        | PlatformStackRouteProp<NewTaskNavigatorParamList, typeof SCREENS.NEW_TASK.TASK_ASSIGNEE_SELECTOR>
+        | PlatformStackRouteProp<NewTaskNavigatorParamList, typeof SCREENS.NEW_TASK.DYNAMIC_ASSIGNEE>
     >();
     const {translate} = useLocalize();
     const reportID = route.params && 'reportID' in route.params ? route.params.reportID : undefined;
-    const backTo = route.params && 'backTo' in route.params ? route.params.backTo : undefined;
     const taskEditBackPath = useDynamicBackPath(DYNAMIC_ROUTES.TASK_ASSIGNEE.path);
+    const newTaskBackPath = useDynamicBackPath(DYNAMIC_ROUTES.NEW_TASK_ASSIGNEE.path);
+
+    const goBackToNewTaskConfirm = () => {
+        if (navigation.canGoBack()) {
+            navigation.goBack();
+            return;
+        }
+        Navigation.navigate(newTaskBackPath, {forceReplace: true});
+    };
+
     const [reports] = useOnyx(ONYXKEYS.COLLECTION.REPORT);
     const [task] = useOnyx(ONYXKEYS.TASK);
     const [isSearchingForReports] = useOnyx(ONYXKEYS.RAM_ONLY_IS_SEARCHING_FOR_REPORTS);
@@ -180,13 +190,13 @@ function TaskAssigneeSelectorModal() {
                 undefined, // passing null as report is null in this condition
                 option.accountID === currentUserPersonalDetails.accountID,
             );
-            Navigation.goBack(ROUTES.NEW_TASK.getRoute(backTo));
+            goBackToNewTaskConfirm();
         }
     };
 
     const handleBackButtonPress = () => {
         if (!reportID) {
-            Navigation.goBack(ROUTES.NEW_TASK.getRoute(backTo));
+            goBackToNewTaskConfirm();
             return;
         }
         Navigation.goBack(taskEditBackPath);

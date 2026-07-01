@@ -12,6 +12,7 @@ import useLocalize from '@hooks/useLocalize';
 import useOnyx from '@hooks/useOnyx';
 import useThemeStyles from '@hooks/useThemeStyles';
 import {addErrorMessage} from '@libs/ErrorUtils';
+import createDynamicRoute from '@libs/Navigation/helpers/dynamicRoutesUtils/createDynamicRoute';
 import Navigation from '@libs/Navigation/Navigation';
 import type {PlatformStackScreenProps} from '@libs/Navigation/PlatformStackNavigation/types';
 import type {NewTaskNavigatorParamList} from '@libs/Navigation/types';
@@ -23,7 +24,7 @@ import variables from '@styles/variables';
 import {setDescriptionValue} from '@userActions/Task';
 import CONST from '@src/CONST';
 import ONYXKEYS from '@src/ONYXKEYS';
-import ROUTES from '@src/ROUTES';
+import {DYNAMIC_ROUTES} from '@src/ROUTES';
 import type SCREENS from '@src/SCREENS';
 import INPUT_IDS from '@src/types/form/NewTaskForm';
 import isLoadingOnyxValue from '@src/types/utils/isLoadingOnyxValue';
@@ -36,7 +37,7 @@ function NewTaskDescriptionPage({route}: NewTaskDescriptionPageProps) {
     const [task, taskMetadata] = useOnyx(ONYXKEYS.TASK);
     const {inputCallbackRef, inputRef} = useAutoFocusInput();
 
-    const goBack = () => Navigation.goBack(ROUTES.NEW_TASK.getRoute(route.params?.backTo));
+    const goBack = () => Navigation.goBack(createDynamicRoute(DYNAMIC_ROUTES.NEW_TASK.path, route.params?.backTo));
     const onSubmit = (values: FormOnyxValues<typeof ONYXKEYS.FORMS.NEW_TASK_FORM>) => {
         setDescriptionValue(values.taskDescription);
         goBack();

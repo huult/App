@@ -858,6 +858,41 @@ const DYNAMIC_ROUTES = {
         path: 'title',
         entryScreens: [SCREENS.REPORT, SCREENS.RIGHT_MODAL.SEARCH_REPORT, SCREENS.RIGHT_MODAL.EXPENSE_REPORT, SCREENS.RIGHT_MODAL.SEARCH_MONEY_REQUEST_REPORT],
     },
+    NEW_TASK_TITLE: {
+        path: 'new-task-title',
+        entryScreens: [SCREENS.NEW_TASK.DYNAMIC_ROOT],
+    },
+    NEW_TASK_DETAILS: {
+        path: 'new-task-details',
+        entryScreens: [
+            SCREENS.HOME,
+            SCREENS.INBOX,
+            SCREENS.REPORT,
+            SCREENS.SEARCH.ROOT,
+            SCREENS.RIGHT_MODAL.SEARCH_REPORT,
+            SCREENS.RIGHT_MODAL.EXPENSE_REPORT,
+            SCREENS.RIGHT_MODAL.SEARCH_MONEY_REQUEST_REPORT,
+        ],
+    },
+    NEW_TASK_ASSIGNEE: {
+        path: 'new-task-assignee',
+        entryScreens: [SCREENS.NEW_TASK.DYNAMIC_ROOT],
+    },
+    NEW_TASK: {
+        path: 'new-task-confirm',
+        entryScreens: [
+            SCREENS.HOME,
+            SCREENS.INBOX,
+            SCREENS.REPORT,
+            SCREENS.SEARCH.ROOT,
+            SCREENS.RIGHT_MODAL.SEARCH_REPORT,
+            SCREENS.RIGHT_MODAL.EXPENSE_REPORT,
+            SCREENS.RIGHT_MODAL.SEARCH_MONEY_REQUEST_REPORT,
+            SCREENS.NEW_TASK.DYNAMIC_DETAILS,
+            SCREENS.NEW_TASK.DESCRIPTION,
+            SCREENS.NEW_TASK.TASK_SHARE_DESTINATION_SELECTOR,
+        ],
+    },
     REPORT_DESCRIPTION: {
         path: 'description',
         entryScreens: [
@@ -2065,27 +2100,7 @@ const ROUTES = {
     IOU_SEND_ADD_DEBIT_CARD: 'pay/new/add-debit-card',
     IOU_SEND_ENABLE_PAYMENTS: 'pay/new/enable-payments',
 
-    NEW_TASK: {
-        route: 'new/task',
-
-        getRoute: (backTo?: string) => getUrlWithBackToParam('new/task', backTo),
-    },
-    NEW_TASK_ASSIGNEE: {
-        route: 'new/task/assignee',
-
-        getRoute: (backTo?: string) => getUrlWithBackToParam('new/task/assignee', backTo),
-    },
     NEW_TASK_SHARE_DESTINATION: 'new/task/share-destination',
-    NEW_TASK_DETAILS: {
-        route: 'new/task/details',
-
-        getRoute: (backTo?: string) => getUrlWithBackToParam('new/task/details', backTo),
-    },
-    NEW_TASK_TITLE: {
-        route: 'new/task/title',
-
-        getRoute: (backTo?: string) => getUrlWithBackToParam('new/task/title', backTo),
-    },
     NEW_TASK_DESCRIPTION: {
         route: 'new/task/description',
 
