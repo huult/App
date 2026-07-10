@@ -309,13 +309,20 @@ const SCREENS = {
         REPORT_CHANGE_APPROVER: 'Report_Change_Approver',
         MERGE_TRANSACTION: 'MergeTransaction',
         REPORT_CARD_ACTIVATE: 'Report_Card_Activate',
+        REPORT_MISSING_PERSONAL_DETAILS: 'Report_Missing_Personal_Details',
         DOMAIN: 'Domain',
         EXPENSE_REPORT: 'ExpenseReport',
         MULTIFACTOR_AUTHENTICATION: 'MultifactorAuthentication',
         CHRONOS_SCHEDULE_OOO: 'Chronos_Schedule_OOO',
         AVATAR_CROP: 'AvatarCrop',
     },
-    REPORT_CARD_ACTIVATE: 'Report_Card_Activate_Root',
+    REPORT_CARD_ACTIVATE: {
+        DYNAMIC_ROOT: 'Dynamic_Report_Card_Activate_Root',
+    },
+    REPORT_MISSING_PERSONAL_DETAILS: {
+        DYNAMIC_ROOT: 'Dynamic_Report_Missing_Personal_Details_Root',
+        DYNAMIC_CONFIRM_MAGIC_CODE: 'Dynamic_Report_Missing_Personal_Details_Confirm_Magic_Code',
+    },
     SAML_SIGN_IN: 'SAMLSignIn',
     WORKSPACE_JOIN_USER: 'WorkspaceJoinUser',
     AVATAR_CROP: {

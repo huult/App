@@ -1507,7 +1507,13 @@ const config: LinkingOptions<RootNavigatorParamList>['config'] = {
                 },
                 [SCREENS.RIGHT_MODAL.REPORT_CARD_ACTIVATE]: {
                     screens: {
-                        [SCREENS.REPORT_CARD_ACTIVATE]: ROUTES.REPORT_CARD_ACTIVATE.route,
+                        [SCREENS.REPORT_CARD_ACTIVATE.DYNAMIC_ROOT]: DYNAMIC_ROUTES.REPORT_CARD_ACTIVATE.path,
+                    },
+                },
+                [SCREENS.RIGHT_MODAL.REPORT_MISSING_PERSONAL_DETAILS]: {
+                    screens: {
+                        [SCREENS.REPORT_MISSING_PERSONAL_DETAILS.DYNAMIC_CONFIRM_MAGIC_CODE]: DYNAMIC_ROUTES.REPORT_MISSING_PERSONAL_DETAILS_CONFIRM_MAGIC_CODE.path,
+                        [SCREENS.REPORT_MISSING_PERSONAL_DETAILS.DYNAMIC_ROOT]: DYNAMIC_ROUTES.REPORT_MISSING_PERSONAL_DETAILS.path,
                     },
                 },
                 [SCREENS.RIGHT_MODAL.REPORT_CHANGE_WORKSPACE]: {

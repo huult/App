@@ -68,6 +68,14 @@ function MissingPersonalDetailsWithPINContext(props: Record<string, unknown>) {
     );
 }
 
+function ReportMissingPersonalDetailsWithPINContext(props: Record<string, unknown>) {
+    return (
+        <PINContextProvider>
+            <ModalStackNavigators.ReportMissingPersonalDetailsModalStackNavigator {...props} />
+        </PINContextProvider>
+    );
+}
+
 function SearchAdvancedFiltersWithContext(props: Record<string, unknown>) {
     return (
         <SearchAdvancedFiltersProvider>
@@ -285,6 +293,10 @@ function RightModalNavigator({navigation, route}: RightModalNavigatorProps) {
                             <Stack.Screen
                                 name={SCREENS.RIGHT_MODAL.REPORT_CARD_ACTIVATE}
                                 component={ModalStackNavigators.ReportCardActivateStackNavigator}
+                            />
+                            <Stack.Screen
+                                name={SCREENS.RIGHT_MODAL.REPORT_MISSING_PERSONAL_DETAILS}
+                                component={ReportMissingPersonalDetailsWithPINContext}
                             />
                             <Stack.Screen
                                 name={SCREENS.RIGHT_MODAL.REPORT_CHANGE_WORKSPACE}

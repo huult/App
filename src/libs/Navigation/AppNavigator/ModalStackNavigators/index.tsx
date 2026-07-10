@@ -28,6 +28,7 @@ import type {
     ProfileNavigatorParamList,
     ReferralDetailsNavigatorParamList,
     ReportCardActivateNavigatorParamList,
+    ReportMissingPersonalDetailsNavigatorParamList,
     ReportChangeApproverParamList,
     ReportChangeWorkspaceNavigatorParamList,
     ReportDescriptionNavigatorParamList,
@@ -265,7 +266,13 @@ const ReportDetailsModalStackNavigator = createModalStackNavigator<ReportDetails
 });
 
 const ReportCardActivateStackNavigator = createModalStackNavigator<ReportCardActivateNavigatorParamList>({
-    [SCREENS.REPORT_CARD_ACTIVATE]: () => require<ReactComponentModule>('../../../../pages/inbox/report/ActivatePhysicalCardPage').default,
+    [SCREENS.REPORT_CARD_ACTIVATE.DYNAMIC_ROOT]: () => require<ReactComponentModule>('../../../../pages/inbox/report/DynamicActivatePhysicalCardPage').default,
+});
+
+const ReportMissingPersonalDetailsModalStackNavigator = createModalStackNavigator<ReportMissingPersonalDetailsNavigatorParamList>({
+    [SCREENS.REPORT_MISSING_PERSONAL_DETAILS.DYNAMIC_ROOT]: () => require<ReactComponentModule>('../../../../pages/inbox/report/DynamicMissingPersonalDetailsPage').default,
+    [SCREENS.REPORT_MISSING_PERSONAL_DETAILS.DYNAMIC_CONFIRM_MAGIC_CODE]: () =>
+        require<ReactComponentModule>('../../../../pages/inbox/report/DynamicMissingPersonalDetailsMagicCodePage').default,
 });
 
 const ReportChangeWorkspaceModalStackNavigator = createModalStackNavigator<ReportChangeWorkspaceNavigatorParamList>({
@@ -1269,6 +1276,7 @@ export {
     FlagCommentStackNavigator,
     MergeTransactionStackNavigator,
     MissingPersonalDetailsModalStackNavigator,
+    ReportMissingPersonalDetailsModalStackNavigator,
     MoneyRequestModalStackNavigator,
     NewChatModalStackNavigator,
     NewReportWorkspaceSelectionModalStackNavigator,

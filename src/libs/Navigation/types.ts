@@ -1850,10 +1850,25 @@ type ReportDetailsNavigatorParamList = {
 };
 
 type ReportCardActivateNavigatorParamList = {
-    [SCREENS.REPORT_CARD_ACTIVATE]: {
+    [SCREENS.REPORT_CARD_ACTIVATE.DYNAMIC_ROOT]: {
         reportID: string;
         cardID: string;
         reportActionID?: string;
+    };
+};
+
+type ReportMissingPersonalDetailsNavigatorParamList = {
+    [SCREENS.REPORT_MISSING_PERSONAL_DETAILS.DYNAMIC_ROOT]: {
+        reportID: string;
+        reportActionID?: string;
+        cardID: string;
+        subPage?: string;
+        action?: 'edit';
+    };
+    [SCREENS.REPORT_MISSING_PERSONAL_DETAILS.DYNAMIC_CONFIRM_MAGIC_CODE]: {
+        reportID: string;
+        reportActionID?: string;
+        cardID: string;
     };
 };
 
@@ -2613,6 +2628,7 @@ type RightModalNavigatorParamList = {
     [SCREENS.RIGHT_MODAL.NEW_REPORT_WORKSPACE_SELECTION]: NavigatorScreenParams<NewReportWorkspaceSelectionNavigatorParamList>;
     [SCREENS.RIGHT_MODAL.REPORT_DETAILS]: NavigatorScreenParams<ReportDetailsNavigatorParamList>;
     [SCREENS.RIGHT_MODAL.REPORT_CARD_ACTIVATE]: NavigatorScreenParams<ReportCardActivateNavigatorParamList>;
+    [SCREENS.RIGHT_MODAL.REPORT_MISSING_PERSONAL_DETAILS]: NavigatorScreenParams<ReportMissingPersonalDetailsNavigatorParamList>;
     [SCREENS.RIGHT_MODAL.REPORT_CHANGE_WORKSPACE]: NavigatorScreenParams<ReportChangeWorkspaceNavigatorParamList>;
     [SCREENS.RIGHT_MODAL.REPORT_SETTINGS]: NavigatorScreenParams<ReportSettingsNavigatorParamList>;
     [SCREENS.RIGHT_MODAL.SETTINGS_CATEGORIES]: NavigatorScreenParams<SettingsNavigatorParamList>;
@@ -3450,6 +3466,7 @@ export type {
     MergeTransactionNavigatorParamList,
     AttachmentModalScreensParamList,
     ReportCardActivateNavigatorParamList,
+    ReportMissingPersonalDetailsNavigatorParamList,
     WorkspacesDomainModalNavigatorParamList,
     DomainSplitNavigatorParamList,
     SearchColumnsParamList,

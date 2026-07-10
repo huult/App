@@ -20,7 +20,7 @@ import type {SkeletonSpanReasonAttributes} from '@libs/telemetry/useSkeletonSpan
 
 import CONST from '@src/CONST';
 import ONYXKEYS from '@src/ONYXKEYS';
-import ROUTES from '@src/ROUTES';
+import type {Route} from '@src/ROUTES';
 import type {PersonalDetailsForm} from '@src/types/form';
 import type {CardList, PrivatePersonalDetails} from '@src/types/onyx';
 
@@ -52,6 +52,9 @@ type MissingPersonalDetailsContentProps = {
 
     /** Card ID for the card that the user is adding personal details to */
     cardID: string;
+
+    /** Builds the route for a given sub page. Lets the flow run under either a static or a dynamic (report-scoped) route. */
+    getSubPageRoute: (cardID: string, subPage?: string, action?: 'edit') => Route;
 };
 
 const baseFormPages = [
@@ -64,7 +67,7 @@ const baseFormPages = [
 const PINPage = {pageName: CONST.MISSING_PERSONAL_DETAILS.PAGE_NAME.PIN, component: PINStep};
 const confirmPage = {pageName: CONST.MISSING_PERSONAL_DETAILS.PAGE_NAME.CONFIRM, component: Confirmation};
 
-function MissingPersonalDetailsContent({privatePersonalDetails, draftValues, headerTitle, onComplete, cardID}: MissingPersonalDetailsContentProps) {
+function MissingPersonalDetailsContent({privatePersonalDetails, draftValues, headerTitle, onComplete, cardID, getSubPageRoute}: MissingPersonalDetailsContentProps) {
     const styles = useThemeStyles();
     const {isOffline} = useNetwork();
     const {executeScenario} = useMultifactorAuthentication();
@@ -101,7 +104,7 @@ function MissingPersonalDetailsContent({privatePersonalDetails, draftValues, hea
             }
 
             if (!PIN) {
-                Navigation.navigate(ROUTES.MISSING_PERSONAL_DETAILS.getRoute(cardID, CONST.MISSING_PERSONAL_DETAILS.PAGE_NAME.PIN));
+                Navigation.navigate(getSubPageRoute(cardID, CONST.MISSING_PERSONAL_DETAILS.PAGE_NAME.PIN));
                 return;
             }
 
@@ -130,7 +133,7 @@ function MissingPersonalDetailsContent({privatePersonalDetails, draftValues, hea
         pages: formPages,
         startFrom,
         onFinished: handleFinishStep,
-        buildRoute: (pageName, action) => ROUTES.MISSING_PERSONAL_DETAILS.getRoute(cardID, pageName, action),
+        buildRoute: (pageName, action) => getSubPageRoute(cardID, pageName, action),
     });
 
     if (isRedirecting) {
@@ -146,7 +149,7 @@ function MissingPersonalDetailsContent({privatePersonalDetails, draftValues, hea
         }
 
         if (isEditing) {
-            Navigation.goBack(ROUTES.MISSING_PERSONAL_DETAILS.getRoute(cardID, CONST.MISSING_PERSONAL_DETAILS.PAGE_NAME.CONFIRM));
+            Navigation.goBack(getSubPageRoute(cardID, CONST.MISSING_PERSONAL_DETAILS.PAGE_NAME.CONFIRM));
             return;
         }
 

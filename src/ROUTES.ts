@@ -1045,6 +1045,26 @@ const DYNAMIC_ROUTES = {
         entryScreens: [SCREENS.REPORT, SCREENS.RIGHT_MODAL.SEARCH_REPORT, SCREENS.RIGHT_MODAL.EXPENSE_REPORT, SCREENS.RIGHT_MODAL.SEARCH_MONEY_REQUEST_REPORT],
         getRoute: (reportID: string, reportActionID: string) => `flag/${reportID}/${reportActionID}`,
     },
+    REPORT_CARD_ACTIVATE: {
+        path: 'card/:cardID/activate',
+        entryScreens: [SCREENS.REPORT, SCREENS.RIGHT_MODAL.SEARCH_REPORT, SCREENS.RIGHT_MODAL.EXPENSE_REPORT, SCREENS.RIGHT_MODAL.SEARCH_MONEY_REQUEST_REPORT],
+        getRoute: (cardID: number) => `card/${cardID}/activate` as const,
+    },
+    REPORT_MISSING_PERSONAL_DETAILS_CONFIRM_MAGIC_CODE: {
+        path: 'card/:cardID/missing-personal-details/confirm-magic-code',
+        entryScreens: [SCREENS.REPORT, SCREENS.RIGHT_MODAL.SEARCH_REPORT, SCREENS.RIGHT_MODAL.EXPENSE_REPORT, SCREENS.RIGHT_MODAL.SEARCH_MONEY_REQUEST_REPORT],
+        getRoute: (cardID: string) => `card/${cardID}/missing-personal-details/confirm-magic-code` as const,
+    },
+    REPORT_MISSING_PERSONAL_DETAILS: {
+        path: 'card/:cardID/missing-personal-details/:subPage?/:action?',
+        entryScreens: [SCREENS.REPORT, SCREENS.RIGHT_MODAL.SEARCH_REPORT, SCREENS.RIGHT_MODAL.EXPENSE_REPORT, SCREENS.RIGHT_MODAL.SEARCH_MONEY_REQUEST_REPORT],
+        getRoute: (cardID: string, subPage?: string, action?: 'edit') => {
+            if (!subPage) {
+                return `card/${cardID}/missing-personal-details` as const;
+            }
+            return `card/${cardID}/missing-personal-details/${subPage}${action ? `/${action}` : ''}` as const;
+        },
+    },
     WORKSPACE_REPORT_FIELDS_INITIAL_LIST_VALUE: {
         path: 'initial-list-value',
         entryScreens: [SCREENS.WORKSPACE.REPORT_FIELDS_CREATE],
@@ -1625,18 +1645,6 @@ const ROUTES = {
             const queryString = queryParams.length > 0 ? `?${queryParams.join('&')}` : '';
 
             return getUrlWithBackToParam(`${baseRoute}${queryString}` as const, backTo);
-        },
-    },
-    REPORT_CARD_ACTIVATE: {
-        route: 'r/:reportID/:reportActionID?/card/:cardID/activate',
-        getRoute: (cardID: number, reportID?: string, reportActionID?: string) => {
-            if (!reportID) {
-                Log.warn('Invalid reportID is used to build the REPORT_CARD_ACTIVATE route');
-            }
-            if (!reportActionID) {
-                return `r/${reportID}/card/${cardID}/activate` as const;
-            }
-            return `r/${reportID}/${reportActionID}/card/${cardID}/activate` as const;
         },
     },
     REPORT_ATTACHMENTS: {
