@@ -41,7 +41,7 @@ function DynamicReceiptReviewPage({route}: DynamicReceiptReviewPageProps) {
     const {translate, localeCompare} = useLocalize();
     const styles = useThemeStyles();
     const {getCurrencyDecimals} = useCurrencyListActions();
-    const {transactionID} = route.params;
+    const {transactionID, isOnSearch} = route.params;
     const backPath = useDynamicBackPath(DYNAMIC_ROUTES.MERGE_TRANSACTION_RECEIPT.path);
 
     const [mergeTransaction, mergeTransactionMetadata] = useOnyx(`${ONYXKEYS.COLLECTION.MERGE_TRANSACTION}${getNonEmptyStringOnyxID(transactionID)}`);
@@ -70,10 +70,10 @@ function DynamicReceiptReviewPage({route}: DynamicReceiptReviewPageProps) {
         if (!conflictFields.length) {
             // If there are no conflict fields, we should set mergeable data and navigate to the confirmation page
             setMergeTransactionKey(transactionID, mergeableData);
-            Navigation.navigate(createDynamicRoute(DYNAMIC_ROUTES.MERGE_TRANSACTION_CONFIRMATION.getRoute(transactionID)));
+            Navigation.navigate(createDynamicRoute(DYNAMIC_ROUTES.MERGE_TRANSACTION_CONFIRMATION.getRoute(transactionID, isOnSearch), backPath));
             return;
         }
-        Navigation.navigate(createDynamicRoute(DYNAMIC_ROUTES.MERGE_TRANSACTION_DETAILS.getRoute(transactionID)));
+        Navigation.navigate(createDynamicRoute(DYNAMIC_ROUTES.MERGE_TRANSACTION_DETAILS.getRoute(transactionID, isOnSearch), backPath));
     };
 
     if (isLoadingOnyxValue(mergeTransactionMetadata)) {
@@ -94,7 +94,7 @@ function DynamicReceiptReviewPage({route}: DynamicReceiptReviewPageProps) {
                 <HeaderWithBackButton
                     title={translate('transactionMerge.receiptPage.header')}
                     onBackButtonPress={() => {
-                        Navigation.goBack(backPath);
+                        Navigation.goBack();
                     }}
                 />
                 <ScrollView style={[styles.pv3, styles.ph5]}>

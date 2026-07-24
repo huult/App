@@ -52,7 +52,7 @@ function DynamicDetailsReviewPage({route}: DynamicDetailsReviewPageProps) {
     const {translate, localeCompare} = useLocalize();
     const styles = useThemeStyles();
     const {getCurrencyDecimals, convertToDisplayString} = useCurrencyListActions();
-    const {transactionID} = route.params;
+    const {transactionID, isOnSearch} = route.params;
     const backPath = useDynamicBackPath(DYNAMIC_ROUTES.MERGE_TRANSACTION_DETAILS.path);
 
     const [mergeTransaction, mergeTransactionMetadata] = useOnyx(`${ONYXKEYS.COLLECTION.MERGE_TRANSACTION}${getNonEmptyStringOnyxID(transactionID)}`);
@@ -154,9 +154,9 @@ function DynamicDetailsReviewPage({route}: DynamicDetailsReviewPageProps) {
         setHasErrors(newHasErrors);
 
         if (isEmptyObject(newHasErrors)) {
-            Navigation.navigate(createDynamicRoute(DYNAMIC_ROUTES.MERGE_TRANSACTION_CONFIRMATION.getRoute(transactionID)));
+            Navigation.navigate(createDynamicRoute(DYNAMIC_ROUTES.MERGE_TRANSACTION_CONFIRMATION.getRoute(transactionID, isOnSearch), backPath));
         }
-    }, [mergeTransaction, conflictFields, transactionID]);
+    }, [mergeTransaction, conflictFields, transactionID, isOnSearch, backPath]);
 
     // Build merge fields array with all necessary information
     const mergeFields = useMemo(
@@ -213,7 +213,7 @@ function DynamicDetailsReviewPage({route}: DynamicDetailsReviewPageProps) {
                 <HeaderWithBackButton
                     title={translate('transactionMerge.detailsPage.header')}
                     onBackButtonPress={() => {
-                        Navigation.goBack(backPath);
+                        Navigation.goBack();
                     }}
                 />
                 <ScrollView style={[styles.flex1, styles.ph5]}>

@@ -10,7 +10,6 @@ import Text from '@components/Text';
 
 import useCurrentUserPersonalDetails from '@hooks/useCurrentUserPersonalDetails';
 import useDelegateAccountID from '@hooks/useDelegateAccountID';
-import useDynamicBackPath from '@hooks/useDynamicBackPath';
 import useLocalize from '@hooks/useLocalize';
 import useMergeTransactions from '@hooks/useMergeTransactions';
 import useOnyx from '@hooks/useOnyx';
@@ -30,7 +29,7 @@ import type {SkeletonSpanReasonAttributes} from '@libs/telemetry/useSkeletonSpan
 
 import CONST from '@src/CONST';
 import ONYXKEYS from '@src/ONYXKEYS';
-import ROUTES, {DYNAMIC_ROUTES} from '@src/ROUTES';
+import ROUTES from '@src/ROUTES';
 import type SCREENS from '@src/SCREENS';
 import {personalDetailsLoginSelector} from '@src/selectors/PersonalDetails';
 import type {Transaction} from '@src/types/onyx';
@@ -49,8 +48,7 @@ function DynamicConfirmationPage({route}: DynamicConfirmationPageProps) {
     const styles = useThemeStyles();
     const [isMergingExpenses, setIsMergingExpenses] = useState(false);
 
-    const {transactionID} = route.params;
-    const backPath = useDynamicBackPath(DYNAMIC_ROUTES.MERGE_TRANSACTION_CONFIRMATION.path);
+    const {transactionID, isOnSearch} = route.params;
     const [mergeTransaction, mergeTransactionMetadata] = useOnyx(`${ONYXKEYS.COLLECTION.MERGE_TRANSACTION}${getNonEmptyStringOnyxID(transactionID)}`);
     const {targetTransaction, sourceTransaction, targetTransactionReport, targetTransactionPolicy} = useMergeTransactions({mergeTransaction});
     const [allTransactionViolations] = useOnyx(ONYXKEYS.COLLECTION.TRANSACTION_VIOLATIONS);
@@ -118,8 +116,8 @@ function DynamicConfirmationPage({route}: DynamicConfirmationPageProps) {
 
         const searchReportIDToOpen = targetTransactionThreadReportID ?? reportIDToDismiss;
 
-        // If we're in search, dismiss the modal and open the expense in the RHP
-        if (isSearchTopmostFullScreenRoute() && searchReportIDToOpen) {
+        // If we're in search (or the topmost route is search), dismiss the modal and open the expense in the RHP
+        if ((isOnSearch || isSearchTopmostFullScreenRoute()) && searchReportIDToOpen) {
             Navigation.dismissModal();
             Navigation.setNavigationActionToMicrotaskQueue(() => {
                 Navigation.navigate(ROUTES.SEARCH_REPORT.getRoute({reportID: searchReportIDToOpen}));
@@ -153,7 +151,7 @@ function DynamicConfirmationPage({route}: DynamicConfirmationPageProps) {
                 <HeaderWithBackButton
                     title={translate('transactionMerge.confirmationPage.header')}
                     onBackButtonPress={() => {
-                        Navigation.goBack(backPath);
+                        Navigation.goBack();
                     }}
                 />
                 <ScrollView>

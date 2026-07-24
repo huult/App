@@ -1128,7 +1128,8 @@ const DYNAMIC_ROUTES = {
     MERGE_TRANSACTION_LIST: {
         path: 'merge/:transactionID',
         entryScreens: [SCREENS.REPORT, SCREENS.RIGHT_MODAL.SEARCH_REPORT, SCREENS.RIGHT_MODAL.EXPENSE_REPORT, SCREENS.RIGHT_MODAL.SEARCH_MONEY_REQUEST_REPORT, SCREENS.SEARCH.ROOT],
-        getRoute: (transactionID: string) => `merge/${transactionID}` as const,
+        getRoute: (transactionID: string, isOnSearch?: boolean) => `merge/${transactionID}${isOnSearch ? '?isOnSearch=true' : ''}` as const,
+        queryParams: ['isOnSearch'],
     },
     MERGE_TRANSACTION_RECEIPT: {
         path: 'merge/:transactionID/receipt',
@@ -1140,7 +1141,8 @@ const DYNAMIC_ROUTES = {
             SCREENS.SEARCH.ROOT,
             SCREENS.MERGE_TRANSACTION.DYNAMIC_LIST_PAGE,
         ],
-        getRoute: (transactionID: string) => `merge/${transactionID}/receipt` as const,
+        getRoute: (transactionID: string, isOnSearch?: boolean) => `merge/${transactionID}/receipt${isOnSearch ? '?isOnSearch=true' : ''}` as const,
+        queryParams: ['isOnSearch'],
     },
     MERGE_TRANSACTION_DETAILS: {
         path: 'merge/:transactionID/details',
@@ -1153,7 +1155,8 @@ const DYNAMIC_ROUTES = {
             SCREENS.MERGE_TRANSACTION.DYNAMIC_LIST_PAGE,
             SCREENS.MERGE_TRANSACTION.DYNAMIC_RECEIPT_PAGE,
         ],
-        getRoute: (transactionID: string) => `merge/${transactionID}/details` as const,
+        getRoute: (transactionID: string, isOnSearch?: boolean) => `merge/${transactionID}/details${isOnSearch ? '?isOnSearch=true' : ''}` as const,
+        queryParams: ['isOnSearch'],
     },
     MERGE_TRANSACTION_CONFIRMATION: {
         path: 'merge/:transactionID/confirmation',
@@ -1167,7 +1170,8 @@ const DYNAMIC_ROUTES = {
             SCREENS.MERGE_TRANSACTION.DYNAMIC_RECEIPT_PAGE,
             SCREENS.MERGE_TRANSACTION.DYNAMIC_DETAILS_PAGE,
         ],
-        getRoute: (transactionID: string) => `merge/${transactionID}/confirmation` as const,
+        getRoute: (transactionID: string, isOnSearch?: boolean) => `merge/${transactionID}/confirmation${isOnSearch ? '?isOnSearch=true' : ''}` as const,
+        queryParams: ['isOnSearch'],
     },
 } as const satisfies DynamicRoutes;
 

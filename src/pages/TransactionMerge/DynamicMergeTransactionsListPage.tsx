@@ -3,7 +3,6 @@ import FullScreenLoadingIndicator from '@components/FullscreenLoadingIndicator';
 import HeaderWithBackButton from '@components/HeaderWithBackButton';
 import ScreenWrapper from '@components/ScreenWrapper';
 
-import useDynamicBackPath from '@hooks/useDynamicBackPath';
 import useLocalize from '@hooks/useLocalize';
 import useOnyx from '@hooks/useOnyx';
 
@@ -13,7 +12,6 @@ import type {MergeTransactionNavigatorParamList} from '@libs/Navigation/types';
 import type {SkeletonSpanReasonAttributes} from '@libs/telemetry/useSkeletonSpan';
 
 import ONYXKEYS from '@src/ONYXKEYS';
-import {DYNAMIC_ROUTES} from '@src/ROUTES';
 import type SCREENS from '@src/SCREENS';
 import isLoadingOnyxValue from '@src/types/utils/isLoadingOnyxValue';
 
@@ -25,8 +23,7 @@ type DynamicMergeTransactionsListPageProps = PlatformStackScreenProps<MergeTrans
 
 function DynamicMergeTransactionsListPage({route}: DynamicMergeTransactionsListPageProps) {
     const {translate} = useLocalize();
-    const {transactionID} = route.params;
-    const backPath = useDynamicBackPath(DYNAMIC_ROUTES.MERGE_TRANSACTION_LIST.path);
+    const {transactionID, isOnSearch} = route.params;
 
     const [mergeTransaction, mergeTransactionMetadata] = useOnyx(`${ONYXKEYS.COLLECTION.MERGE_TRANSACTION}${transactionID}`);
 
@@ -48,12 +45,13 @@ function DynamicMergeTransactionsListPage({route}: DynamicMergeTransactionsListP
                 <HeaderWithBackButton
                     title={translate('transactionMerge.listPage.header')}
                     onBackButtonPress={() => {
-                        Navigation.goBack(backPath);
+                        Navigation.goBack();
                     }}
                 />
                 <MergeTransactionsListContent
                     transactionID={transactionID}
                     mergeTransaction={mergeTransaction}
+                    isOnSearch={isOnSearch}
                 />
             </FullPageNotFoundView>
         </ScreenWrapper>
