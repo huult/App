@@ -37,9 +37,13 @@ function WalletConfirmValidateCodePage() {
         updatePersonalDetails({...personalDetails, validateCode});
     };
 
+    // Tracked via ref because the unmount cleanup below runs with a stale closure ([] deps).
+    const errorCodeRef = useRef(walletAdditionalDetails?.errorCode);
+    errorCodeRef.current = walletAdditionalDetails?.errorCode;
+
     useEffect(
         () => () => {
-            clearWalletAdditionalDetailsErrors();
+            clearWalletAdditionalDetailsErrors(errorCodeRef.current);
         },
         [],
     );
