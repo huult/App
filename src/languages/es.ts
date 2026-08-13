@@ -10542,10 +10542,14 @@ El plan Controlar empieza en 9 $ por miembro activo al mes.`,
     },
     productMarketingWindow: {
         roleTypes: {
+            cta: 'Pruébalo',
             admin: {
-                heading: 'Nuevos tipos de roles para admins',
-                body: 'Ofrece a tu equipo permisos más granulares con los nuevos roles de administrador de tarjetas, personas y pagos.',
-                cta: 'Pruébalo',
+                heading: 'Mapeo de proveedores mejorado',
+                body: 'Crea proveedores y reglas personalizadas para un mapeo sencillo a los principales paquetes de contabilidad.',
+            },
+            member: {
+                heading: 'Agentes prediseñados para ti',
+                body: 'Usa agentes prediseñados o personalizados para codificar, dividir y enviar gastos automáticamente en tu nombre.',
             },
         },
     },

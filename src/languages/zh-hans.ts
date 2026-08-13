@@ -9931,10 +9931,14 @@ ${reportName}`,
     },
     productMarketingWindow: {
         roleTypes: {
+            cta: '试用一下',
             admin: {
-                heading: '新的管理员角色类型',
-                body: '通过新增卡片、成员和付款管理员角色，为你的团队提供更精细的权限控制。',
-                cta: '试用一下',
+                heading: '增强的供应商映射',
+                body: '创建供应商和自定义规则，轻松映射到主要会计软件。',
+            },
+            member: {
+                heading: '为你打造的预置代理',
+                body: '使用预置或自定义代理，自动为你编码、拆分和提交费用。',
             },
         },
     },

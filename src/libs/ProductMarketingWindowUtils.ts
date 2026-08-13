@@ -1,13 +1,14 @@
-import July26PromoImage from '@assets/images/july26-promo.png';
-
 import type {IllustrationName} from '@components/Icon/IllustrationLoader';
 
 import type {TranslationPaths} from '@src/languages/types';
 import ROUTES from '@src/ROUTES';
 import type {Route} from '@src/ROUTES';
+import type {Policy} from '@src/types/onyx';
 
 import type {ImageSourcePropType} from 'react-native';
 import type {OnyxEntry} from 'react-native-onyx';
+
+import {hasVendorFeature} from './PolicyUtils';
 
 type ProductMarketingAnnouncementVisual =
     | {
@@ -18,6 +19,18 @@ type ProductMarketingAnnouncementVisual =
           type: 'illustration';
           name: IllustrationName;
       };
+
+/** Context passed to `getCtaRoute` for the target admin workspace, when the user has one. Member-only variants ignore it. */
+type ProductMarketingAnnouncementCtaContext = {
+    /** ID of the target admin workspace (the active policy when the user administers it, otherwise their first active admin workspace). */
+    policyID?: string;
+
+    /** Full policy object for `policyID`, needed to branch the CTA on workspace feature state (e.g. `hasVendorFeature`). */
+    policy?: OnyxEntry<Policy>;
+
+    /** Whether the current user has the vendor-matching beta, needed alongside `policy` to evaluate `hasVendorFeature`. */
+    isVendorMatchingBetaEnabled?: boolean;
+};
 
 /** One audience-specific content variant of a product marketing announcement. All content is authored by marketing per release. */
 type ProductMarketingAnnouncementVariant = {
@@ -33,8 +46,8 @@ type ProductMarketingAnnouncementVariant = {
     /** Label of the primary CTA button. */
     ctaLabel: TranslationPaths;
 
-    /** Builds the route the primary CTA navigates to. Admin announcements receive the target workspace ID. */
-    getCtaRoute: (adminPolicyID?: string) => Route;
+    /** Builds the route the primary CTA navigates to. */
+    getCtaRoute: (context: ProductMarketingAnnouncementCtaContext) => Route;
 };
 
 /** A single product marketing announcement with audience-targeted content variants. */
@@ -55,13 +68,21 @@ type ProductMarketingAnnouncement = {
  * announcement is dismissed, nothing is shown until a later release replaces it with a new update key.
  */
 const ACTIVE_PRODUCT_MARKETING_ANNOUNCEMENT: ProductMarketingAnnouncement | null = {
-    updateKey: 'productUpdateJuly2026',
+    updateKey: 'productUpdateAugust2026',
     admin: {
-        visual: {type: 'image', source: July26PromoImage},
+        visual: {type: 'illustration', name: 'Accounting'},
         heading: 'productMarketingWindow.roleTypes.admin.heading',
         body: 'productMarketingWindow.roleTypes.admin.body',
-        ctaLabel: 'productMarketingWindow.roleTypes.admin.cta',
-        getCtaRoute: (adminPolicyID) => ROUTES.WORKSPACE_MEMBERS.getRoute(adminPolicyID),
+        ctaLabel: 'productMarketingWindow.roleTypes.cta',
+        getCtaRoute: ({policyID, policy, isVendorMatchingBetaEnabled}) =>
+            hasVendorFeature(policy, !!isVendorMatchingBetaEnabled) ? ROUTES.WORKSPACE_VENDORS.getRoute(policyID) : ROUTES.WORKSPACE_MORE_FEATURES.getRoute(policyID),
+    },
+    member: {
+        visual: {type: 'illustration', name: 'AgentsIceCream'},
+        heading: 'productMarketingWindow.roleTypes.member.heading',
+        body: 'productMarketingWindow.roleTypes.member.body',
+        ctaLabel: 'productMarketingWindow.roleTypes.cta',
+        getCtaRoute: () => ROUTES.SETTINGS_AGENTS_NEW.getRoute(),
     },
 };
 

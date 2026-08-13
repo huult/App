@@ -10316,10 +10316,14 @@ Aggiungi altre regole di spesa per proteggere il flusso di cassa aziendale.`,
     },
     productMarketingWindow: {
         roleTypes: {
+            cta: 'Provalo',
             admin: {
-                heading: 'Nuovi tipi di ruolo per gli amministratori',
-                body: 'Offri al tuo team autorizzazioni più granulari con i nuovi ruoli di amministratore per carte, persone e pagamenti.',
-                cta: 'Provalo',
+                heading: 'Mappatura fornitori avanzata',
+                body: 'Crea fornitori e regole personalizzate per una mappatura semplice verso i principali pacchetti contabili.',
+            },
+            member: {
+                heading: 'Agenti predefiniti per te',
+                body: 'Usa agenti predefiniti o personalizzati per codificare, dividere e inviare le spese automaticamente per tuo conto.',
             },
         },
     },

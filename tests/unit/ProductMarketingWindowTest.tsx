@@ -1,10 +1,7 @@
 import {act, fireEvent, render, screen} from '@testing-library/react-native';
 
-import July26PromoImage from '@assets/images/july26-promo.png';
-
 import ComposeProviders from '@components/ComposeProviders';
 import {CurrentUserPersonalDetailsProvider} from '@components/CurrentUserPersonalDetailsProvider';
-import Image from '@components/Image';
 import {LocaleContextProvider} from '@components/LocaleContextProvider';
 import OnyxListItemProvider from '@components/OnyxListItemProvider';
 import ProductMarketingWindowManager from '@components/ProductMarketingWindow/ProductMarketingWindowManager';
@@ -26,12 +23,15 @@ import CONST from '@src/CONST';
 import en from '@src/languages/en';
 import NAVIGATORS from '@src/NAVIGATORS';
 import ONYXKEYS from '@src/ONYXKEYS';
+import ROUTES from '@src/ROUTES';
 import SCREENS from '@src/SCREENS';
 import type {Policy} from '@src/types/onyx';
+import type {Connections} from '@src/types/onyx/Policy';
 
 import React from 'react';
 import Onyx from 'react-native-onyx';
 
+import createMock from '../utils/createMock';
 import {buildPersonalDetails} from '../utils/TestHelper';
 import waitForBatchedUpdatesWithAct from '../utils/waitForBatchedUpdatesWithAct';
 
@@ -72,9 +72,11 @@ const mockUseSafeAreaPaddings = jest.mocked(useSafeAreaPaddings);
 
 const adminHeading = en.productMarketingWindow.roleTypes.admin.heading;
 const adminBody = en.productMarketingWindow.roleTypes.admin.body;
-const adminCtaLabel = en.productMarketingWindow.roleTypes.admin.cta;
+const adminCtaLabel = en.productMarketingWindow.roleTypes.cta;
+const memberHeading = en.productMarketingWindow.roleTypes.member.heading;
+const memberBody = en.productMarketingWindow.roleTypes.member.body;
 
-function buildAdminPolicy(policyID = POLICY_ID): Policy {
+function buildAdminPolicy(policyID = POLICY_ID, connections?: Partial<Connections>): Policy {
     return {
         id: policyID,
         name: 'Test Workspace',
@@ -89,6 +91,7 @@ function buildAdminPolicy(policyID = POLICY_ID): Policy {
                 role: CONST.POLICY.ROLE.ADMIN,
             },
         },
+        connections,
     } as Policy;
 }
 
@@ -140,7 +143,7 @@ describe('ProductMarketingWindowManager', () => {
         });
     });
 
-    it('renders nothing for a user without an admin role on any workspace', async () => {
+    it('shows the member variant for a user without an admin role on any workspace', async () => {
         await act(async () => {
             await setupOnyxBaseline({isAdmin: false});
             await waitForBatchedUpdatesWithAct();
@@ -149,7 +152,13 @@ describe('ProductMarketingWindowManager', () => {
         renderManager();
         await waitForBatchedUpdatesWithAct();
 
-        expect(screen.queryByTestId('ProductMarketingWindow')).toBeNull();
+        expect(screen.getByText(memberHeading)).toBeTruthy();
+        expect(screen.getByText(memberBody)).toBeTruthy();
+
+        fireEvent.press(screen.getByText(en.productMarketingWindow.roleTypes.cta));
+        await waitForBatchedUpdatesWithAct();
+
+        expect(mockNavigate).toHaveBeenCalledWith(ROUTES.SETTINGS_AGENTS_NEW.getRoute());
     });
 
     it('shows the admin variant when the user administers at least one active workspace', async () => {
@@ -163,7 +172,6 @@ describe('ProductMarketingWindowManager', () => {
 
         expect(screen.getByText(adminHeading)).toBeTruthy();
         expect(screen.getByText(adminBody)).toBeTruthy();
-        expect(screen.UNSAFE_getByType(Image).props.source).toBe(July26PromoImage);
     });
 
     it('renders nothing on startup when the active update key was already dismissed', async () => {
@@ -497,7 +505,8 @@ describe('ProductMarketingWindowManager', () => {
         expect(mockSetNameValuePair).toHaveBeenCalledTimes(1);
         expect(mockSetNameValuePair).toHaveBeenCalledWith(ONYXKEYS.NVP_LAST_DISMISSED_MARKETING_WINDOW, announcement.updateKey, OLDER_UPDATE_KEY);
         expect(mockNavigate).toHaveBeenCalledTimes(1);
-        expect(mockNavigate).toHaveBeenCalledWith(announcement.admin.getCtaRoute(POLICY_ID));
+        // Vendors is off by default (no beta, no connections), so the admin CTA falls back to More features.
+        expect(mockNavigate).toHaveBeenCalledWith(ROUTES.WORKSPACE_MORE_FEATURES.getRoute(POLICY_ID));
 
         const dismissCallOrder = mockSetNameValuePair.mock.invocationCallOrder.at(0) ?? Number.NaN;
         const navigateCallOrder = mockNavigate.mock.invocationCallOrder.at(0) ?? Number.NaN;
@@ -519,7 +528,7 @@ describe('ProductMarketingWindowManager', () => {
         fireEvent.press(screen.getByText(adminCtaLabel));
         await waitForBatchedUpdatesWithAct();
 
-        expect(mockNavigate).toHaveBeenCalledWith(announcement.admin.getCtaRoute(SECOND_POLICY_ID));
+        expect(mockNavigate).toHaveBeenCalledWith(ROUTES.WORKSPACE_MORE_FEATURES.getRoute(SECOND_POLICY_ID));
     });
 
     it('falls back to the first eligible admin workspace when the active workspace is not administered by the user', async () => {
@@ -534,7 +543,30 @@ describe('ProductMarketingWindowManager', () => {
         fireEvent.press(screen.getByText(adminCtaLabel));
         await waitForBatchedUpdatesWithAct();
 
-        expect(mockNavigate).toHaveBeenCalledWith(announcement.admin.getCtaRoute(POLICY_ID));
+        expect(mockNavigate).toHaveBeenCalledWith(ROUTES.WORKSPACE_MORE_FEATURES.getRoute(POLICY_ID));
+    });
+
+    it('routes the admin CTA to the Vendors page when the target workspace already has Vendors enabled', async () => {
+        await act(async () => {
+            await setupOnyxBaseline({isAdmin: false});
+            await Onyx.set(ONYXKEYS.BETAS, [CONST.BETAS.VENDOR_MATCHING]);
+            await Onyx.set(
+                `${ONYXKEYS.COLLECTION.POLICY}${POLICY_ID}`,
+                buildAdminPolicy(POLICY_ID, createMock<Connections>({[CONST.POLICY.CONNECTIONS.NAME.XERO]: {config: {isConfigured: true}}})),
+            );
+            await Onyx.set(ONYXKEYS.NVP_ACTIVE_POLICY_ID, POLICY_ID);
+            // Connections are already hydrated, so skip the prefetch effect that would otherwise fire for a fallback admin workspace.
+            await Onyx.set(`${ONYXKEYS.COLLECTION.POLICY_HAS_CONNECTIONS_DATA_BEEN_FETCHED}${POLICY_ID}`, true);
+            await waitForBatchedUpdatesWithAct();
+        });
+
+        renderManager();
+        await waitForBatchedUpdatesWithAct();
+
+        fireEvent.press(screen.getByText(adminCtaLabel));
+        await waitForBatchedUpdatesWithAct();
+
+        expect(mockNavigate).toHaveBeenCalledWith(ROUTES.WORKSPACE_VENDORS.getRoute(POLICY_ID));
     });
 
     it('shows the window again when a failed persistence request rolls the NVP back to its previous update key', async () => {

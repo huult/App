@@ -9,14 +9,14 @@ const activeAnnouncement: ProductMarketingAnnouncement = {
         visual: {type: 'illustration', name: 'Rules'},
         heading: 'productMarketingWindow.roleTypes.admin.heading',
         body: 'productMarketingWindow.roleTypes.admin.body',
-        ctaLabel: 'productMarketingWindow.roleTypes.admin.cta',
+        ctaLabel: 'productMarketingWindow.roleTypes.cta',
         getCtaRoute: () => ROUTES.WORKSPACES_LIST.getRoute(),
     },
     member: {
         visual: {type: 'illustration', name: 'MultiScan'},
         heading: 'productMarketingWindow.roleTypes.admin.heading',
         body: 'productMarketingWindow.roleTypes.admin.body',
-        ctaLabel: 'productMarketingWindow.roleTypes.admin.cta',
+        ctaLabel: 'productMarketingWindow.roleTypes.cta',
         getCtaRoute: () => ROUTES.HOME,
     },
 };
