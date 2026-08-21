@@ -97,6 +97,12 @@ function BaseOnboardingPrivateDomain({shouldUseNativeStyles, route}: BaseOnboard
     }, [sendValidateCode, isValidated, shouldBlockPublicDomain]);
 
     useEffect(() => {
+        console.log('****[APP-HT5][DEBUG] BaseOnboardingPrivateDomain redirect effect fired', {
+            shouldBlockPublicDomain,
+            isValidated,
+            joinablePoliciesLength,
+            loading: getAccessiblePoliciesAction?.loading,
+        });
         if (shouldBlockPublicDomain) {
             navigateToNextOnboardingStep(ROUTES.ONBOARDING_PERSONAL_DETAILS.getRoute(), {forceReplace: true});
             return;

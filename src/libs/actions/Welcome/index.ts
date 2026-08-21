@@ -87,8 +87,20 @@ function setOnboardingRHPVariant(value?: OnboardingRHPVariant) {
     Onyx.set(ONYXKEYS.NVP_ONBOARDING_RHP_VARIANT, value ?? null);
 }
 
+// ****[APP-HT5][DEBUG] TEMP repro simulation, kept in for manual testing - remove before merging.
+// Widens the real-world race window between this write and useOnboardingFlowRouter re-reading
+// ONBOARDING_LAST_VISITED_PATH, by delaying+debouncing it the way a slow network/device would.
+const APP_HT5_REPRO_DELAY_MS = 5000;
+let appHt5ReproTimeout: ReturnType<typeof setTimeout> | undefined;
+
 function updateOnboardingLastVisitedPath(path: string) {
-    Onyx.merge(ONYXKEYS.ONBOARDING_LAST_VISITED_PATH, path);
+    if (appHt5ReproTimeout) {
+        clearTimeout(appHt5ReproTimeout);
+    }
+    appHt5ReproTimeout = setTimeout(() => {
+        console.log('****[APP-HT5][DEBUG] updateOnboardingLastVisitedPath (delayed write applied)', {path});
+        Onyx.merge(ONYXKEYS.ONBOARDING_LAST_VISITED_PATH, path);
+    }, APP_HT5_REPRO_DELAY_MS);
 }
 
 function updateOnboardingValuesAndNavigation(onboardingValues: Onboarding | undefined) {

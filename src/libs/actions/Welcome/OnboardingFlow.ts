@@ -89,21 +89,51 @@ Onyx.connectWithoutView({
 /**
  * Start a new onboarding flow or continue from the last visited onboarding page.
  */
+let appHt5CallCount = 0;
+
 function startOnboardingFlow(startOnboardingFlowParams: GetOnboardingInitialPathParamsType) {
     const currentRoute = navigationRef.getCurrentRoute();
     const onboardingPath = startOnboardingFlowParams.resumePath ?? getOnboardingInitialPath(startOnboardingFlowParams);
     const adaptedState = getAdaptedStateFromPath(onboardingPath as Route, undefined, false);
     const focusedRoute = findFocusedRoute(adaptedState as PartialState<NavigationState<RootNavigatorParamList>>);
+    appHt5CallCount += 1;
+    console.log('****[APP-HT5][DEBUG] startOnboardingFlow', {
+        callNumber: appHt5CallCount,
+        currentRouteName: currentRoute?.name,
+        onboardingPath,
+        focusedRouteName: focusedRoute?.name,
+        mismatchDetected: focusedRoute?.name !== currentRoute?.name,
+    });
     if (focusedRoute?.name === currentRoute?.name) {
         return;
     }
     const rootState = navigationRef.getRootState();
     const rootStateRouteNamesSet = new Set(rootState.routes.map((route) => route.name));
+    const mergedRoutes = [...rootState.routes, ...(adaptedState?.routes.filter((route) => !rootStateRouteNamesSet.has(route.name)) ?? [])];
+    // The merge above only ever appends routes whose top-level name isn't already present, so two different
+    // in-flight onboarding screens (e.g. Private_Domain vs Personal_Details) still collapse onto the same
+    // existing OnboardingModalNavigator entry: the resulting route list is identical to rootState.routes even
+    // though focusedRoute's name differed. resetRoot's `stale: true` unconditionally triggers useLinking's
+    // onStateChange -> history.replaceState() regardless of whether anything actually changed, so calling it
+    // here would be a no-op navigation that still burns a replaceState call (APP-HT5). Skip it when the route
+    // list truly hasn't changed.
+    const routesUnchanged = mergedRoutes.length === rootState.routes.length && mergedRoutes.every((route, index) => route.name === rootState.routes.at(index)?.name);
+    console.log('****[APP-HT5][DEBUG] FIX #2 guard evaluated', {
+        callNumber: appHt5CallCount,
+        rootStateRouteNamesBefore: [...rootStateRouteNamesSet],
+        mergedRouteNamesAfter: mergedRoutes.map((route) => route.name),
+        routesUnchanged,
+        resetRootWillBeSkipped: routesUnchanged,
+    });
+    if (routesUnchanged) {
+        return;
+    }
     navigationRef.resetRoot({
         ...rootState,
         ...adaptedState,
         stale: true,
-        routes: [...rootState.routes, ...(adaptedState?.routes.filter((route) => !rootStateRouteNamesSet.has(route.name)) ?? [])],
+        routes: mergedRoutes,
+        // routes:  [...rootState.routes, ...(adaptedState?.routes.filter((route) => !rootStateRouteNamesSet.has(route.name)) ?? [])],
     } as PartialState<NavigationState>);
 }
 
@@ -149,6 +179,13 @@ function getOnboardingInitialPath(getOnboardingInitialPathParams: GetOnboardingI
     }
 
     if (!isUserFromPublicDomain && hasAccessiblePolicies) {
+        // A validated account has no reason to be sent back to the private-domain "people you may know" screen -
+        // OnboardingPrivateDomain's own effect already moves it forward once validation resolves. Trusting the
+        // (possibly stale) last-visited path here instead fights that effect for control of the route.
+        if (isAccountValidated && initialPath.includes(ROUTES.ONBOARDING_PRIVATE_DOMAIN.route)) {
+            console.log('****[APP-HT5][DEBUG] FIX #1 triggered: validated + stale private-domain path -> forwarding instead of replaying stale path', {initialPath, isAccountValidated});
+            return `/${ROUTES.ONBOARDING_PERSONAL_DETAILS.route}`;
+        }
         if (initialPath) {
             return initialPath;
         }
