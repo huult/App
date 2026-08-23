@@ -1,5 +1,6 @@
 import {translate} from '@libs/Localize';
 import getAdaptedStateFromPath from '@libs/Navigation/helpers/getAdaptedStateFromPath';
+import {isOnboardingFlowName} from '@libs/Navigation/helpers/isNavigatorName';
 import {linkingConfig} from '@libs/Navigation/linkingConfig';
 import Navigation, {navigationRef} from '@libs/Navigation/Navigation';
 import type {RootNavigatorParamList} from '@libs/Navigation/types';
@@ -91,9 +92,26 @@ Onyx.connectWithoutView({
  */
 function startOnboardingFlow(startOnboardingFlowParams: GetOnboardingInitialPathParamsType) {
     const currentRoute = navigationRef.getCurrentRoute();
+
+    // FIX (APP-HT5): once already on an onboarding screen, leave progression to that screen's own
+    // navigation instead of recomputing/resetting here too. See console log below for verification.
+    if (isOnboardingFlowName(currentRoute?.name)) {
+        // eslint-disable-next-line no-console
+        console.log('****[APP-HT5][DEBUG] startOnboardingFlow BLOCKED by fix guard (already on onboarding screen)', {currentRouteName: currentRoute?.name});
+        // return;
+    }
+
     const onboardingPath = startOnboardingFlowParams.resumePath ?? getOnboardingInitialPath(startOnboardingFlowParams);
     const adaptedState = getAdaptedStateFromPath(onboardingPath as Route, undefined, false);
     const focusedRoute = findFocusedRoute(adaptedState as PartialState<NavigationState<RootNavigatorParamList>>);
+    // eslint-disable-next-line no-console
+    console.log('****[APP-HT5][DEBUG] startOnboardingFlow', {
+        currentRouteName: currentRoute?.name,
+        onboardingPath,
+        focusedRouteName: focusedRoute?.name,
+        willReset: focusedRoute?.name !== currentRoute?.name,
+        isCurrentRouteOnboarding: isOnboardingFlowName(currentRoute?.name),
+    });
     if (focusedRoute?.name === currentRoute?.name) {
         return;
     }

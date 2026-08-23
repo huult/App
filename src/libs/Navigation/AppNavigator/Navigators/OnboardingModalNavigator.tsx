@@ -27,6 +27,9 @@ import OnboardingWorkEmail from '@pages/OnboardingWorkEmail';
 import OnboardingWorkEmailValidation from '@pages/OnboardingWorkEmailValidation';
 import OnboardingWorkspaces from '@pages/OnboardingWorkspaces';
 
+import {startOnboardingFlow} from '@userActions/Welcome/OnboardingFlow';
+import type {GetOnboardingInitialPathParamsType} from '@userActions/Welcome/OnboardingFlow';
+
 import CONST from '@src/CONST';
 import ONYXKEYS from '@src/ONYXKEYS';
 import SCREENS from '@src/SCREENS';
@@ -80,6 +83,23 @@ function OnboardingModalNavigator() {
         signUpEventPublishedForAccountID = accountID;
         GoogleTagManager.publishEvent(CONST.ANALYTICS.EVENT.SIGN_UP.NAME, accountID, email);
     }, [accountID, email]);
+
+    // TEMP DEBUG (APP-HT5): directly force startOnboardingFlow's resetRoot to fire on a fixed timer,
+    // alternating targets via resumePath (bypasses Onyx/getOnboardingInitialPath entirely). Isolates
+    // whether repeated resetRoot() calls alone trip Safari's history.replaceState limit. Remove after.
+    useEffect(() => {
+        let toggle = false;
+        const dummyParams = {} as GetOnboardingInitialPathParamsType;
+        const intervalId = setInterval(() => {
+            toggle = !toggle;
+            const resumePath = toggle ? '/onboarding/private-domain' : '/onboarding/personal-details';
+            // eslint-disable-next-line no-console
+            console.log('****[APP-HT5][DEBUG] forcing startOnboardingFlow resetRoot ->', resumePath);
+            startOnboardingFlow({...dummyParams, resumePath});
+        }, 50);
+
+        return () => clearInterval(intervalId);
+    }, []);
 
     const handleOuterClick = useCallback(() => {
         OnboardingRefManager.handleOuterClick();
