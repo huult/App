@@ -37,6 +37,12 @@ type BaseImageProps = {
      *  the load with the higher priority will be started first.
      *  Maps to SDWebImageHighPriority (iOS) and Glide.Priority.IMMEDIATE (Android). */
     priority?: ValueOf<typeof CONST.IMAGE_LOADING_PRIORITY> | null;
+
+    /** Web only: whether the underlying <img> should use the native `loading` attribute.
+     *  Defaults to `lazy` in expo-image, which can leave an image that is already on screen
+     *  stuck unloaded when many images mount in the same burst (e.g. a chat's report previews
+     *  reloading at once) — pass `eager` to opt out for images that are already visible. */
+    loading?: 'lazy' | 'eager';
 };
 
 type ImageOwnProps = BaseImageProps & {
