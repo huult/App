@@ -226,6 +226,15 @@ const expenseReportQueryJSON: SearchQueryJSON = {
     filters: {operator: CONST.SEARCH.SYNTAX_OPERATORS.AND, left: 'type', right: 'expense-report'},
 };
 
+// "Select all" (all matching items across pages) is only wired up for the Expenses tab (type:expense), not Reports
+// (type:expense-report) - see the isExpenseType check gating headerButtonsOptions in useSearchBulkActions.
+const expenseQueryJSON: SearchQueryJSON = {
+    ...expenseReportQueryJSON,
+    inputQuery: 'type:expense status:all',
+    type: CONST.SEARCH.DATA_TYPES.EXPENSE,
+    filters: {operator: CONST.SEARCH.SYNTAX_OPERATORS.AND, left: 'type', right: 'expense'},
+};
+
 function makeSelectedTransaction(overrides: Partial<SelectedTransactions[string]> = {}): SelectedTransactions[string] {
     return {
         isSelected: true,
@@ -323,12 +332,16 @@ describe('useSearchBulkActions - Pay option', () => {
     });
 
     it('queues a server-side bulk payment instead of paying per report when all matching items are selected', async () => {
-        // Given "Select all" is checked, so the selection can span more reports than are loaded on the current page
+        // Given "Select all" is checked. The real SearchSelectionProvider only flips this flag and never populates
+        // selectedTransactions/selectedReports (the selection can span pages that were never loaded), so useBulkPayOptions
+        // can't build any menu items either. Reproduce that empty state instead of mocking it away.
         mockAreAllMatchingItemsSelected = true;
-        // Mark as paid is the only option offered in this mode
-        mockBulkPayButtonOptions = [{text: 'Mark as paid', key: CONST.IOU.PAYMENT_TYPE.ELSEWHERE}];
+        mockSelectedTransactions = {};
+        mockSelectedReports = [];
+        mockBulkPayButtonOptions = [];
 
-        const {result} = renderHook(() => useSearchBulkActions({queryJSON: expenseReportQueryJSON}));
+        // "Select all" bulk pay is only wired up for the Expenses tab (see expenseQueryJSON above)
+        const {result} = renderHook(() => useSearchBulkActions({queryJSON: expenseQueryJSON}));
 
         await waitFor(() => {
             expect(getPayOptionFromResult(result.current.headerButtonsOptions)).toBeDefined();

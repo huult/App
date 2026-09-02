@@ -422,14 +422,18 @@ describe('useSearchBulkActions - CSV export flow', () => {
         });
     });
 
-    it('keeps the original expense-report export guard when no loaded transaction is selected', async () => {
+    it('keeps export available for an expense-report all-matching selection with no loaded transaction', async () => {
+        // "Select all" (all matching) is wired up for expense-report search too, not just expense search,
+        // so this must not fall back to the empty-selection guard the way a non-supported type would.
         mockAreAllMatchingItemsSelected = true;
         mockSelectedTransactions = {};
         mockExcludedTransactions = {tx1: makeSelectedTransaction()};
 
         const {result} = renderHook(() => useSearchBulkActions({queryJSON: expenseReportQueryJSON}));
 
-        expect(result.current.headerButtonsOptions).toEqual([]);
+        await waitFor(() => {
+            expect(result.current.headerButtonsOptions.some((option) => option.value === CONST.SEARCH.BULK_ACTION_TYPES.EXPORT)).toBe(true);
+        });
     });
 
     it('does not send exclusions for an expense-report export', async () => {

@@ -1,11 +1,9 @@
 import SearchBulkActionsButton from '@components/Search/SearchBulkActionsButton';
 import {useSearchSelectionContext} from '@components/Search/SearchContext';
-import {useSelectionCounts} from '@components/Search/SearchSelectionProvider';
 import type {SearchQueryJSON} from '@components/Search/types';
 
 import useThemeStyles from '@hooks/useThemeStyles';
 
-import CONST from '@src/CONST';
 import type {SearchResults} from '@src/types/onyx';
 
 import type {OnyxEntry} from 'react-native-onyx';
@@ -28,9 +26,9 @@ type SearchActionsBarWideProps = {
 
 function SearchActionsBarWide({queryJSON, searchResults, onSort}: SearchActionsBarWideProps) {
     const styles = useThemeStyles();
-    const {hasSelectedTransactions} = useSearchSelectionContext();
-    const {selected} = useSelectionCounts();
-    const shouldShowBulkActions = queryJSON.type === CONST.SEARCH.DATA_TYPES.EXPENSE ? hasSelectedTransactions : selected > 0;
+    // hasSelectedTransactions already covers "Select all" (all matching items) for the types that support it,
+    // on top of the ordinary per-row selection that used to be checked separately via selected > 0.
+    const {hasSelectedTransactions: shouldShowBulkActions} = useSearchSelectionContext();
 
     return (
         <View style={[styles.searchActionsBarContainer]}>

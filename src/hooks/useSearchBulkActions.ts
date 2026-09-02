@@ -522,6 +522,7 @@ function useSearchBulkActions({queryJSON}: UseSearchBulkActionsParams) {
         'Stopwatch',
         'Exclamation',
         'MoneyBag',
+        'CheckCircle',
         'ArrowSplit',
         'ExpenseCopy',
         'ReportCopy',
@@ -681,10 +682,7 @@ function useSearchBulkActions({queryJSON}: UseSearchBulkActionsParams) {
         isCurrencySupportedWallet: isCurrencySupportedBulkWallet,
         currency: selectedBulkCurrency,
         formattedAmount: totalFormattedAmount,
-        // When "Select all" spans pages, the selection can cover many workspaces/currencies whose per-report payment
-        // methods aren't all loaded, and QueueBulkPayReports only carries the query (no payment method). So offer only
-        // the manual "Pay elsewhere" option in that mode, which routes to QueueBulkPayReports in onBulkPaySelected.
-        onlyShowPayElsewhere: onlyShowPayElsewhere || areAllMatchingItemsSelected,
+        onlyShowPayElsewhere,
     });
 
     const {hash} = queryJSON ?? {};
@@ -1756,7 +1754,9 @@ function useSearchBulkActions({queryJSON}: UseSearchBulkActionsParams) {
     }, [selectedReports, currentSearchResults?.data, isTrackIntentUser, policies, selectedTransactions]);
 
     const headerButtonsOptions = useMemo(() => {
-        if ((selectedTransactionsKeys.length === 0 && !(isExpenseType && areAllMatchingItemsSelected)) || !hash) {
+        // "Select all" never populates selectedTransactions/selectedReports (the selection can span pages that
+        // aren't loaded), so the length-based check below must be bypassed for both search types that support it.
+        if ((selectedTransactionsKeys.length === 0 && !((isExpenseType || isExpenseReportType) && areAllMatchingItemsSelected)) || !hash) {
             return CONST.EMPTY_ARRAY as unknown as Array<DropdownOption<SearchHeaderOptionValue>>;
         }
 
@@ -2122,7 +2122,25 @@ function useSearchBulkActions({queryJSON}: UseSearchBulkActionsParams) {
                   subMenuItems,
               };
 
-        // Pay is offered for both "Select all" (all matching) and normal selections, so build it once here and reuse it in both branches below.
+        // With "Select all", the selection can span more reports than are loaded, so per-report eligibility (currency,
+        // canPay, payment method) can't be checked on the client. Skip useBulkPayOptions/getPayOption entirely here —
+        // they need a loaded report to build their menu and would otherwise hide Pay for a selection that was never
+        // enumerated. Offer the single manual "Pay elsewhere" action instead; QueueBulkPayReports pages through every
+        // matching report on the backend and validates payability there.
+        if (areAllMatchingItemsSelected) {
+            if (isAnyTransactionOnHold) {
+                return [exportButtonOption];
+            }
+            const manualPayOption: DropdownOption<SearchHeaderOptionValue> = {
+                icon: expensifyIcons.CheckCircle,
+                text: translate('iou.payElsewhere', ''),
+                value: CONST.SEARCH.BULK_ACTION_TYPES.PAY,
+                shouldCloseModalOnSelect: true,
+                onSelected: () => onBulkPaySelected(undefined),
+            };
+            return [manualPayOption, exportButtonOption];
+        }
+
         const {shouldEnableBulkPayOption} = getPayOption(selectedReports, selectedTransactions, lastPaymentMethods, selectedReportIDs, personalPolicyID);
         // Keep Pay visible while offline: selecting it is handled by onBulkPaySelected, which shows the offline modal
         // rather than attempting a payment. Gating on !isOffline here would hide Pay entirely offline, which is wrong.
@@ -2137,12 +2155,6 @@ function useSearchBulkActions({queryJSON}: UseSearchBulkActionsParams) {
             subMenuItems: bulkPayButtonOptions,
             onSelected: () => onBulkPaySelected(undefined),
         };
-
-        // With "Select all" the selection can span more reports than are loaded, so per-report actions other than Pay
-        // (which the backend resolves from the query) can't be built. Offer the manual bulk Pay alongside Export only.
-        if (areAllMatchingItemsSelected) {
-            return shouldShowPayOption ? [payButtonOption, exportButtonOption] : [exportButtonOption];
-        }
 
         if (allSelectedAreDeleted) {
             const deletedTransactionOptions: Array<DropdownOption<SearchHeaderOptionValue>> = [

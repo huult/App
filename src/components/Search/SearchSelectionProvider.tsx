@@ -36,7 +36,8 @@ const defaultSelectionState: SelectionState = {
 // Owns selection state + pure setters only; the write actions (toggle/toggleAll) live in SearchWriteActionsProvider.
 function SearchSelectionProvider({children}: SearchSelectionProviderProps) {
     const {currentSearchHash, currentSearchQueryJSON} = useSearchQueryContext();
-    const isExpenseSearch = currentSearchQueryJSON?.type === CONST.SEARCH.DATA_TYPES.EXPENSE;
+    // "Select all" (all matching items across pages) is wired up for the Expenses and Reports tabs.
+    const isSelectAllMatchingSupported = currentSearchQueryJSON?.type === CONST.SEARCH.DATA_TYPES.EXPENSE || currentSearchQueryJSON?.type === CONST.SEARCH.DATA_TYPES.EXPENSE_REPORT;
 
     const areTransactionsEmpty = useRef(true);
     const [selectionState, setSelectionState] = useState<SelectionState>(defaultSelectionState);
@@ -235,7 +236,7 @@ function SearchSelectionProvider({children}: SearchSelectionProviderProps) {
     };
 
     const hasSelectedTransactions =
-        (isExpenseSearch && selectionState.areAllMatchingItemsSelected) ||
+        (isSelectAllMatchingSupported && selectionState.areAllMatchingItemsSelected) ||
         selectionState.selectedTransactionIDs.length > 0 ||
         Object.values(selectionState.selectedTransactions).some((t) => t.isSelected);
 
