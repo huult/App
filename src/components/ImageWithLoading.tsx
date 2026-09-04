@@ -97,9 +97,8 @@ function ImageWithLoading({
                     <Image
                         {...rest}
                         source={{uri: previewUri}}
-                        style={[styles.w100, styles.h100, styles.opacitySemiTransparent, style]}
+                        style={[styles.pAbsolute, styles.w100, styles.h100, styles.opacitySemiTransparent, style]}
                         resizeMode={resizeMode}
-                        loading="eager"
                         onLoad={onLoad}
                         loadingIconSize={loadingIconSize}
                         loadingIndicatorStyles={loadingIndicatorStyles}
@@ -116,7 +115,6 @@ function ImageWithLoading({
                     }
                     setIsLoading(true);
                 }}
-                loading="eager"
                 onError={handleError}
                 onLoad={(e) => {
                     imageLoadedSuccessfully(e);
