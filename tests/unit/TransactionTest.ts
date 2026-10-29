@@ -71,13 +71,7 @@ function isCapturedOnyxData(value: unknown): value is CapturedOnyxData {
 }
 
 function isChangeTransactionsReportParams(value: unknown): value is ChangeTransactionsReportParams {
-    return (
-        isRecord(value) &&
-        typeof value.reportID === 'string' &&
-        typeof value.transactionList === 'string' &&
-        typeof value.transactionIDToReportActionAndThreadData === 'string' &&
-        (value.transactionIDToUpdatedCustomUnitRateID === undefined || typeof value.transactionIDToUpdatedCustomUnitRateID === 'string')
-    );
+    return isRecord(value) && typeof value.reportID === 'string' && typeof value.transactionList === 'string' && typeof value.transactionIDToReportActionAndThreadData === 'string';
 }
 
 // Wrapper mirroring the pre-refactor signature so existing test call sites compile unchanged.
@@ -2002,6 +1996,8 @@ describe('Transaction', () => {
                 [`${ONYXKEYS.COLLECTION.TRANSACTION}${transaction.transactionID}`]: transaction,
             };
 
+            const mockAPIWrite = jest.spyOn(API, 'write').mockImplementation((_command, _params, onyxData) => Onyx.update(onyxData?.optimisticData ?? []));
+
             changeTransactionsReport({
                 isVendorMatchingBetaEnabled: false,
                 transactionIDs: [transaction.transactionID],
@@ -2022,6 +2018,12 @@ describe('Transaction', () => {
             const updatedTransaction = await getOnyxValue(`${ONYXKEYS.COLLECTION.TRANSACTION}${transaction.transactionID}`);
             expect(updatedTransaction?.comment?.customUnit?.customUnitRateID).toBe(validRateID);
             expect(updatedTransaction?.comment?.customUnit?.defaultP2PRate).toBeUndefined();
+
+            // Auth picks the rate server-side, so the optimistic rate must not be sent as an authoritative answer
+            const [, parameters] = TestHelper.getRequiredWriteCall(mockAPIWrite.mock.calls, 0);
+            expect(parameters).not.toHaveProperty('transactionIDToUpdatedCustomUnitRateID');
+
+            mockAPIWrite.mockRestore();
         });
 
         it('should auto-select a valid distance rate when the current rate is disabled on the destination workspace', async () => {
