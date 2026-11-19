@@ -208,14 +208,29 @@ function clearPerDiemRateError(policyID: string, customUnitID: string, rateID: s
     });
 }
 
+function isSubRatePendingDelete(rate: Rate, subRateID: string): boolean {
+    return rate.pendingFields?.[subRateID] === CONST.RED_BRICK_ROAD_PENDING_ACTION.DELETE;
+}
+
 /**
- * Returns whether the selection covers every subrate of the custom unit, so the whole rate list can be cleared at once.
+ * Builds a pendingFields map that sets the given action on each subrate, keyed by subrate ID so siblings of a deleted subrate are untouched.
+ */
+function getSubRatePendingFields(subRateIDs: string[], action: typeof CONST.RED_BRICK_ROAD_PENDING_ACTION.DELETE | null) {
+    return Object.fromEntries(subRateIDs.map((subRateID) => [subRateID, action]));
+}
+
+/**
+ * Returns whether the selection covers every subrate of the custom unit that is not already being deleted,
+ * so the whole rate list can be cleared at once.
  */
 function isEverySubRateSelected(customUnit: CustomUnit, subRatesToBeDeleted: SubRateData[]): boolean {
     const selectedSubRateKeys = new Set(subRatesToBeDeleted.map((subRate) => getPerDiemRowKey(subRate.rateID, subRate.subRateID)));
     let subRateCount = 0;
     for (const rate of Object.values(customUnit.rates)) {
         for (const subRate of rate.subRates ?? []) {
+            if (isSubRatePendingDelete(rate, subRate.id)) {
+                continue;
+            }
             if (!selectedSubRateKeys.has(getPerDiemRowKey(rate.customUnitRateID, subRate.id))) {
                 return false;
             }
@@ -227,7 +242,10 @@ function isEverySubRateSelected(customUnit: CustomUnit, subRatesToBeDeleted: Sub
 
 /**
  * Builds the targeted updates for deleting a subset of subrates: the changed parent rates to send, the destination IDs
- * to remove, and the matching optimistic and failure Onyx data.
+ * to remove, and the matching optimistic, success and failure Onyx data.
+ *
+ * The optimistic data only marks the selected subrates as pending deletion, so they stay visible with a strikethrough while
+ * offline. The success data removes them for good and the failure data clears the marker and attaches the error.
  */
 function prepareCustomUnitRateUpdates(customUnit: CustomUnit, subRatesToBeDeleted: SubRateData[], error: Errors) {
     const mappedDeletedSubRatesToRate = subRatesToBeDeleted.reduce(
@@ -242,7 +260,8 @@ function prepareCustomUnitRateUpdates(customUnit: CustomUnit, subRatesToBeDelete
         {} as Record<string, SubRateData[]>,
     );
 
-    const optimisticRates: Record<string, NullishDeep<Rate> | null> = {};
+    const optimisticRates: Record<string, NullishDeep<Rate>> = {};
+    const successRates: Record<string, NullishDeep<Rate> | null> = {};
     const failureRates: Record<string, NullishDeep<Rate>> = {};
     const customUnitRateUpdates: Record<string, Rate> = {};
     const customUnitRateIDs: string[] = [];
@@ -252,31 +271,40 @@ function prepareCustomUnitRateUpdates(customUnit: CustomUnit, subRatesToBeDelete
             continue;
         }
         const selectedSubRateIDs = new Set(subRates.map((subRate) => subRate.subRateID));
-        const currentSubRates = currentRate.subRates ?? [];
-        const affectedSubRateIDs = currentSubRates.filter((subRate) => selectedSubRateIDs.has(subRate.id)).map((subRate) => subRate.id);
+        // Subrates that are already pending deletion from an earlier offline request are going away too, so they are not sent back to the server.
+        const liveSubRates = (currentRate.subRates ?? []).filter((subRate) => !isSubRatePendingDelete(currentRate, subRate.id));
+        const affectedSubRateIDs = liveSubRates.filter((subRate) => selectedSubRateIDs.has(subRate.id)).map((subRate) => subRate.id);
         if (!affectedSubRateIDs.length) {
             continue;
         }
 
+        optimisticRates[rateID] = {
+            errors: null,
+            errorFields: null,
+            pendingFields: getSubRatePendingFields(affectedSubRateIDs, CONST.RED_BRICK_ROAD_PENDING_ACTION.DELETE),
+        };
         failureRates[rateID] = {
-            ...currentRate,
             errors: null,
             errorFields: Object.fromEntries(affectedSubRateIDs.map((subRateID) => [subRateID, error])),
-            pendingAction: null,
+            pendingFields: getSubRatePendingFields(affectedSubRateIDs, null),
         };
-        if (affectedSubRateIDs.length === currentSubRates.length) {
+        if (affectedSubRateIDs.length === liveSubRates.length) {
             customUnitRateIDs.push(rateID);
-            optimisticRates[rateID] = null;
+            successRates[rateID] = null;
         } else {
             const updatedRate = lodashDeepClone(currentRate);
-            updatedRate.subRates = currentSubRates.filter((subRate) => !selectedSubRateIDs.has(subRate.id));
+            updatedRate.subRates = liveSubRates.filter((subRate) => !selectedSubRateIDs.has(subRate.id));
             customUnitRateUpdates[rateID] = updatedRate;
-            optimisticRates[rateID] = updatedRate;
+            successRates[rateID] = {
+                subRates: updatedRate.subRates,
+                pendingFields: getSubRatePendingFields(affectedSubRateIDs, null),
+            };
         }
     }
 
     return {
         optimisticRates,
+        successRates,
         failureRates,
         customUnitRateUpdates,
         customUnitRateIDs,
@@ -301,25 +329,40 @@ function deleteWorkspacePerDiemRates(policyID: string, customUnit: CustomUnit | 
     }
     const error = getMicroSecondOnyxErrorWithTranslationKey('common.genericErrorMessage');
     let parameters: UpdateWorkspaceCustomUnitParams;
-    let optimisticRates: Record<string, NullishDeep<Rate> | null>;
+    let optimisticRates: Record<string, NullishDeep<Rate>>;
+    let successRates: Record<string, NullishDeep<Rate> | null>;
     let failureRates: Record<string, NullishDeep<Rate>>;
     // Auth clears every destination when deleteAllRates is set, so filtered selections must use targeted mutations instead.
     if (isEverySubRateSelected(customUnit, subRatesToBeDeleted)) {
         parameters = {policyID, customUnitID: customUnit.customUnitID, deleteAllRates: true};
         // Match the server's empty array while keeping the dictionary type used for populated rates.
         // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- Empty API dictionaries use arrays, but no rate entries are read from this value.
-        optimisticRates = [] as unknown as CustomUnit['rates'];
+        successRates = [] as unknown as CustomUnit['rates'];
 
+        // Keep every subrate visible as pending deletion until the server confirms, and clear the marker again on failure.
+        optimisticRates = {};
+        failureRates = {};
+        for (const [rateID, rate] of Object.entries(customUnit.rates)) {
+            const liveSubRateIDs = (rate.subRates ?? []).filter((subRate) => !isSubRatePendingDelete(rate, subRate.id)).map((subRate) => subRate.id);
+            if (!liveSubRateIDs.length) {
+                continue;
+            }
+            optimisticRates[rateID] = {
+                errors: null,
+                errorFields: null,
+                pendingFields: getSubRatePendingFields(liveSubRateIDs, CONST.RED_BRICK_ROAD_PENDING_ACTION.DELETE),
+            };
+            failureRates[rateID] = {pendingFields: getSubRatePendingFields(liveSubRateIDs, null)};
+        }
+
+        // Attach one row error to avoid duplicating the same error across the full selection.
         const firstSelectedSubRate = subRatesToBeDeleted.at(0);
-        const firstSelectedRate = firstSelectedSubRate ? customUnit.rates[firstSelectedSubRate.rateID] : undefined;
-        // Restore every rate on failure, but attach one row error to avoid duplicating the same error across the full selection.
-        failureRates = {...customUnit.rates};
-        if (firstSelectedSubRate && firstSelectedRate) {
-            failureRates[firstSelectedSubRate.rateID] = {
-                ...firstSelectedRate,
+        const firstSelectedRateID = firstSelectedSubRate?.rateID;
+        if (firstSelectedSubRate && firstSelectedRateID && failureRates[firstSelectedRateID]) {
+            failureRates[firstSelectedRateID] = {
+                ...failureRates[firstSelectedRateID],
                 errors: null,
                 errorFields: {[firstSelectedSubRate.subRateID]: error},
-                pendingAction: null,
             };
         }
     } else {
@@ -328,6 +371,7 @@ function deleteWorkspacePerDiemRates(policyID: string, customUnit: CustomUnit | 
             return;
         }
         optimisticRates = targetedUpdates.optimisticRates;
+        successRates = targetedUpdates.successRates;
         failureRates = targetedUpdates.failureRates;
 
         const sanitizedRateUpdates = Object.values(targetedUpdates.customUnitRateUpdates).map(getCustomUnitRateForAPI);
@@ -352,6 +396,19 @@ function deleteWorkspacePerDiemRates(policyID: string, customUnit: CustomUnit | 
                     customUnits: {
                         [customUnit.customUnitID]: {
                             rates: optimisticRates,
+                        },
+                    },
+                },
+            },
+        ],
+        successData: [
+            {
+                onyxMethod: Onyx.METHOD.MERGE,
+                key: `${ONYXKEYS.COLLECTION.POLICY}${policyID}`,
+                value: {
+                    customUnits: {
+                        [customUnit.customUnitID]: {
+                            rates: successRates,
                         },
                     },
                 },

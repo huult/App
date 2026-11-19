@@ -46,7 +46,8 @@ function getSubRatesData(rates: Record<string, Rate>) {
         if (subRates) {
             for (const [index, subRate] of subRates.entries()) {
                 subRatesData.push({
-                    pendingAction: rate.pendingAction,
+                    // A subrate can be pending deletion on its own, while the rate-level action applies to all of its subrates.
+                    pendingAction: rate.pendingFields?.[subRate.id] ?? rate.pendingAction,
                     // Rate-level errors appear once; subrate errors appear on the row that was edited.
                     errors: rate.errorFields?.[subRate.id] ?? (index === 0 ? rate.errors : undefined),
                     destination: rate.name ?? '',

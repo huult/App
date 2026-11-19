@@ -97,7 +97,8 @@ type Rate = OnyxCommon.OnyxValueWithOfflineFeedback<
         /** ISO 8601 date string for when this rate expires */
         endDate?: string | null;
     },
-    keyof RateAttributes
+    // pendingFields is also keyed by subrate ID, so a single subrate can show as pending deletion without affecting its siblings
+    string
 >;
 
 /** Custom unit attributes */
